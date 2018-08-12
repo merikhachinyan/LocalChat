@@ -5,8 +5,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import com.example.meri.nearbychat.preferences.Preferences;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
+
 
 public class AdvertiseService extends BaseService {
 
@@ -51,7 +51,7 @@ public class AdvertiseService extends BaseService {
     }
 
     private void advertising() {
-        mConnectionsClient.startAdvertising(Preferences.getName(this), getPackageName(),
+        mConnectionsClient.startAdvertising("Name", getPackageName(),
                 mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());

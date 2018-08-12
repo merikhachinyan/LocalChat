@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraint_layout_in_toolbar"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/user_circle_image_view_on_toolbar"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:src="@drawable/no_user_image"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/user_name_text_view_on_toolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="User Name"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/user_circle_image_view_on_toolbar" />
+
+    <TextView
+        android:id="@+id/user_info_text_view_on_toolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="User info"
+        android:textColor="#cee2e3"
+        app:layout_constraintStart_toEndOf="@id/user_circle_image_view_on_toolbar"
+        app:layout_constraintTop_toBottomOf="@id/user_name_text_view_on_toolbar" />
+
+
+</android.support.constraint.ConstraintLayout>

@@ -14,7 +14,6 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.meri.nearbychat.R;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
@@ -24,6 +23,7 @@ import com.google.android.gms.nearby.connection.Payload;
 import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
+import com.ss.localchat.R;
 
 public abstract class BaseService extends IntentService {
     private static final String CHANNEL_ID = "send_message_service";

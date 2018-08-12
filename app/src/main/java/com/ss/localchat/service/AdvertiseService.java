@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 
-
 public class AdvertiseService extends BaseService {
 
     public static final String CHANNEL_ID = "advertise_service";
@@ -51,7 +50,7 @@ public class AdvertiseService extends BaseService {
     }
 
     private void advertising() {
-        mConnectionsClient.startAdvertising("Name", getPackageName(),
+        mConnectionsClient.startAdvertising("User", getPackageName(),
                 mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());

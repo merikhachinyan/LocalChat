@@ -26,7 +26,9 @@ import com.google.android.gms.nearby.connection.Strategy;
 import com.ss.localchat.R;
 
 public abstract class BaseService extends IntentService {
+
     private static final String CHANNEL_ID = "send_message_service";
+
     public static final int NOTIFICATION_ID = 1;
 
     public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;

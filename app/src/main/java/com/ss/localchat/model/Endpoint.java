@@ -2,28 +2,29 @@ package com.ss.localchat.model;
 
 import java.io.Serializable;
 
-public class Endpoint implements Serializable{
-    private String mId;
-    private String mName;
+public class Endpoint implements Serializable {
+
+    private String id;
+    private String name;
 
     public Endpoint(String id, String name) {
-        mId = id;
-        mName = name;
+        this.id = id;
+        this.name = name;
     }
 
     public String getId() {
-        return mId;
+        return id;
     }
 
     public void setId(String id) {
-        mId = id;
+        this.id = id;
     }
 
     public String getName() {
-        return mName;
+        return name;
     }
 
     public void setName(String name) {
-        mName = name;
+        this.name = name;
     }
 }

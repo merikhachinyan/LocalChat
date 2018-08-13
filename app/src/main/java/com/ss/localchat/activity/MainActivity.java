@@ -14,14 +14,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TableLayout;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
-import com.ss.localchat.fragment.ChatFragment;
+import com.ss.localchat.fragment.ChatListFragment;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,13 +86,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
-        ViewPager viewPager = findViewById(R.id.view_pager_content_main);
+        mFragmentList.add(ChatListFragment.newInstance());
+        mFragmentList.add(ChatListFragment.newInstance());
 
         ViewPagerFragmentAdapter adapter =
                 new ViewPagerFragmentAdapter(getSupportFragmentManager(), mFragmentList);
-        viewPager.setAdapter(adapter);
 
+        ViewPager viewPager = findViewById(R.id.view_pager_content_main);
+        viewPager.setAdapter(adapter);
+        viewPager.setOffscreenPageLimit(3);
+
+        TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
         tableLayout.setupWithViewPager(viewPager);
 
     }
@@ -111,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings:
-
+                Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 return true;
             case android.R.id.home:
                 getSupportFragmentManager().popBackStack();
@@ -120,5 +122,4 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
 }

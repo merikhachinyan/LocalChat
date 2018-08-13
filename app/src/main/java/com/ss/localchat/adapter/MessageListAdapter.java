@@ -64,7 +64,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemViewType(int position) {
-        if (position % 2 == 0) {
+        if (position % 2 != 0) {
             return RECEIVED_MESSAGE_TYPE;
         } else {
             return SENT_MESSAGE_TYPE;

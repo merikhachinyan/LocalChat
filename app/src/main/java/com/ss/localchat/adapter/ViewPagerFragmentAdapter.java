@@ -5,6 +5,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.ss.localchat.fragment.ChatListFragment;
+
 import java.util.List;
 
 public class ViewPagerFragmentAdapter extends FragmentPagerAdapter {
@@ -31,10 +33,9 @@ public class ViewPagerFragmentAdapter extends FragmentPagerAdapter {
     public CharSequence getPageTitle(int position) {
         switch (position) {
             case 0:
-                //Todo get name from fragment
-                return "Chats";
+                return ChatListFragment.FRAGMENT_TITLE;
             case 1:
-                //Todo get name from fragment
+                //Todo Discover Fragment Title
                 return "Discover";
             default:
                 return null;

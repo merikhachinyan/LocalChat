@@ -13,20 +13,20 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
     private Drawable mDivider;
 
-    private int leftMargin;
+    private int mLeftMargin;
 
     public DividerItemDecoration(Context context, int pLeftMargin) {
         mDivider = context.getResources().getDrawable(R.drawable.line_divider);
-        leftMargin = pLeftMargin;
+        mLeftMargin = pLeftMargin;
     }
 
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        int left = parent.getPaddingLeft()+leftMargin;
+        int left = parent.getPaddingLeft() + mLeftMargin;
         int right = parent.getWidth() - parent.getPaddingRight();
 
         int childCount = parent.getChildCount();
-        for (int i = 0; i < childCount-1; i++) {
+        for (int i = 0; i < childCount - 1; i++) {
             View child = parent.getChildAt(i);
 
             RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();

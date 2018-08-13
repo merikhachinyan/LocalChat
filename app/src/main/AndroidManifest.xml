@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ss.localchat">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -25,6 +26,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".activity.ChatActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".activity.MainActivity" />
+
         <service android:name=".service.AdvertiseService" />
         <service android:name=".service.DiscoverService" />
         <service android:name=".service.SendMessageService" />

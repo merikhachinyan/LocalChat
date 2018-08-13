@@ -112,8 +112,8 @@ public abstract class BaseService extends IntentService {
 
     protected void createNotificationChannel(String channelId) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "SendMessageServiceChannel";
-            String description = "SendMessageServiceChannelDescription";
+            CharSequence name = "ServiceChannel";
+            String description = "ServiceChannelDescription";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(channelId, name, importance);
             channel.setDescription(description);

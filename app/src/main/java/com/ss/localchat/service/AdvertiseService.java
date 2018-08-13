@@ -10,6 +10,8 @@ import com.google.android.gms.nearby.connection.AdvertisingOptions;
 public class AdvertiseService extends BaseService {
 
     public static final String CHANNEL_ID = "advertise_service";
+    public static final String NOTIFICATION_TITLE = "Local Chat";
+    public static final String NOTIFICATION_CONTENT = "Advertising...";
 
     private AdvertiseBinder mAdvertiseBinder;
 
@@ -50,16 +52,15 @@ public class AdvertiseService extends BaseService {
     }
 
     private void advertising() {
-        mConnectionsClient.startAdvertising("User", getPackageName(),
+        mConnectionsClient.startAdvertising("Name", getPackageName(),
                 mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());
     }
 
-
     public void startForegroundAdvertiseService(){
         createNotificationChannel(CHANNEL_ID);
-        startForeground(1, createNotification("Local chat", "Advertising..."));
+        startForeground(1, createNotification(NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
     public class AdvertiseBinder extends Binder {

@@ -20,14 +20,14 @@ public class DiscoverService extends BaseService {
             new EndpointDiscoveryCallback() {
                 @Override
                 public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
-//                    mConnectionsClient.requestConnection(Preferences.getName(getApplicationContext()),
+                    //                    mConnectionsClient.requestConnection(Preferences.getName(getApplicationContext()),
 //                            id, mConnectionLifecycleCallback);
-                    mOnEndpointFoundListener.onEndpointFound(new Endpoint(id, discoveredEndpointInfo.getEndpointName()));
+                    mOnDiscoverUsersListener.OnUserFound(new Endpoint(id, discoveredEndpointInfo.getEndpointName()));
                 }
 
                 @Override
                 public void onEndpointLost(@NonNull String id) {
-                    mOnEndpointFoundListener.onEndpointLost(id);
+                    mOnDiscoverUsersListener.onUserLost(id);
                 }
             };
 
@@ -47,7 +47,7 @@ public class DiscoverService extends BaseService {
 //    private ConnectionsBroadcastReceiver mConnectionsBroadcastReceiver;
     private IntentFilter mConnectionsIntentFilter;
     private DiscoverBinder mDiscoverBinder;
-    private OnEndpointFoundListener mOnEndpointFoundListener;
+    private OnDiscoverUsersListener mOnDiscoverUsersListener;
 
     public DiscoverService() {
         super("Discover Service");
@@ -107,13 +107,13 @@ public class DiscoverService extends BaseService {
             discover();
         }
 
-        public void setOnEndpointFoundListener(OnEndpointFoundListener onEndpointFoundListener){
-            mOnEndpointFoundListener = onEndpointFoundListener;
+        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener){
+            mOnDiscoverUsersListener = OnDiscoverUsersListener;
         }
     }
 
-    public interface OnEndpointFoundListener{
-        void onEndpointFound(Endpoint endpoint);
-        void onEndpointLost(String id);
+    public interface OnDiscoverUsersListener{
+        void OnUserFound(Endpoint endpoint);
+        void onUserLost(String id);
     }
 }

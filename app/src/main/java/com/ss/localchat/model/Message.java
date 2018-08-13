@@ -4,25 +4,25 @@ import java.util.Date;
 
 public class Message {
 
-    private String mText;
-    private User mSender;
-    private Date mDate;
+    private String text;
+    private User sender;
+    private Date date;
 
     public Message(String text, User sender) {
-        mText = text;
-        mSender = sender;
-        mDate = new Date();
+        this.text = text;
+        this.sender = sender;
+        date = new Date();
     }
 
     public String getText() {
-        return mText;
+        return text;
     }
 
     public User getSender() {
-        return mSender;
+        return sender;
     }
 
     public Date getDate() {
-        return mDate;
+        return date;
     }
 }

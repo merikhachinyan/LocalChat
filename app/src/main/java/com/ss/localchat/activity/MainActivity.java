@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
+import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +89,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         mFragmentList.add(ChatListFragment.newInstance());
-        mFragmentList.add(ChatListFragment.newInstance());
+        //mFragmentList.add(ChatListFragment.newInstance());
+
+        mFragmentList.add(new DiscoveredUsersFragment());
 
         ViewPagerFragmentAdapter adapter =
                 new ViewPagerFragmentAdapter(getSupportFragmentManager(), mFragmentList);

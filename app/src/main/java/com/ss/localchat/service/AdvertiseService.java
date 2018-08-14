@@ -10,6 +10,7 @@ import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.ss.localchat.R;
+import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.activity.SettingsActivity;
 
 public class AdvertiseService extends BaseService {
@@ -26,7 +27,7 @@ public class AdvertiseService extends BaseService {
 
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
-//        advertising();
+        advertising();
         startForegroundAdvertiseService();
         return START_STICKY;
     }

@@ -35,7 +35,7 @@
         <service android:name=".service.DiscoverService" />
         <service android:name=".service.SendMessageService" />
 
-        <activity android:name=".activity.SettingsActivity"></activity>
+        <activity android:name=".activity.SettingsActivity" />
     </application>
 
 </manifest>

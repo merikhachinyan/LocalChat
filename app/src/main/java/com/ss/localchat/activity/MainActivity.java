@@ -118,11 +118,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
-            case android.R.id.home:
-                getSupportFragmentManager().popBackStack();
-                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
 
-        return super.onOptionsItemSelected(item);
     }
 }

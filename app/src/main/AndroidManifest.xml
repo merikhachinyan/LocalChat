@@ -31,11 +31,13 @@
             android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <activity android:name=".activity.SettingsActivity" android:parentActivityName=".activity.MainActivity" />
+
+
         <service android:name=".service.AdvertiseService" />
         <service android:name=".service.DiscoverService" />
         <service android:name=".service.SendMessageService" />
 
-        <activity android:name=".activity.SettingsActivity" />
     </application>
 
 </manifest>

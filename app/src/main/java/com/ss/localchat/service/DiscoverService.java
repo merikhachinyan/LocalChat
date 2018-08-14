@@ -22,8 +22,7 @@ public class DiscoverService extends BaseService {
                 public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
                     //Todo request user name & user photo is null
 
-                    mConnectionsClient.requestConnection("User",
-                            id, mConnectionLifecycleCallback);
+                    mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
 
                     mOnDiscoverUsersListener.OnUserFound(new User(id, discoveredEndpointInfo.getEndpointName(), null));
 

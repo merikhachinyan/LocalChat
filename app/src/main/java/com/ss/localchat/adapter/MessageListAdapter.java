@@ -20,6 +20,8 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final int SENT_MESSAGE_TYPE = 2;
 
+    private static final int DATE_TYPE = 3;
+
 
     private List<Message> mMessages;
 

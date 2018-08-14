@@ -5,7 +5,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.ss.localchat.R;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.model.User;
 
 public class DiscoveredUserHolder extends RecyclerView.ViewHolder{
 
@@ -19,8 +19,8 @@ public class DiscoveredUserHolder extends RecyclerView.ViewHolder{
         mUserId = itemView.findViewById(R.id.discovered_user_id_text_view);
     }
 
-    public void bind(Endpoint endpoint){
-        mUserName.setText(endpoint.getName());
-        mUserId.setText(endpoint.getId());
+    public void bind(User user){
+        mUserName.setText(user.getName());
+        mUserId.setText(user.getId());
     }
 }

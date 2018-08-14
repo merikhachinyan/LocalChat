@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingTop="4dp"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
+    android:background="?android:selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     android:paddingBottom="4dp"
-    xmlns:tools="http://schemas.android.com/tools">
+    android:paddingEnd="8dp"
+    android:paddingStart="8dp"
+    android:paddingTop="4dp">
 
     <TextView
         android:id="@+id/discovered_user_name_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
-        tools:text="@string/name"/>
+        tools:text="@string/name" />
 
     <TextView
         android:id="@+id/discovered_user_id_text_view"
@@ -22,6 +25,6 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         app:layout_constraintTop_toBottomOf="@id/discovered_user_name_text_view"
-        tools:text="@string/id"/>
+        tools:text="@string/id" />
 
 </android.support.constraint.ConstraintLayout>

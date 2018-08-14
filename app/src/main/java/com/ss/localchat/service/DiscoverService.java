@@ -11,7 +11,7 @@ import android.support.annotation.Nullable;
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
 import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.model.User;
 
 
 public class DiscoverService extends BaseService {
@@ -20,9 +20,13 @@ public class DiscoverService extends BaseService {
             new EndpointDiscoveryCallback() {
                 @Override
                 public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
-                    //                    mConnectionsClient.requestConnection(Preferences.getName(getApplicationContext()),
-//                            id, mConnectionLifecycleCallback);
-                    mOnDiscoverUsersListener.OnUserFound(new Endpoint(id, discoveredEndpointInfo.getEndpointName()));
+                    //Todo request user name & user photo is null
+
+                    mConnectionsClient.requestConnection("User",
+                            id, mConnectionLifecycleCallback);
+
+                    mOnDiscoverUsersListener.OnUserFound(new User(id, discoveredEndpointInfo.getEndpointName(), null));
+
                 }
 
                 @Override
@@ -31,29 +35,15 @@ public class DiscoverService extends BaseService {
                 }
             };
 
-//    private ConnectionsBroadcastReceiver.OnConnectionsStateChangedListener mOnConnectionsStateChangedListener =
-//            new ConnectionsBroadcastReceiver.OnConnectionsStateChangedListener() {
-//                @Override
-//                public void onConnectionLost() {
-//                    stopSelf();
-//                }
-//
-//                @Override
-//                public void onConnectionFound() {
-//
-//                }
-//            };
-
-//    private ConnectionsBroadcastReceiver mConnectionsBroadcastReceiver;
     private IntentFilter mConnectionsIntentFilter;
+
     private DiscoverBinder mDiscoverBinder;
+
     private OnDiscoverUsersListener mOnDiscoverUsersListener;
 
     public DiscoverService() {
         super("Discover Service");
 
-//        mConnectionsBroadcastReceiver = new ConnectionsBroadcastReceiver();
-//        mConnectionsBroadcastReceiver.setOnConnectionsStateChangedListener(mOnConnectionsStateChangedListener);
         mConnectionsIntentFilter = new IntentFilter();
         mConnectionsIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
     }
@@ -65,14 +55,13 @@ public class DiscoverService extends BaseService {
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         discover();
-//        startDiscoverForegroundService();
         return START_STICKY;
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        if (mDiscoverBinder == null){
+        if (mDiscoverBinder == null) {
             mDiscoverBinder = new DiscoverBinder();
         }
         return mDiscoverBinder;
@@ -81,7 +70,6 @@ public class DiscoverService extends BaseService {
     @Override
     public void onStart(@Nullable Intent intent, int startId) {
         super.onStart(intent, startId);
-//        registerReceiver(mConnectionsBroadcastReceiver, mConnectionsIntentFilter);
     }
 
     @Override
@@ -90,30 +78,26 @@ public class DiscoverService extends BaseService {
         return super.stopService(name);
     }
 
-    private void discover(){
+    private void discover() {
         mConnectionsClient.startDiscovery(getPackageName(), mEndpointDiscoveryCallback,
                 new DiscoveryOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());
     }
 
-    private void startDiscoverForegroundService(){
-        createNotificationChannel(AdvertiseService.CHANNEL_ID);
-        startForeground(2, createNotification("Local chat", "Discovery..."));
-    }
-
     public class DiscoverBinder extends Binder {
-        public void startDiscovery(){
+        public void startDiscovery() {
             discover();
         }
 
-        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener){
+        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener) {
             mOnDiscoverUsersListener = OnDiscoverUsersListener;
         }
     }
 
-    public interface OnDiscoverUsersListener{
-        void OnUserFound(Endpoint endpoint);
+    public interface OnDiscoverUsersListener {
+        void OnUserFound(User user);
+
         void onUserLost(String id);
     }
 }

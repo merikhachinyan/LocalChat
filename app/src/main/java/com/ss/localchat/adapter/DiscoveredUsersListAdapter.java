@@ -15,6 +15,8 @@ import java.util.List;
 
 public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredUserHolder>{
 
+    private OnItemClickListener mListener;
+
     private List<User> mUsers;
 
     public DiscoveredUsersListAdapter() {
@@ -25,7 +27,7 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
     @Override
     public DiscoveredUserHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.discovered_user_item_view, parent, false);
-        return new DiscoveredUserHolder(view);
+        return new DiscoveredUserHolder(view, mListener);
     }
 
     @Override
@@ -52,5 +54,13 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
             }
         }
         notifyDataSetChanged();
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener){
+        mListener = listener;
+    }
+
+    public interface OnItemClickListener{
+        void onClick(User user);
     }
 }

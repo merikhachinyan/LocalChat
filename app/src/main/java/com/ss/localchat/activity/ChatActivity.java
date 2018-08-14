@@ -28,6 +28,7 @@ import com.ss.localchat.util.CircularTransformation;
 public class ChatActivity extends AppCompatActivity {
 
     public static final String USER_EXTRA = "chat.user";
+    public static final String NEW_USER_EXTRA = "new.user";
 
 
     private EditText mMessageInputEditText;
@@ -46,7 +47,12 @@ public class ChatActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         if (getIntent() != null) {
-            mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
+             mUser = (User) getIntent().getSerializableExtra(NEW_USER_EXTRA);
+             if(mUser != null){
+                 Toast.makeText(this, "New User", Toast.LENGTH_SHORT).show();
+             } else {
+                 mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
+             }
         }
 
         initActionBar();

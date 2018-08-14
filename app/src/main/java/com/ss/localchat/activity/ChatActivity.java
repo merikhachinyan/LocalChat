@@ -1,6 +1,11 @@
 package com.ss.localchat.activity;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,6 +28,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.model.Message;
 import com.ss.localchat.model.User;
+import com.ss.localchat.service.SendMessageService;
 import com.ss.localchat.util.CircularTransformation;
 
 public class ChatActivity extends AppCompatActivity {
@@ -30,12 +36,32 @@ public class ChatActivity extends AppCompatActivity {
     public static final String USER_EXTRA = "chat.user";
     public static final String NEW_USER_EXTRA = "new.user";
 
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mSendMessageBinder = (SendMessageService.SendMessageBinder)service;
+            mSendMessageBinder.send(mUserId, mMessageText);
+
+            unbindService(mServiceConnection);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mSendMessageBinder = null;
+        }
+    };
+
 
     private EditText mMessageInputEditText;
 
     private MessageListAdapter mMessageListAdapter;
 
+    private SendMessageService.SendMessageBinder mSendMessageBinder;
+
     private User mUser;
+
+    private String mMessageText;
+    private String mUserId;
 
 
     @Override
@@ -49,6 +75,8 @@ public class ChatActivity extends AppCompatActivity {
         if (getIntent() != null) {
              mUser = (User) getIntent().getSerializableExtra(NEW_USER_EXTRA);
              if(mUser != null){
+                 mUserId = mUser.getId();
+
                  Toast.makeText(this, "New User", Toast.LENGTH_SHORT).show();
              } else {
                  mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
@@ -116,9 +144,11 @@ public class ChatActivity extends AppCompatActivity {
         sendImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String text = mMessageInputEditText.getText().toString().trim();
-                if (!text.isEmpty()) {
-                    sendMessage(text);
+                mMessageText = mMessageInputEditText.getText().toString().trim();
+                if (!mMessageText.isEmpty()) {
+                    bindSendMessageService();
+
+                    sendMessage(mMessageText);
                     mMessageInputEditText.setText("");
                 }
             }
@@ -151,5 +181,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessage(String text) {
         mMessageListAdapter.addMessage(new Message(text, null));
+    }
+
+    private void bindSendMessageService(){
+        Intent intent = new Intent(this, SendMessageService.class);
+        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 }

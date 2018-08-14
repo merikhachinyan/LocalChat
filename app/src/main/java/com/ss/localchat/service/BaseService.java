@@ -55,8 +55,9 @@ public abstract class BaseService extends IntentService {
             new PayloadCallback() {
                 @Override
                 public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
-                    createNotificationChannel(CHANNEL_ID);
-                    showNotification("Message", new String(payload.asBytes()));
+//                    createNotificationChannel(CHANNEL_ID);
+//                    showNotification("Message", new String(payload.asBytes()));
+
                     Toast.makeText(getApplicationContext(),
                             new String(payload.asBytes()), Toast.LENGTH_SHORT).show();
                 }

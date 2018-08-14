@@ -7,6 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
@@ -31,6 +32,7 @@ public class DiscoverService extends BaseService {
                 @Override
                 public void onEndpointLost(@NonNull String id) {
                     mOnDiscoverUsersListener.onUserLost(id);
+                    Log.v("____", "Lost");
                 }
             };
 

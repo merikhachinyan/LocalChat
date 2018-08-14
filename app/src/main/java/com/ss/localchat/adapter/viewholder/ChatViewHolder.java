@@ -33,7 +33,9 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
 
     public void bind(final User user) {
         name.setText(user.getName());
-        message.setText(user.getMessage());
+
+        //Todo implement last message
+        message.setText("Last message");
 
         if (user.getProfilePhotoUrl() == null) {
             Picasso.get()

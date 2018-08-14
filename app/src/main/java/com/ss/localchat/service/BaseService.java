@@ -27,7 +27,7 @@ import com.ss.localchat.R;
 
 public abstract class BaseService extends IntentService {
 
-    private static final String CHANNEL_ID = "send_message_service";
+    private static final String CHANNEL_ID = "send.message.service";
 
     public static final int NOTIFICATION_ID = 1;
 
@@ -47,6 +47,7 @@ public abstract class BaseService extends IntentService {
 
                 @Override
                 public void onDisconnected(@NonNull String id) {
+
                 }
             };
 
@@ -66,6 +67,7 @@ public abstract class BaseService extends IntentService {
             };
 
     protected ConnectionsClient mConnectionsClient;
+
     private NotificationManager mManager;
 
     public BaseService(String name) {
@@ -81,7 +83,6 @@ public abstract class BaseService extends IntentService {
     @Override
     public void onStart(@Nullable Intent intent, int startId) {
         super.onStart(intent, startId);
-//        mConnectionsClient = Nearby.getConnectionsClient(this);
     }
 
     @Override
@@ -90,7 +91,7 @@ public abstract class BaseService extends IntentService {
         mConnectionsClient = Nearby.getConnectionsClient(this);
     }
 
-    protected Notification createNotification(String title, String message){
+    protected Notification createNotification(String title, String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(message)
@@ -99,7 +100,7 @@ public abstract class BaseService extends IntentService {
         return builder.build();
     }
 
-    private void showNotification(String title, String message){
+    private void showNotification(String title, String message) {
         getManager().notify(NOTIFICATION_ID, createNotification(title, message));
     }
 

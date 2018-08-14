@@ -4,13 +4,22 @@ import java.io.Serializable;
 
 public class User implements Serializable {
 
+    private String id;
     private String name;
     private String profilePhotoUrl;
-    private String message = "Last Message";
 
-    public User(String name, String profilePhotoUrl) {
+    public User(String id, String name, String profilePhotoUrl) {
+        this.id = id;
         this.name = name;
         this.profilePhotoUrl = profilePhotoUrl;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -27,13 +36,5 @@ public class User implements Serializable {
 
     public void setProfilePhotoUrl(String profilePhotoUrl) {
         this.profilePhotoUrl = profilePhotoUrl;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 }

@@ -22,19 +22,6 @@ public class SendMessageService extends BaseService{
     protected void onHandleIntent(@Nullable Intent intent) {
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-
-//        ArrayList<String> membersIds = new ArrayList<>();
-//        membersIds.addAll(intent.getStringArrayListExtra(MainActivity.GROUP_MEMBERS_LIST));
-//
-//        String message = intent.getStringExtra(MainActivity.MESSAGE);
-//        for (String id : membersIds){
-//            sendMessage(id, message);
-//        }
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

@@ -89,9 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         mFragmentList.add(ChatListFragment.newInstance());
-        //mFragmentList.add(ChatListFragment.newInstance());
-
-        mFragmentList.add(new DiscoveredUsersFragment());
+        mFragmentList.add(DiscoveredUsersFragment.newInstance());
 
         ViewPagerFragmentAdapter adapter =
                 new ViewPagerFragmentAdapter(getSupportFragmentManager(), mFragmentList);
@@ -120,11 +118,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
-            case android.R.id.home:
-                getSupportFragmentManager().popBackStack();
-                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
 
-        return super.onOptionsItemSelected(item);
     }
 }

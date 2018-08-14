@@ -8,17 +8,17 @@ import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.DiscoveredUserHolder;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredUserHolder>{
 
-    private List<Endpoint> mEndpoints;
+    private List<User> mUsers;
 
     public DiscoveredUsersListAdapter() {
-        mEndpoints = new ArrayList<>();
+        mUsers = new ArrayList<>();
     }
 
     @NonNull
@@ -30,24 +30,24 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
 
     @Override
     public void onBindViewHolder(@NonNull DiscoveredUserHolder holder, int position) {
-        Endpoint endpoint = mEndpoints.get(position);
-        holder.bind(endpoint);
+        User user = mUsers.get(position);
+        holder.bind(user);
     }
 
     @Override
     public int getItemCount() {
-        return mEndpoints.size();
+        return mUsers.size();
     }
 
-    public void addUser(Endpoint endpoint){
-        mEndpoints.add(endpoint);
-        notifyItemInserted(mEndpoints.size() - 1);
+    public void addUser(User user){
+        mUsers.add(user);
+        notifyItemInserted(mUsers.size() - 1);
     }
 
     public void removeUserById(String id){
-        for (Endpoint endpoint : mEndpoints){
-            if(id.equals(endpoint.getId())){
-                mEndpoints.remove(endpoint);
+        for (User user : mUsers){
+            if(id.equals(user.getId())){
+                mUsers.remove(user);
                 break;
             }
         }

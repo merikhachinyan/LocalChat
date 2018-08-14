@@ -20,10 +20,13 @@ import android.widget.Button;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.model.User;
 import com.ss.localchat.service.DiscoverService;
 
 public class DiscoveredUsersFragment extends Fragment {
+
+    public static final String FRAGMENT_TITLE = "Discover";
+
 
     private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
         @Override
@@ -42,8 +45,8 @@ public class DiscoveredUsersFragment extends Fragment {
     private DiscoverService.OnDiscoverUsersListener mOnDiscoverUsersListener =
             new DiscoverService.OnDiscoverUsersListener() {
                 @Override
-                public void OnUserFound(Endpoint endpoint) {
-                    mDiscoveredUsersListAdapter.addUser(endpoint);
+                public void OnUserFound(User user) {
+                    mDiscoveredUsersListAdapter.addUser(user);
                 }
 
                 @Override
@@ -59,10 +62,18 @@ public class DiscoveredUsersFragment extends Fragment {
     private DiscoverService.DiscoverBinder mDiscoverBinder;
 
     public DiscoveredUsersFragment() {
+
+    }
+
+    public static DiscoveredUsersFragment newInstance() {
+        DiscoveredUsersFragment fragment = new DiscoveredUsersFragment();
+        Bundle args = new Bundle();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
     }

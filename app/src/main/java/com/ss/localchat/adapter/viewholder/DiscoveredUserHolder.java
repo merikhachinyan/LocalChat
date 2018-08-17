@@ -6,9 +6,9 @@ import android.widget.TextView;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
 
-public class DiscoveredUserHolder extends RecyclerView.ViewHolder{
+public class DiscoveredUserHolder extends RecyclerView.ViewHolder {
 
     private DiscoveredUsersListAdapter.OnItemClickListener mListener;
 
@@ -24,14 +24,14 @@ public class DiscoveredUserHolder extends RecyclerView.ViewHolder{
         mUserId = itemView.findViewById(R.id.discovered_user_id_text_view);
     }
 
-    public void bind(final User user){
+    public void bind(final User user) {
         mUserName.setText(user.getName());
-        mUserId.setText(user.getId());
+        mUserId.setText(user.getId().toString());
 
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mListener != null){
+                if (mListener != null) {
                     mListener.onClick(user);
                 }
             }

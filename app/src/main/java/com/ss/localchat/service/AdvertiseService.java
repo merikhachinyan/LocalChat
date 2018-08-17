@@ -3,8 +3,7 @@ package com.ss.localchat.service;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.os.Binder;
-import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
@@ -14,11 +13,11 @@ import com.ss.localchat.activity.SettingsActivity;
 
 public class AdvertiseService extends BaseService {
 
-    public static final String CHANNEL_ID = "advertise_service";
-    public static final String NOTIFICATION_TITLE = "Local Chat";
-    public static final String NOTIFICATION_CONTENT = "Advertising...";
+    public static final String CHANNEL_ID = "advertise.service";
 
-    private AdvertiseBinder mAdvertiseBinder;
+    public static final String NOTIFICATION_TITLE = "Local Chat";
+
+    public static final String NOTIFICATION_CONTENT = "Advertising...";
 
     public AdvertiseService() {
         super("Advertise Service");
@@ -37,38 +36,26 @@ public class AdvertiseService extends BaseService {
     }
 
     @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        if (mAdvertiseBinder == null) {
-            mAdvertiseBinder = new AdvertiseBinder();
-        }
-        return mAdvertiseBinder;
-    }
-
-    @Override
     public boolean stopService(Intent name) {
         mConnectionsClient.stopAdvertising();
         return super.stopService(name);
     }
 
     private void advertising() {
-        mConnectionsClient.startAdvertising("Name", getPackageName(),
-                mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
-                        .setStrategy(STRATEGY)
-                        .build());
+        String name = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("name", "");
+        String id = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", "");
+        String ownerName = name + ":" + id;
+        mConnectionsClient.startAdvertising(ownerName, getPackageName(), mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
+                .setStrategy(STRATEGY)
+                .build());
     }
 
-    public void startForegroundAdvertiseService(){
+    public void startForegroundAdvertiseService() {
         createNotificationChannel(CHANNEL_ID);
         startForeground(1, createNotification(NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
-    protected Notification createNotification(String title, String message){
+    protected Notification createNotification(String title, String message) {
         Intent intent = new Intent(this, SettingsActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
@@ -79,11 +66,5 @@ public class AdvertiseService extends BaseService {
                 .setSmallIcon(R.drawable.ic_launcher_background);
 
         return builder.build();
-    }
-
-    public class AdvertiseBinder extends Binder {
-        public void startAdvertising() {
-            advertising();
-        }
     }
 }

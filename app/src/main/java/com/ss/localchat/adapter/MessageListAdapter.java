@@ -1,5 +1,7 @@
 package com.ss.localchat.adapter;
 
+import android.content.Context;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -9,10 +11,11 @@ import android.view.ViewGroup;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.ReceivedMessageHolder;
 import com.ss.localchat.adapter.viewholder.SentMessageHolder;
-import com.ss.localchat.model.Message;
+import com.ss.localchat.db.entity.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -25,7 +28,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private List<Message> mMessages;
 
-    public MessageListAdapter() {
+    private Context mContext;
+
+    public MessageListAdapter(Context context) {
+        mContext = context;
         mMessages = new ArrayList<>();
     }
 
@@ -61,16 +67,29 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        return mMessages.size();
+        return mMessages == null ? 0 : mMessages.size();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position % 2 != 0) {
-            return RECEIVED_MESSAGE_TYPE;
-        } else {
+        UUID ownerId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(mContext).getString("id", ""));
+        Message message = mMessages.get(position);
+        if (message.getSenderId().equals(ownerId)) {
             return SENT_MESSAGE_TYPE;
+        } else {
+            return RECEIVED_MESSAGE_TYPE;
         }
+    }
+
+    public void setMessages(List<Message> messages) {
+        mMessages = messages;
+        notifyDataSetChanged();
+    }
+
+    public void addMessages(List<Message> messages) {
+        int startPosition = mMessages.size();
+        mMessages.addAll(messages);
+        notifyItemRangeInserted(startPosition, messages.size());
     }
 
     public void addMessage(Message message) {

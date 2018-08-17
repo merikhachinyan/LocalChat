@@ -3,13 +3,18 @@ package com.ss.localchat.service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 
 import com.google.android.gms.nearby.connection.Payload;
 
-import java.nio.charset.StandardCharsets;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class SendMessageService extends BaseService{
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+public class SendMessageService extends BaseService {
 
     private SendMessageBinder mSendMessageBinder;
 
@@ -24,18 +29,28 @@ public class SendMessageService extends BaseService{
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        if (mSendMessageBinder == null){
+        if (mSendMessageBinder == null) {
             mSendMessageBinder = new SendMessageBinder();
         }
         return mSendMessageBinder;
     }
 
-    private void sendMessage(String id, String messageText){
-        mConnectionsClient.sendPayload(id, Payload.fromBytes(messageText.getBytes(StandardCharsets.UTF_8)));
+    private void sendMessage(String id, String messageText) {
+        try {
+            UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", ""));
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", userId.toString());
+            jsonObject.put("message", messageText);
+            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public class SendMessageBinder extends Binder {
-        public void send(String id, String messageText){
+        public void send(String id, String messageText) {
             sendMessage(id, messageText);
         }
     }

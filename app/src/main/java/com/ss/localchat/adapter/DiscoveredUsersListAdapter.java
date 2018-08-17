@@ -8,12 +8,12 @@ import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.DiscoveredUserHolder;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredUserHolder>{
+public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredUserHolder> {
 
     private OnItemClickListener mListener;
 
@@ -41,26 +41,27 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
         return mUsers.size();
     }
 
-    public void addUser(User user){
+    public void addUser(User user) {
         mUsers.add(user);
         notifyItemInserted(mUsers.size() - 1);
     }
 
-    public void removeUserById(String id){
-        for (User user : mUsers){
-            if(id.equals(user.getId())){
+    public void removeUserById(String id) {
+        for (User user : mUsers) {
+            if (id.equals(user.getEndpointId())) {
+                int index = mUsers.indexOf(user);
                 mUsers.remove(user);
+                notifyItemRemoved(index);
                 break;
             }
         }
-        notifyDataSetChanged();
     }
 
-    public void setOnItemClickListener(OnItemClickListener listener){
+    public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;
     }
 
-    public interface OnItemClickListener{
+    public interface OnItemClickListener {
         void onClick(User user);
     }
 }

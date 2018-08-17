@@ -39,5 +39,5 @@
         <service android:name=".service.SendMessageService" />
 
     </application>
-
+  
 </manifest>

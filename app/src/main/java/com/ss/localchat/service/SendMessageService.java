@@ -9,7 +9,7 @@ import com.google.android.gms.nearby.connection.Payload;
 
 import java.nio.charset.StandardCharsets;
 
-public class SendMessageService extends BaseService{
+public class SendMessageService extends BaseService {
 
     private SendMessageBinder mSendMessageBinder;
 

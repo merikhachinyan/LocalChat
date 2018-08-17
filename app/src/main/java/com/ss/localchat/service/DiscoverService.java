@@ -7,7 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
@@ -22,11 +22,10 @@ public class DiscoverService extends BaseService {
                 @Override
                 public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
                     //Todo request user name & user photo is null
-
+                   
                     mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
 
                     mOnDiscoverUsersListener.OnUserFound(new User(id, discoveredEndpointInfo.getEndpointName(), null));
-
                 }
 
                 @Override
@@ -36,6 +35,7 @@ public class DiscoverService extends BaseService {
                 }
             };
 
+  
     private IntentFilter mConnectionsIntentFilter;
 
     private DiscoverBinder mDiscoverBinder;
@@ -68,10 +68,6 @@ public class DiscoverService extends BaseService {
         return mDiscoverBinder;
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
 
     @Override
     public boolean stopService(Intent name) {

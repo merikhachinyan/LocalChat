@@ -1,6 +1,5 @@
 package com.ss.localchat.fragment;
 
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

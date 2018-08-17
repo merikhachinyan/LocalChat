@@ -51,6 +51,7 @@ public class ChatActivity extends AppCompatActivity {
         }
     };
 
+    public static boolean isCurrentlyRunning;
 
     private EditText mMessageInputEditText;
 
@@ -61,7 +62,7 @@ public class ChatActivity extends AppCompatActivity {
     private User mUser;
 
     private String mMessageText;
-    private String mUserId;
+    public String mUserId;
 
 
     @Override
@@ -85,6 +86,20 @@ public class ChatActivity extends AppCompatActivity {
 
         initActionBar();
         init();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        isCurrentlyRunning = true;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        isCurrentlyRunning = false;
     }
 
     private void initActionBar() {
@@ -173,6 +188,9 @@ public class ChatActivity extends AppCompatActivity {
                 return true;
             case R.id.action_delete_in_chat:
                 Toast.makeText(this, "Delete chat", Toast.LENGTH_SHORT).show();
+                return true;
+            case android.R.id.home:
+                onBackPressed();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

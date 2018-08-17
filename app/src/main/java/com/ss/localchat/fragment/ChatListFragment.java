@@ -54,9 +54,9 @@ public class ChatListFragment extends Fragment {
 
     public void init(View v) {
         List<User> userList = new ArrayList<>();
-        User user = new User("Rob Sargsyan", "https://techcrunch.com/wp-content/uploads/2018/03/gettyimages-705351545.jpg?w=1390&crop=1");
-        User user1 = new User("Meri Khachinyan", null);
-        User user2 = new User("Sergey Kudryashov", "https://pp.userapi.com/c631219/v631219392/147d3/DB7c8X31Xys.jpg");
+        User user = new User(null,"Rob Sargsyan", "https://techcrunch.com/wp-content/uploads/2018/03/gettyimages-705351545.jpg?w=1390&crop=1");
+        User user1 = new User(null,"Meri Khachinyan", null);
+        User user2 = new User(null, "Sergey Kudryashov", "https://pp.userapi.com/c631219/v631219392/147d3/DB7c8X31Xys.jpg");
         userList.add(user);
         userList.add(user1);
         userList.add(user2);

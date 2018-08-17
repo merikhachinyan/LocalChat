@@ -1,6 +1,5 @@
 package com.ss.localchat.fragment;
 
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +18,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.ss.localchat.R;
+import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.model.User;
 import com.ss.localchat.service.DiscoverService;
 
 public class DiscoveredUsersFragment extends Fragment {
@@ -42,8 +42,8 @@ public class DiscoveredUsersFragment extends Fragment {
     private DiscoverService.OnDiscoverUsersListener mOnDiscoverUsersListener =
             new DiscoverService.OnDiscoverUsersListener() {
                 @Override
-                public void OnUserFound(Endpoint endpoint) {
-                    mDiscoveredUsersListAdapter.addUser(endpoint);
+                public void OnUserFound(User user) {
+                    mDiscoveredUsersListAdapter.addUser(user);
                 }
 
                 @Override
@@ -59,10 +59,18 @@ public class DiscoveredUsersFragment extends Fragment {
     private DiscoverService.DiscoverBinder mDiscoverBinder;
 
     public DiscoveredUsersFragment() {
+
+    }
+
+    public static DiscoveredUsersFragment newInstance() {
+        DiscoveredUsersFragment fragment = new DiscoveredUsersFragment();
+        Bundle args = new Bundle();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
     }
@@ -74,6 +82,14 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private void init(View view){
         mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();
+        mDiscoveredUsersListAdapter.setOnItemClickListener(new DiscoveredUsersListAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(User user) {
+                Intent intent = new Intent(getActivity(), ChatActivity.class);
+                intent.putExtra(ChatActivity.NEW_USER_EXTRA, user);
+                startActivity(intent);
+            }
+        });
 
         final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

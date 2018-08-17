@@ -8,9 +8,8 @@ import android.support.annotation.Nullable;
 import com.google.android.gms.nearby.connection.Payload;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
-public class SendMessageService extends BaseService{
+public class SendMessageService extends BaseService {
 
     private SendMessageBinder mSendMessageBinder;
 
@@ -22,19 +21,6 @@ public class SendMessageService extends BaseService{
     protected void onHandleIntent(@Nullable Intent intent) {
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-
-//        ArrayList<String> membersIds = new ArrayList<>();
-//        membersIds.addAll(intent.getStringArrayListExtra(MainActivity.GROUP_MEMBERS_LIST));
-//
-//        String message = intent.getStringExtra(MainActivity.MESSAGE);
-//        for (String id : membersIds){
-//            sendMessage(id, message);
-//        }
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -44,19 +30,13 @@ public class SendMessageService extends BaseService{
         return mSendMessageBinder;
     }
 
-//    private void sendMessage(String id, String message){
-//        mConnectionsClient.sendPayload(id, Payload.fromBytes(message.getBytes(StandardCharsets.UTF_8)));
-//    }
-
-    private void sendMessage(ArrayList<String> ids, String message){
-        for (String id : ids){
-            mConnectionsClient.sendPayload(id, Payload.fromBytes(message.getBytes(StandardCharsets.UTF_8)));
-        }
+    private void sendMessage(String id, String messageText){
+        mConnectionsClient.sendPayload(id, Payload.fromBytes(messageText.getBytes(StandardCharsets.UTF_8)));
     }
 
     public class SendMessageBinder extends Binder {
-        public void send(ArrayList<String> ids, String message){
-            sendMessage(ids, message);
+        public void send(String id, String messageText){
+            sendMessage(id, messageText);
         }
     }
 }

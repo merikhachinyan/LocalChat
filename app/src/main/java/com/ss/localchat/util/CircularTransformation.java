@@ -34,12 +34,13 @@ public class CircularTransformation implements Transformation {
         paint.setShader(shader);
         paint.setAntiAlias(true);
 
-        float r = size/2f;
+        float r = size / 2f;
         canvas.drawCircle(r, r, r, paint);
 
         squaredBitmap.recycle();
         return bitmap;
     }
+
     @Override
     public String key() {
         return "circle";

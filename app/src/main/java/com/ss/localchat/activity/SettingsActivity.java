@@ -23,7 +23,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String START_ADVERTISING = "Start Advertising";
     public static final String STOP_ADVERTISING = "Stop Advertising";
 
-  
+
     private ServiceConnection mAdvertiseServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {

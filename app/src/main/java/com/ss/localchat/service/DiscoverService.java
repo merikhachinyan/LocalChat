@@ -5,37 +5,48 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
 import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
+
+import java.util.UUID;
 
 
 public class DiscoverService extends BaseService {
 
-    protected EndpointDiscoveryCallback mEndpointDiscoveryCallback =
-            new EndpointDiscoveryCallback() {
-                @Override
-                public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
-                    //Todo request user name & user photo is null
-                   
-                    mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
+    protected EndpointDiscoveryCallback mEndpointDiscoveryCallback = new EndpointDiscoveryCallback() {
+        @Override
+        public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
+            //Todo request user name from shared preferences& user photo is null
+            String nameOwner = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("name", "");
 
-                    mOnDiscoverUsersListener.OnUserFound(new User(id, discoveredEndpointInfo.getEndpointName(), null));
-                }
+            mConnectionsClient.requestConnection(nameOwner, id, mConnectionLifecycleCallback);
 
-                @Override
-                public void onEndpointLost(@NonNull String id) {
-                    mOnDiscoverUsersListener.onUserLost(id);
-                    Log.v("____", "Lost");
-                }
-            };
+            String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
+            String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
 
-  
+            User user = new User();
+            user.setId(UUID.fromString(uuidString));
+            user.setName(name);
+            user.setEndpointId(id);
+
+            mOnDiscoverUsersListener.OnUserFound(user);
+        }
+
+        @Override
+        public void onEndpointLost(@NonNull String id) {
+            mOnDiscoverUsersListener.onUserLost(id);
+            Log.v("____", "Lost");
+        }
+    };
+
+
     private IntentFilter mConnectionsIntentFilter;
 
     private DiscoverBinder mDiscoverBinder;

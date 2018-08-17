@@ -1,5 +1,6 @@
 package com.ss.localchat.fragment;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -20,8 +21,9 @@ import android.widget.Button;
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.service.DiscoverService;
+import com.ss.localchat.viewmodel.UserViewModel;
 
 public class DiscoveredUsersFragment extends Fragment {
 
@@ -31,7 +33,7 @@ public class DiscoveredUsersFragment extends Fragment {
     private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mDiscoverBinder = (DiscoverService.DiscoverBinder)service;
+            mDiscoverBinder = (DiscoverService.DiscoverBinder) service;
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
             mDiscoverBinder.startDiscovery();
         }
@@ -61,6 +63,8 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private DiscoverService.DiscoverBinder mDiscoverBinder;
 
+    private UserViewModel mUserViewModel;
+
     public DiscoveredUsersFragment() {
 
     }
@@ -83,13 +87,16 @@ public class DiscoveredUsersFragment extends Fragment {
         init(view);
     }
 
-    private void init(View view){
+    private void init(View view) {
+        mUserViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
+
         mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();
         mDiscoveredUsersListAdapter.setOnItemClickListener(new DiscoveredUsersListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
+                mUserViewModel.insert(user);
                 Intent intent = new Intent(getActivity(), ChatActivity.class);
-                intent.putExtra(ChatActivity.NEW_USER_EXTRA, user);
+                intent.putExtra(ChatActivity.USER_EXTRA, user);
                 startActivity(intent);
             }
         });

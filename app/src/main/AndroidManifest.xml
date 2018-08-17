@@ -26,18 +26,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activity.ChatActivity"
-            android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <activity android:name=".activity.SettingsActivity" android:parentActivityName=".activity.MainActivity" />
+        <activity android:name=".activity.SettingsActivity" />
 
+        <activity android:name=".activity.LoginActivity" />
 
         <service android:name=".service.AdvertiseService" />
         <service android:name=".service.DiscoverService" />
         <service android:name=".service.SendMessageService" />
 
     </application>
-  
+
 </manifest>

@@ -7,11 +7,12 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+
 import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
+
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -22,6 +23,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String START_ADVERTISING = "Start Advertising";
     public static final String STOP_ADVERTISING = "Stop Advertising";
 
+  
     private ServiceConnection mAdvertiseServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -66,7 +68,6 @@ public class SettingsActivity extends AppCompatActivity {
 
                     //startService(mIntent);
                     advertisingText.setText(STOP_ADVERTISING);
-
                 } else {
                     if(isBoundAdvertising){
                         unbindService(mAdvertiseServiceConnection);

@@ -89,6 +89,19 @@ public class AdvertiseService extends BaseService {
         return builder.build();
     }
 
+    protected Notification createNotification(String title, String message){
+        Intent intent = new Intent(this, SettingsActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setContentIntent(pendingIntent)
+                .setSmallIcon(R.drawable.ic_launcher_background);
+
+        return builder.build();
+    }
+
     public class AdvertiseBinder extends Binder {
         public void startAdvertising() {
             advertising();

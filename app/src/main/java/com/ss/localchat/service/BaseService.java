@@ -69,11 +69,9 @@ public abstract class BaseService extends IntentService {
                     //TODO get user name by id from db
                     mUser = new User(s, "User", null);
                     showNotification(mUser.getName(), new String(payload.asBytes()));
-
+                  
                     Toast.makeText(getApplicationContext(),
                                 new String(payload.asBytes()), Toast.LENGTH_SHORT).show();
-
-
                 }
 
                 @Override
@@ -110,7 +108,6 @@ public abstract class BaseService extends IntentService {
         super.onCreate();
         mConnectionsClient = Nearby.getConnectionsClient(this);
     }
-
 
     private void showNotification(String title, String message) {
         getManager().notify(NOTIFICATION_ID, createNotification(title, message));

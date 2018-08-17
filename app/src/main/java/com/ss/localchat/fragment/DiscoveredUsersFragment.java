@@ -25,6 +25,9 @@ import com.ss.localchat.service.DiscoverService;
 
 public class DiscoveredUsersFragment extends Fragment {
 
+    public static final String FRAGMENT_TITLE = "Discover";
+
+
     private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {

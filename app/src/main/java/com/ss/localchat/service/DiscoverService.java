@@ -22,8 +22,7 @@ public class DiscoverService extends BaseService {
                 @Override
                 public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
                     //Todo request user name & user photo is null
-
-                    Toast.makeText(getApplicationContext(), "Found", Toast.LENGTH_SHORT).show();
+                   
                     mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
 
                     mOnDiscoverUsersListener.OnUserFound(new User(id, discoveredEndpointInfo.getEndpointName(), null));
@@ -32,10 +31,11 @@ public class DiscoverService extends BaseService {
                 @Override
                 public void onEndpointLost(@NonNull String id) {
                     mOnDiscoverUsersListener.onUserLost(id);
+                    Log.v("____", "Lost");
                 }
             };
 
-
+  
     private IntentFilter mConnectionsIntentFilter;
 
     private DiscoverBinder mDiscoverBinder;
@@ -68,13 +68,14 @@ public class DiscoverService extends BaseService {
         return mDiscoverBinder;
     }
 
+
     @Override
     public boolean stopService(Intent name) {
         mConnectionsClient.stopDiscovery();
         return super.stopService(name);
     }
 
-    private void discover(){
+    private void discover() {
         mConnectionsClient.startDiscovery(getPackageName(), mEndpointDiscoveryCallback,
                 new DiscoveryOptions.Builder()
                         .setStrategy(STRATEGY)
@@ -82,11 +83,11 @@ public class DiscoverService extends BaseService {
     }
 
     public class DiscoverBinder extends Binder {
-        public void startDiscovery(){
+        public void startDiscovery() {
             discover();
         }
 
-        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener){
+        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener) {
             mOnDiscoverUsersListener = OnDiscoverUsersListener;
         }
     }

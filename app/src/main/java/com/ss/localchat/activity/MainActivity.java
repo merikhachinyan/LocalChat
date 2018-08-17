@@ -1,6 +1,7 @@
 package com.ss.localchat.activity;
 
 import android.Manifest;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
@@ -25,6 +27,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
+
 import com.ss.localchat.receiver.BluetoothStateBroadcastReceiver;
 import com.ss.localchat.receiver.LocationStateBroadcastReceiver;
 import com.ss.localchat.receiver.WifiStateBroadcastReceiver;
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
+  
     protected WifiStateBroadcastReceiver.OnWifiStateChangedListener mWifiStateChangedListener =
             new WifiStateBroadcastReceiver.OnWifiStateChangedListener() {
                 @Override
@@ -102,6 +106,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean isWifiDisabled;
     private boolean isBluetoothDisabled;
     private boolean isLocationDisabled;
+
+
+    private List<Fragment> mFragmentList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,5 +231,6 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mWifiStateBroadcastReceiver);
         unregisterReceiver(mBluetoothStateBroadcastReceiver);
         unregisterReceiver(mLocationStateBroadcastReceiver);
+        }
     }
 }

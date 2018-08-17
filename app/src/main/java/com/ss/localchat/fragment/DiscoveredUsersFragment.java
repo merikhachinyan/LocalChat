@@ -33,7 +33,7 @@ public class DiscoveredUsersFragment extends Fragment {
     private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mDiscoverBinder = (DiscoverService.DiscoverBinder)service;
+            mDiscoverBinder = (DiscoverService.DiscoverBinder) service;
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
             mDiscoverBinder.startDiscovery();
         }
@@ -87,7 +87,7 @@ public class DiscoveredUsersFragment extends Fragment {
         init(view);
     }
 
-    private void init(View view){
+    private void init(View view) {
         mUserViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
 
         mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();

@@ -46,6 +46,7 @@ public class DiscoverService extends BaseService {
         }
     };
 
+
     private IntentFilter mConnectionsIntentFilter;
 
     private DiscoverBinder mDiscoverBinder;
@@ -78,10 +79,6 @@ public class DiscoverService extends BaseService {
         return mDiscoverBinder;
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
 
     @Override
     public boolean stopService(Intent name) {

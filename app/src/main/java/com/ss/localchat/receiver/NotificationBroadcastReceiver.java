@@ -2,15 +2,12 @@ package com.ss.localchat.receiver;
 
 import android.app.RemoteInput;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.widget.Toast;
 
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.service.BaseService;
 
 public class NotificationBroadcastReceiver extends BroadcastReceiver {

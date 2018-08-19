@@ -5,11 +5,12 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -29,6 +30,7 @@ import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 import com.ss.localchat.R;
 import com.ss.localchat.db.MessageRepository;
+import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.Message;
 
 import org.json.JSONException;
@@ -40,7 +42,8 @@ import java.util.UUID;
 
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.activity.MainActivity;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.NotificationBroadcastReceiver;
 
 public abstract class BaseService extends IntentService {
@@ -63,6 +66,7 @@ public abstract class BaseService extends IntentService {
 
         @Override
         public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
+
         }
 
         @Override
@@ -82,20 +86,24 @@ public abstract class BaseService extends IntentService {
                     JSONObject jsonObject = new JSONObject(payloadText);
                     UUID senderId = UUID.fromString(jsonObject.getString("id"));
                     String messageText = jsonObject.getString("message");
-                    UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", ""));
+
+                    UUID myUserId = Preferences.getUserId(getApplicationContext());
+
 
                     // TODO get user name and show notification
-                    mUser = new User(s, "User", null);
-                    showNotification(mUser.getName(), new String(payload.asBytes()));
+//                    mUser = new User(s, "User", null);
+//                    showNotification(mUser.getName(), new String(payload.asBytes()));
+
 
                     Message message = new Message();
                     message.setText(messageText);
                     message.setRead(false);
-                    message.setReceiverId(userId);
+                    message.setReceiverId(myUserId);
                     message.setSenderId(senderId);
                     message.setDate(new Date());
                     mMessageRepository.insert(message);
 
+                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -120,7 +128,6 @@ public abstract class BaseService extends IntentService {
         super(name);
         mMessageRepository = new MessageRepository(getApplication());
 
-        createNotificationChannel(CHANNEL_ID);
     }
 
     @Nullable
@@ -138,6 +145,7 @@ public abstract class BaseService extends IntentService {
     public void onCreate() {
         super.onCreate();
         mConnectionsClient = Nearby.getConnectionsClient(this);
+        createNotificationChannel(CHANNEL_ID);
     }
 
     private void showNotification(String title, String message) {

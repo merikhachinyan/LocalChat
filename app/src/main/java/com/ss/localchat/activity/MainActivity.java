@@ -11,7 +11,6 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -29,6 +28,7 @@ import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.BluetoothStateBroadcastReceiver;
 import com.ss.localchat.receiver.LocationStateBroadcastReceiver;
 import com.ss.localchat.receiver.WifiStateBroadcastReceiver;
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
-  
+
     protected WifiStateBroadcastReceiver.OnWifiStateChangedListener mWifiStateChangedListener =
             new WifiStateBroadcastReceiver.OnWifiStateChangedListener() {
                 @Override
@@ -83,9 +83,9 @@ public class MainActivity extends AppCompatActivity {
             new LocationStateBroadcastReceiver.OnLocationStateChangedListener() {
                 @Override
                 public void onLocationStateDisabled() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         if (isBluetoothDisabled) {
-                           stopService(new Intent(MainActivity.this, AdvertiseService.class));
+                            stopService(new Intent(MainActivity.this, AdvertiseService.class));
                         } else {
                             isLocationDisabled = true;
                         }
@@ -109,8 +109,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean isLocationDisabled;
 
 
-    private List<Fragment> mFragmentList = new ArrayList<>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -119,10 +117,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if (!PreferenceManager.getDefaultSharedPreferences(this).contains("id")) {
+        if (!Preferences.contain(getApplicationContext(), Preferences.USER_ID_KEY)) {
             Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
+            finish();
             return;
         }
 
@@ -137,14 +136,14 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
 
-        registerReceivers();
+//        registerReceivers();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
-        unregisterReceivers();
+//        unregisterReceivers();
     }
 
     private boolean hasPermissions(Context context, String... permissions) {
@@ -171,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        recreate();
+//        recreate();
     }
 
     private void init() {
@@ -218,27 +217,22 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings:
-                Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-            case android.R.id.home:
-                getSupportFragmentManager().popBackStack();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void registerReceivers(){
+    private void registerReceivers() {
         registerReceiver(mWifiStateBroadcastReceiver, mWifiIntentFilter);
         registerReceiver(mBluetoothStateBroadcastReceiver, mBluetoothIntentFilter);
         registerReceiver(mLocationStateBroadcastReceiver, mLocationIntentFilter);
     }
 
-    private void unregisterReceivers(){
+    private void unregisterReceivers() {
         unregisterReceiver(mWifiStateBroadcastReceiver);
         unregisterReceiver(mBluetoothStateBroadcastReceiver);
         unregisterReceiver(mLocationStateBroadcastReceiver);
-        }
     }
 }

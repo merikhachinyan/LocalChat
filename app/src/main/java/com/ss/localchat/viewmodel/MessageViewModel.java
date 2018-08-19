@@ -33,8 +33,8 @@ public class MessageViewModel extends AndroidViewModel {
         return messageRepository.getLastMessage(user_id);
     }
 
-    public LiveData<List<Message>> getUnreadMessages(UUID user_id) {
-        return messageRepository.getUnreadMessages(user_id);
+    public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read) {
+        return messageRepository.getReadOrUnreadMessagesWith(user_id, is_read);
     }
 
     public void update(Message... messages) {

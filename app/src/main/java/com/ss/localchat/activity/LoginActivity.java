@@ -11,6 +11,7 @@ import android.widget.EditText;
 
 import com.ss.localchat.R;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 public class LoginActivity extends AppCompatActivity {
@@ -22,9 +23,6 @@ public class LoginActivity extends AppCompatActivity {
 
         final UserViewModel userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        final SharedPreferences.Editor editor = sharedPref.edit();
-
         final EditText inputNameEditText = findViewById(R.id.input_name_edit_text_login_activity);
 
         findViewById(R.id.login_button_login_activity).setOnClickListener(new View.OnClickListener() {
@@ -32,14 +30,16 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 User user = new User();
                 user.setName(inputNameEditText.getText().toString().trim());
-                editor.putString("id", user.getId().toString());
-                editor.putString("name", user.getName());
-                editor.apply();
+
+                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
+                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
+
                 userViewModel.insert(user);
 
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
+                finish();
             }
         });
     }

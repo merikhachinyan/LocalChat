@@ -14,6 +14,7 @@ import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
 import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 
 import java.util.UUID;
 
@@ -24,9 +25,9 @@ public class DiscoverService extends BaseService {
         @Override
         public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
             //Todo request user name from shared preferences& user photo is null
-            String nameOwner = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("name", "");
+            String myUserName = Preferences.getUserName(getApplicationContext());
 
-            mConnectionsClient.requestConnection(nameOwner, id, mConnectionLifecycleCallback);
+            mConnectionsClient.requestConnection(myUserName, id, mConnectionLifecycleCallback);
 
             String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
             String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];

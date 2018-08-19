@@ -21,6 +21,7 @@ import com.ss.localchat.service.AdvertiseService;
 public class SettingsActivity extends AppCompatActivity {
 
     public static final String START_ADVERTISING = "Start Advertising";
+
     public static final String STOP_ADVERTISING = "Stop Advertising";
 
 

@@ -1,6 +1,6 @@
 package com.ss.localchat.fragment;
 
-
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,16 +19,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.ss.localchat.R;
+import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.service.DiscoverService;
+import com.ss.localchat.viewmodel.UserViewModel;
 
 public class DiscoveredUsersFragment extends Fragment {
+
+    public static final String FRAGMENT_TITLE = "Discover";
+
 
     private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mDiscoverBinder = (DiscoverService.DiscoverBinder)service;
+            mDiscoverBinder = (DiscoverService.DiscoverBinder) service;
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
             mDiscoverBinder.startDiscovery();
         }
@@ -42,8 +47,8 @@ public class DiscoveredUsersFragment extends Fragment {
     private DiscoverService.OnDiscoverUsersListener mOnDiscoverUsersListener =
             new DiscoverService.OnDiscoverUsersListener() {
                 @Override
-                public void OnUserFound(Endpoint endpoint) {
-                    mDiscoveredUsersListAdapter.addUser(endpoint);
+                public void OnUserFound(User user) {
+                    mDiscoveredUsersListAdapter.addUser(user);
                 }
 
                 @Override
@@ -58,11 +63,21 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private DiscoverService.DiscoverBinder mDiscoverBinder;
 
+    private UserViewModel mUserViewModel;
+
     public DiscoveredUsersFragment() {
+
+    }
+
+    public static DiscoveredUsersFragment newInstance() {
+        DiscoveredUsersFragment fragment = new DiscoveredUsersFragment();
+        Bundle args = new Bundle();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
     }
@@ -72,8 +87,19 @@ public class DiscoveredUsersFragment extends Fragment {
         init(view);
     }
 
-    private void init(View view){
+    private void init(View view) {
+        mUserViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
+
         mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();
+        mDiscoveredUsersListAdapter.setOnItemClickListener(new DiscoveredUsersListAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(User user) {
+                mUserViewModel.insert(user);
+                Intent intent = new Intent(getActivity(), ChatActivity.class);
+                intent.putExtra(ChatActivity.USER_EXTRA, user);
+                startActivity(intent);
+            }
+        });
 
         final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

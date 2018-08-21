@@ -1,8 +1,6 @@
 package com.ss.localchat.activity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -16,20 +14,21 @@ import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.ss.localchat.R;
+import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 
 public class LoginActivity extends AppCompatActivity {
     private CallbackManager callbackManager;
     private LoginButton loginButton;
+    private User user;
+    private Preferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        if (!isFirstTimeStartApp()) {
-            goMainScreen();
-            finish();
-        }
+
         Button login = findViewById(R.id.btnLogin);
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,13 +37,15 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
         callbackManager = CallbackManager.Factory.create();
-        loginButton = (LoginButton) findViewById(R.id.login_button);
+        loginButton = findViewById(R.id.login_button);
 
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Profile profile = Profile.getCurrentProfile();
-                Toast.makeText(getApplicationContext(), profile.getFirstName().toString(), Toast.LENGTH_LONG).show();
+                user = new User();
+                user.setName(profile.getName());
+                user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
                 goMainScreen();
 
             }
@@ -61,9 +62,10 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+
     private void goMainScreen() {
         Intent intent = new Intent(this, MainActivity.class);
-        setFirstTimeStartStatus(false);
+        preferences.putStringToPreferences(getApplicationContext(), "user.id", user.getId().toString());
         startActivity(intent);
         finish();
     }
@@ -73,17 +75,5 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         callbackManager.onActivityResult(requestCode, resultCode, data);
-    }
-
-    private boolean isFirstTimeStartApp() {
-        SharedPreferences ref = getApplicationContext().getSharedPreferences("LoginApp", Context.MODE_PRIVATE);
-        return ref.getBoolean("FirstTimeStartFlag", true);
-    }
-
-    private void setFirstTimeStartStatus(boolean stt) {
-        SharedPreferences ref = getApplicationContext().getSharedPreferences("LoginApp", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = ref.edit();
-        editor.putBoolean("FirstTimeStartFlag", stt);
-        editor.commit();
     }
 }

@@ -5,7 +5,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.ss.localchat.R;
-import com.ss.localchat.model.Message;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.util.DateFormatUtil;
 
 public class SentMessageHolder extends RecyclerView.ViewHolder {
@@ -22,6 +22,6 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
 
     public void bind(Message message) {
         mMessageText.setText(message.getText());
-        mMessageDate.setText(DateFormatUtil.getChatMessageDate(message.getDate()));
+        mMessageDate.setText(DateFormatUtil.formatMessageDate(message.getDate()));
     }
 }

@@ -21,6 +21,8 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.ss.localchat.R;
+import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.CircularTransformation;
 
 public class LoginNoInternet extends AppCompatActivity {
@@ -29,15 +31,14 @@ public class LoginNoInternet extends AppCompatActivity {
     private EditText firstName;
     private EditText lastName;
     private Button loginNoInternet;
+    private User user;
+    private Preferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_no_internet);
-        if (!isFirstTimeStartApp()) {
-            goMainScreen();
-            finish();
-        }
+
         imageView = findViewById(R.id.imageViewLogin);
 
         Picasso.get()
@@ -109,6 +110,8 @@ public class LoginNoInternet extends AppCompatActivity {
         startActivityForResult(i, SELECTED_PICTURE);
     }
 
+    private Uri uri;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -116,7 +119,7 @@ public class LoginNoInternet extends AppCompatActivity {
 
             case SELECTED_PICTURE:
                 if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
+                    uri = data.getData();
 
                     Picasso.get()
                             .load(uri)
@@ -151,21 +154,16 @@ public class LoginNoInternet extends AppCompatActivity {
         }
     }
 
-    private boolean isFirstTimeStartApp() {
-        SharedPreferences ref = getApplicationContext().getSharedPreferences("LoginNoInternetApp", Context.MODE_PRIVATE);
-        return ref.getBoolean("FirstTimeStartFlag", true);
-    }
-
-    private void setFirstTimeStartStatus(boolean stt) {
-        SharedPreferences ref = getApplicationContext().getSharedPreferences("LoginNoInternetApp", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = ref.edit();
-        editor.putBoolean("FirstTimeStartFlag", stt);
-        editor.commit();
-    }
 
     private void goMainScreen() {
+        user = new User();
+        user.setName(firstName.getText().toString());
+        if (uri != null) {
+            user.setPhotoUrl(uri.toString());
+        }
+        preferences.putStringToPreferences(getApplicationContext(), "user.id", user.getId().toString());
         Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
 
     }

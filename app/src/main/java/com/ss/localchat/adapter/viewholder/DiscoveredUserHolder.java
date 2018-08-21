@@ -5,22 +5,36 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.ss.localchat.R;
-import com.ss.localchat.model.Endpoint;
+import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
+import com.ss.localchat.db.entity.User;
 
-public class DiscoveredUserHolder extends RecyclerView.ViewHolder{
+public class DiscoveredUserHolder extends RecyclerView.ViewHolder {
+
+    private DiscoveredUsersListAdapter.OnItemClickListener mListener;
 
     private TextView mUserName;
     private TextView mUserId;
 
-    public DiscoveredUserHolder(View itemView) {
+    public DiscoveredUserHolder(View itemView, DiscoveredUsersListAdapter.OnItemClickListener listener) {
         super(itemView);
+
+        mListener = listener;
 
         mUserName = itemView.findViewById(R.id.discovered_user_name_text_view);
         mUserId = itemView.findViewById(R.id.discovered_user_id_text_view);
     }
 
-    public void bind(Endpoint endpoint){
-        mUserName.setText(endpoint.getName());
-        mUserId.setText(endpoint.getId());
+    public void bind(final User user) {
+        mUserName.setText(user.getName());
+        mUserId.setText(user.getId().toString());
+
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mListener != null) {
+                    mListener.onClick(user);
+                }
+            }
+        });
     }
 }

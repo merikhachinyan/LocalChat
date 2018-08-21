@@ -1,7 +1,10 @@
 package com.ss.localchat.fragment;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,12 +17,15 @@ import android.view.ViewGroup;
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.ChatListAdapter;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.Message;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.util.DividerItemDecoration;
 import com.ss.localchat.util.Util;
+import com.ss.localchat.viewmodel.MessageViewModel;
+import com.ss.localchat.viewmodel.UserViewModel;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 public class ChatListFragment extends Fragment {
@@ -53,21 +59,46 @@ public class ChatListFragment extends Fragment {
     }
 
     public void init(View v) {
-        List<User> userList = new ArrayList<>();
-        User user = new User("Rob Sargsyan", "https://techcrunch.com/wp-content/uploads/2018/03/gettyimages-705351545.jpg?w=1390&crop=1");
-        User user1 = new User("Meri Khachinyan", null);
-        User user2 = new User("Sergey Kudryashov", "https://pp.userapi.com/c631219/v631219392/147d3/DB7c8X31Xys.jpg");
-        userList.add(user);
-        userList.add(user1);
-        userList.add(user2);
-
-        ChatListAdapter adapter = new ChatListAdapter(userList);
-        adapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
+        final ChatListAdapter chatListAdapter = new ChatListAdapter(getActivity());
+        chatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
                 Intent intent = new Intent(getActivity(), ChatActivity.class);
                 intent.putExtra(ChatActivity.USER_EXTRA, user);
                 startActivity(intent);
+            }
+        });
+
+        UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
+        final MessageViewModel messageViewModel = ViewModelProviders.of(getActivity()).get(MessageViewModel.class);
+
+        final UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("user.id", ""));
+
+        userViewModel.getUsersExceptOwner(userId).observe(getActivity(), new Observer<List<User>>() {
+            @Override
+            public void onChanged(@Nullable List<User> users) {
+                if (users == null || users.size() == 0)
+                    return;
+
+                chatListAdapter.setUsers(users);
+                for (final User user : users) {
+                    messageViewModel.getMessagesWith(user.getId()).observe(getActivity(), new Observer<List<Message>>() {
+                        @Override
+                        public void onChanged(@Nullable List<Message> messages) {
+                            if (messages == null || messages.size() == 0)
+                                return;
+
+                            int unreadMessagesCount = 0;
+                            int i = messages.size() - 1;
+                            while (!messages.get(i).isRead()) {
+                                unreadMessagesCount++;
+                                i--;
+                            }
+                            chatListAdapter.setUnreadMessagesCount(user, unreadMessagesCount);
+                            chatListAdapter.setLastMessage(user, messages.get(messages.size() - 1));
+                        }
+                    });
+                }
             }
         });
 
@@ -77,6 +108,6 @@ public class ChatListFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.addItemDecoration(dividerItemDecoration);
-        recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(chatListAdapter);
     }
 }

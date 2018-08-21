@@ -14,7 +14,7 @@
 
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/profile_image_view"
         android:layout_width="56dp"
         android:layout_height="56dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -30,11 +30,11 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/layout_time"
-        app:layout_constraintStart_toEndOf="@+id/imageView"
+        app:layout_constraintStart_toEndOf="@+id/profile_image_view"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/content_messages_name"
+            android:id="@+id/name_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -46,7 +46,7 @@
             tools:text="Name" />
 
         <TextView
-            android:id="@+id/content_messages_message"
+            android:id="@+id/last_message_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -67,14 +67,14 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/content_messages_time"
+            android:id="@+id/date_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="12:25" />
+            tools:text="12:25" />
 
         <android.support.v7.widget.AppCompatTextView
-            android:id="@+id/badge_notification_1"
+            android:id="@+id/unread_messages_count_text_view"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="center_horizontal"
@@ -82,13 +82,13 @@
             android:background="@drawable/unread_messages_count_oval_background"
             android:gravity="center"
             android:padding="4dp"
-            android:text="16"
             android:textColor="#FFF"
             android:textStyle="bold"
             app:autoSizeMaxTextSize="14sp"
             app:autoSizeMinTextSize="8sp"
             app:autoSizeStepGranularity="1sp"
-            app:autoSizeTextType="uniform" />
+            app:autoSizeTextType="uniform"
+            tools:text="16" />
 
     </LinearLayout>
 

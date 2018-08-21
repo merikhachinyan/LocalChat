@@ -4,57 +4,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.LoginActivity">
+    tools:context=".activity.LoginNoInternet">
 
-    <com.facebook.login.widget.LoginButton
-        android:id="@+id/login_button"
+
+    <EditText
+        android:id="@+id/editTextFirstName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="212dp"
-        android:paddingBottom="10dp"
-        android:paddingTop="10dp"
+        android:layout_marginTop="24dp"
+        android:ems="10"
+        android:hint="firstName"
+        android:inputType="textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    <android.support.v7.widget.ContentFrameLayout
+        app:layout_constraintTop_toBottomOf="@+id/imageViewLogin" />
+
+    <EditText
+        android:id="@+id/editTextLastName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/container">
-    </android.support.v7.widget.ContentFrameLayout>
-
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="181dp"
-        android:layout_height="34dp"
-
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="37dp"
+        android:ems="10"
+        android:hint="lastname"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextFirstName" />
 
+    <Button
+        android:id="@+id/loginNoInternet"
+        android:layout_width="181dp"
+        android:layout_height="34dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="76dp"
         android:background="@color/colorPrimary"
         android:text="Login"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextLastName" />
+
+    <ImageView
+        android:id="@+id/imageViewLogin"
+        android:layout_width="97dp"
+        android:layout_height="103dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="45dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.683"
-        tools:ignore="MissingConstraints" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="36dp"
-        android:layout_height="21dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="21dp"
-        android:text="or"
-        android:textAlignment="center"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_button" />
-
+        app:srcCompat="@drawable/no_user_image" />
 
 </android.support.constraint.ConstraintLayout>

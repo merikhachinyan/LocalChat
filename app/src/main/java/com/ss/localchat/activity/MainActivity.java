@@ -2,10 +2,12 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 
+import android.app.backup.SharedPreferencesBackupHelper;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -24,11 +26,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.google.android.gms.common.util.SharedPreferencesUtils;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.BluetoothStateBroadcastReceiver;
 import com.ss.localchat.receiver.LocationStateBroadcastReceiver;
 import com.ss.localchat.receiver.WifiStateBroadcastReceiver;
@@ -51,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
-  
+
     protected WifiStateBroadcastReceiver.OnWifiStateChangedListener mWifiStateChangedListener =
             new WifiStateBroadcastReceiver.OnWifiStateChangedListener() {
                 @Override
@@ -83,9 +88,9 @@ public class MainActivity extends AppCompatActivity {
             new LocationStateBroadcastReceiver.OnLocationStateChangedListener() {
                 @Override
                 public void onLocationStateDisabled() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         if (isBluetoothDisabled) {
-                           stopService(new Intent(MainActivity.this, AdvertiseService.class));
+                            stopService(new Intent(MainActivity.this, AdvertiseService.class));
                         } else {
                             isLocationDisabled = true;
                         }
@@ -107,9 +112,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isWifiDisabled;
     private boolean isBluetoothDisabled;
     private boolean isLocationDisabled;
+    private SharedPreferences mSharedPreferences;
 
-
-    private List<Fragment> mFragmentList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,10 +123,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if (!PreferenceManager.getDefaultSharedPreferences(this).contains("id")) {
+
+        if (!Preferences.contain(getApplicationContext(), Preferences.USER_ID_KEY)) {
+
+            if (!Preferences.contain(getApplicationContext(), Preferences.INTRODUCE_APP_KEY)) {
+                Intent intent = new Intent(this, IntroduceActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                finish();
+                return;
+            }
             Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
+            finish();
             return;
         }
 
@@ -137,14 +151,14 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
 
-        registerReceivers();
+//        registerReceivers();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
-        unregisterReceivers();
+        // unregisterReceivers();
     }
 
     private boolean hasPermissions(Context context, String... permissions) {
@@ -229,16 +243,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void registerReceivers(){
+    private void registerReceivers() {
         registerReceiver(mWifiStateBroadcastReceiver, mWifiIntentFilter);
         registerReceiver(mBluetoothStateBroadcastReceiver, mBluetoothIntentFilter);
         registerReceiver(mLocationStateBroadcastReceiver, mLocationIntentFilter);
     }
 
-    private void unregisterReceivers(){
+    private void unregisterReceivers() {
         unregisterReceiver(mWifiStateBroadcastReceiver);
         unregisterReceiver(mBluetoothStateBroadcastReceiver);
         unregisterReceiver(mLocationStateBroadcastReceiver);
-        }
     }
+
+
 }

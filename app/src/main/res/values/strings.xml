@@ -7,4 +7,8 @@
     <string name="start">Start</string>
     <string name="start_advertising">Start Advertising</string>
     <string name="discovering">Discovering</string>
+
+    <string name="facebook_app_id">614584852270723</string>
+    <string name="fb_login_protocol_scheme">fb614584852270723</string>
+
 </resources>

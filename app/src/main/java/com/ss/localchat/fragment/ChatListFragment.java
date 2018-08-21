@@ -72,7 +72,7 @@ public class ChatListFragment extends Fragment {
         UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
         final MessageViewModel messageViewModel = ViewModelProviders.of(getActivity()).get(MessageViewModel.class);
 
-        final UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("id", ""));
+        final UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("user.id", ""));
 
         userViewModel.getUsersExceptOwner(userId).observe(getActivity(), new Observer<List<User>>() {
             @Override

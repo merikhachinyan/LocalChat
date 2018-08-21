@@ -40,7 +40,7 @@ import java.util.UUID;
 
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.activity.MainActivity;
-import com.ss.localchat.model.User;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.receiver.NotificationBroadcastReceiver;
 
 public abstract class BaseService extends IntentService {
@@ -85,7 +85,7 @@ public abstract class BaseService extends IntentService {
                     UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", ""));
 
                     // TODO get user name and show notification
-                    mUser = new User(s, "User", null);
+                    mUser = new User();
                     showNotification(mUser.getName(), new String(payload.asBytes()));
 
                     Message message = new Message();

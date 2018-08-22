@@ -49,13 +49,17 @@ import com.ss.localchat.receiver.NotificationBroadcastReceiver;
 public abstract class BaseService extends IntentService {
 
     private static final String CHANNEL_ID = "send.message.service";
+
     public static final String KEY_TEXT_REPLY = "key.text.reply";
+
     public static final String REPLY_ACTION = "reply.action";
+
     public static final String USER_EXTRA = "user.extra";
 
     public static final int NOTIFICATION_ID = 100;
 
     public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
+
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
@@ -71,7 +75,10 @@ public abstract class BaseService extends IntentService {
 
         @Override
         public void onDisconnected(@NonNull String id) {
-            mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
+            Log.v("____", "Disconnected from " + id);
+            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+
         }
     };
 
@@ -88,12 +95,6 @@ public abstract class BaseService extends IntentService {
                     String messageText = jsonObject.getString("message");
 
                     UUID myUserId = Preferences.getUserId(getApplicationContext());
-
-
-                    // TODO get user name and show notification
-//                    mUser = new User(s, "User", null);
-//                    showNotification(mUser.getName(), new String(payload.asBytes()));
-
 
                     Message message = new Message();
                     message.setText(messageText);
@@ -121,12 +122,15 @@ public abstract class BaseService extends IntentService {
 
     private MessageRepository mMessageRepository;
 
+    protected UserRepository mUserRepository;
+
     private User mUser;
 
 
     public BaseService(String name) {
         super(name);
         mMessageRepository = new MessageRepository(getApplication());
+        mUserRepository = new UserRepository(getApplication());
 
     }
 

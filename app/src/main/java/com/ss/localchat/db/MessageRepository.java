@@ -35,8 +35,6 @@ public class MessageRepository {
         return messageDao.getReadOrUnreadMessagesWith(user_id, is_read);
     }
 
-
-
     public void update(Message... messages) {
         new UpdateAsyncTask(messageDao).execute(messages);
     }

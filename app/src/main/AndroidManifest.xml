@@ -29,9 +29,11 @@
 
         <activity
             android:name=".activity.ChatActivity"
+            android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <activity android:name=".activity.SettingsActivity" />
+        <activity android:name=".activity.SettingsActivity"
+            android:parentActivityName=".activity.MainActivity" />
 
         <activity android:name=".activity.LoginActivity" />
 

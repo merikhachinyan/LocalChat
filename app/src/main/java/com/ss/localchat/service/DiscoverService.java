@@ -24,10 +24,14 @@ public class DiscoverService extends BaseService {
     protected EndpointDiscoveryCallback mEndpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
-            //Todo request user name from shared preferences& user photo is null
-            String myUserName = Preferences.getUserName(getApplicationContext());
 
-            mConnectionsClient.requestConnection(myUserName, id, mConnectionLifecycleCallback);
+            Log.v("____", id + " " + discoveredEndpointInfo.getEndpointName() + " " + discoveredEndpointInfo.getServiceId());
+            if (discoveredEndpointInfo.getEndpointName().isEmpty())
+                return;
+
+            //Todo request user name from shared preferences& user photo is null
+            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
             String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
             String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
@@ -37,6 +41,7 @@ public class DiscoverService extends BaseService {
             user.setName(name);
             user.setEndpointId(id);
 
+            mUserRepository.insert(user);
             mOnDiscoverUsersListener.OnUserFound(user);
         }
 

@@ -79,7 +79,6 @@ public class ChatListFragment extends Fragment {
                 if (users == null || users.size() == 0)
                     return;
 
-                chatListAdapter.setUsers(users);
                 for (final User user : users) {
                     messageViewModel.getMessagesWith(user.getId()).observe(getActivity(), new Observer<List<Message>>() {
                         @Override
@@ -89,12 +88,11 @@ public class ChatListFragment extends Fragment {
 
                             int unreadMessagesCount = 0;
                             int i = messages.size() - 1;
-                            while (!messages.get(i).isRead()) {
+                            while (i >= 0 && !messages.get(i).isRead()) {
                                 unreadMessagesCount++;
                                 i--;
                             }
-                            chatListAdapter.setUnreadMessagesCount(user, unreadMessagesCount);
-                            chatListAdapter.setLastMessage(user, messages.get(messages.size() - 1));
+                            chatListAdapter.setUser(user, messages.get(messages.size() - 1), unreadMessagesCount);
                         }
                     });
                 }

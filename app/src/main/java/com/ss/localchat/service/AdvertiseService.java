@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.ss.localchat.R;
@@ -45,11 +46,6 @@ public class AdvertiseService extends BaseService {
 
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -70,6 +66,7 @@ public class AdvertiseService extends BaseService {
         UUID myUserId = Preferences.getUserId(getApplicationContext());
 
         String ownerName = myUserName + ":" + myUserId.toString();
+        Log.v("____", "Advertising: " + ownerName);
         mConnectionsClient.startAdvertising(ownerName, getPackageName(), mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
                 .setStrategy(STRATEGY)
                 .build());
@@ -80,7 +77,7 @@ public class AdvertiseService extends BaseService {
         startForeground(1, createAdvertiseNotification(NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
-    protected Notification createAdvertiseNotification(String title, String message){
+    protected Notification createAdvertiseNotification(String title, String message) {
         Intent intent = new Intent(this, SettingsActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(MainActivity.class);

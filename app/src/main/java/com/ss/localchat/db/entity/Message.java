@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity(tableName = "messages")
-//        foreignKeys = @ForeignKey(entity = User.class, parentColumns = {"_id", "_id"}, childColumns = {"sender_id", "receiver_id"}))
 public class Message {
 
     @PrimaryKey(autoGenerate = true)
@@ -101,7 +100,7 @@ public class Message {
         final int prime = 31;
         int result = 1;
 
-        result = result + ((id == null) ? 0 : id.hashCode()) * prime;
+        result = result + id.hashCode() * prime;
         return result;
     }
 
@@ -115,6 +114,6 @@ public class Message {
             return false;
 
         Message other = (Message) obj;
-        return id == null ? other.id == null : id.equals(other.id);
+        return id.equals(other.id);
     }
 }

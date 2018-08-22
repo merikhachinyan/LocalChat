@@ -117,9 +117,18 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
         if (!Preferences.contain(getApplicationContext(), Preferences.USER_ID_KEY)) {
+
+            if (!Preferences.contain(getApplicationContext(), Preferences.INTRODUCE_APP_KEY)) {
+                Intent intent = new Intent(this, IntroduceActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                finish();
+                return;
+            }
             Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             finish();
             return;
@@ -170,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-//        recreate();
     }
 
     private void init() {

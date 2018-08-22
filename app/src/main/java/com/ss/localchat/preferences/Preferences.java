@@ -12,6 +12,9 @@ public class Preferences {
 
     public static final String USER_NAME_KEY = "user.name";
 
+    public static final String INTRODUCE_APP_KEY = "introduce.app";
+
+
 
     public static UUID getUserId(Context context) {
         return UUID.fromString(PreferenceManager.getDefaultSharedPreferences(context).getString(USER_ID_KEY, null));
@@ -32,5 +35,4 @@ public class Preferences {
     public static boolean contain(Context context, String key) {
         return PreferenceManager.getDefaultSharedPreferences(context).contains(key);
     }
-
 }

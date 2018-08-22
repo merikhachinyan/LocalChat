@@ -4,6 +4,7 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import java.io.Serializable;
@@ -24,7 +25,7 @@ public class User implements Serializable {
     private String name;
 
     @ColumnInfo(name = "photo_url")
-    private String photoUrl;
+    private Uri photoUrl;
 
     @ColumnInfo(name = "registration_date")
     private Date registrationDate;
@@ -59,11 +60,11 @@ public class User implements Serializable {
         this.name = name;
     }
 
-    public String getPhotoUrl() {
+    public Uri getPhotoUrl() {
         return photoUrl;
     }
 
-    public void setPhotoUrl(String photoUrl) {
+    public void setPhotoUrl(Uri photoUrl) {
         this.photoUrl = photoUrl;
     }
 
@@ -80,7 +81,7 @@ public class User implements Serializable {
         final int prime = 31;
         int result = 1;
 
-        result = result + ((id == null) ? 0 : id.hashCode()) * prime;
+        result = result + id.hashCode() * prime;
         return result;
     }
 
@@ -94,6 +95,6 @@ public class User implements Serializable {
             return false;
 
         User other = (User) obj;
-        return id == null ? other.id == null : id.equals(other.id);
+        return id.equals(other.id);
     }
 }

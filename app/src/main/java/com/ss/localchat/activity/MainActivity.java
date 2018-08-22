@@ -2,18 +2,15 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 
-import android.app.backup.SharedPreferencesBackupHelper;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -26,8 +23,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.google.android.gms.common.util.SharedPreferencesUtils;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
@@ -112,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean isWifiDisabled;
     private boolean isBluetoothDisabled;
     private boolean isLocationDisabled;
-    private SharedPreferences mSharedPreferences;
 
 
     @Override
@@ -128,13 +122,13 @@ public class MainActivity extends AppCompatActivity {
 
             if (!Preferences.contain(getApplicationContext(), Preferences.INTRODUCE_APP_KEY)) {
                 Intent intent = new Intent(this, IntroduceActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 finish();
                 return;
             }
             Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             finish();
             return;
@@ -158,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        // unregisterReceivers();
+//        unregisterReceivers();
     }
 
     private boolean hasPermissions(Context context, String... permissions) {
@@ -185,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        recreate();
     }
 
     private void init() {
@@ -232,11 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings:
-                Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-            case android.R.id.home:
-                getSupportFragmentManager().popBackStack();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -254,6 +243,4 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mBluetoothStateBroadcastReceiver);
         unregisterReceiver(mLocationStateBroadcastReceiver);
     }
-
-
 }

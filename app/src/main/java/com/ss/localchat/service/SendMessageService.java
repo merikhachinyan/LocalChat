@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 
 import com.google.android.gms.nearby.connection.Payload;
+import com.ss.localchat.preferences.Preferences;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,10 +38,10 @@ public class SendMessageService extends BaseService {
 
     private void sendMessage(String id, String messageText) {
         try {
-            UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", ""));
+            UUID myUserId = Preferences.getUserId(getApplicationContext());
 
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", userId.toString());
+            jsonObject.put("id", myUserId.toString());
             jsonObject.put("message", messageText);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 

@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -32,9 +31,11 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.SendMessageService;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
+import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +69,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private MessageViewModel mMessageViewModel;
 
+    private UserViewModel mUserViewModel;
+
     private User mUser;
 
     private String mMessageText;
@@ -80,11 +83,17 @@ public class ChatActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowCustomEnabled(true);
+        }
+
         if (getIntent() != null) {
             mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
         }
 
-        initActionBar();
         init();
     }
 
@@ -104,11 +113,15 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initActionBar() {
         View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
+
         ImageView userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
+
         TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
+
         TextView userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
 
         userName.setText(mUser.getName());
+
         if (mUser.getPhotoUrl() == null) {
             Picasso.get()
                     .load(R.drawable.no_user_image)
@@ -123,9 +136,6 @@ public class ChatActivity extends AppCompatActivity {
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowTitleEnabled(false);
-            actionBar.setDisplayShowCustomEnabled(true);
             actionBar.setCustomView(actionBarView);
         }
 
@@ -156,31 +166,42 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
 
+        mUserViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
+        mUserViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
+            @Override
+            public void onChanged(@Nullable User user) {
+                mUser = user;
+                initActionBar();
+            }
+        });
+
+
+
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
-        // Todo Change getMessagesWith to getReadMessagesWith
-        final LiveData<List<Message>> messagesLiveData = mMessageViewModel.getMessagesWith(mUser.getId());
+
+        final LiveData<List<Message>> messagesLiveData = mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), true);
         messagesLiveData.observe(this, new Observer<List<Message>>() {
             @Override
             public void onChanged(@Nullable List<Message> messages) {
-                mMessageListAdapter.setMessages(messages);
-
-                messagesLiveData.removeObserver(this);
-            }
-        });
-
-        mMessageViewModel.getUnreadMessages(mUser.getId()).observe(this, new Observer<List<Message>>() {
-            @Override
-            public void onChanged(@Nullable List<Message> messages) {
-                if (messages == null || messages.size() == 0)
-                    return;
-
-                for (Message message : messages) {
-                    message.setRead(true);
-                }
-                mMessageViewModel.update(messages.toArray(new Message[messages.size()]));
                 mMessageListAdapter.addMessages(messages);
+                messagesLiveData.removeObserver(this);
+
+                mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), false).observe(ChatActivity.this, new Observer<List<Message>>() {
+                    @Override
+                    public void onChanged(@Nullable List<Message> messages) {
+                        if (messages == null || messages.size() == 0)
+                            return;
+
+                        for (Message message : messages) {
+                            message.setRead(true);
+                        }
+                        mMessageViewModel.update(messages.toArray(new Message[messages.size()]));
+                        mMessageListAdapter.addMessages(messages);
+                    }
+                });
             }
         });
+
 
         findViewById(R.id.send_button_chat_activity).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -197,13 +218,13 @@ public class ChatActivity extends AppCompatActivity {
     private void sendMessage(String text) {
         bindSendMessageService();
 
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
         Message message = new Message();
         message.setText(text);
-        message.setRead(true);
+        message.setRead(false);
         message.setReceiverId(mUser.getId());
-        UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(this).getString("id", ""));
-        message.setSenderId(userId);
-        mMessageListAdapter.addMessage(message);
+        message.setSenderId(myUserId);
         mMessageViewModel.insert(message);
     }
 

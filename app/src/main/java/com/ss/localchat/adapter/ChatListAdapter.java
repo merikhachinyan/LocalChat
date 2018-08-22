@@ -14,6 +14,7 @@ import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.viewmodel.MessageViewModel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +33,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     private MessageViewModel mMessageViewModel;
 
     public ChatListAdapter(FragmentActivity fragmentActivity) {
+        mUsers = new ArrayList<>();
         mMessageViewModel = ViewModelProviders.of(fragmentActivity).get(MessageViewModel.class);
     }
 
@@ -56,19 +58,25 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
         return mUsers == null ? 0 : mUsers.size();
     }
 
-    public void setUsers(List<User> users) {
-        mUsers = users;
-        notifyDataSetChanged();
+    public void setUser(User user, Message message, int count) {
+        if (!mUsers.contains(user)) {
+            mUsers.add(user);
+            setLastMessageAndUnreadCount(user, message, count);
+            notifyItemInserted(mUsers.size() - 1);
+        } else {
+            int i = mUsers.indexOf(user);
+            mUsers.set(i, user);
+            setLastMessageAndUnreadCount(user, message, count);
+            notifyItemChanged(i);
+        }
     }
 
-    public void setLastMessage(User user, Message message) {
+    private void setLastMessageAndUnreadCount(User user, Message message, int count) {
         mLastMessages.put(user.getId(), message);
-        notifyItemChanged(mUsers.indexOf(user));
-    }
-
-    public void setUnreadMessagesCount(User user, Integer count) {
         mUnreadMessagesCount.put(user.getId(), count);
     }
+
+
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;

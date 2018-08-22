@@ -27,12 +27,10 @@ public class IntroduceActivity extends AppCompatActivity {
     private Button btnSkip;
     private Button btnNext;
     private IntroducePagerAdapter pagerAdapter;
-    private Preferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 
         setStatusBarTransparent();
 
@@ -48,7 +46,7 @@ public class IntroduceActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                startLoginctivity();
+                startLoginActivity();
             }
         });
 
@@ -60,7 +58,7 @@ public class IntroduceActivity extends AppCompatActivity {
                     //move to next page
                     viewPager.setCurrentItem(currentPage);
                 } else {
-                    startLoginctivity();
+                    startLoginActivity();
                 }
             }
         });
@@ -112,10 +110,11 @@ public class IntroduceActivity extends AppCompatActivity {
         }
     }
 
-    private void startLoginctivity() {
-        preferences = new Preferences();
-        preferences.putStringToPreferences(getApplicationContext(), "introduce.app", String.valueOf(false));
-        startActivity(new Intent(IntroduceActivity.this, LoginActivity.class));
+    private void startLoginActivity() {
+        Preferences.putStringToPreferences(getApplicationContext(), Preferences.INTRODUCE_APP_KEY, String.valueOf(false));
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
         finish();
     }
 
@@ -126,6 +125,5 @@ public class IntroduceActivity extends AppCompatActivity {
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.setStatusBarColor(Color.TRANSPARENT);
         }
-
     }
 }

@@ -5,15 +5,18 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.ss.localchat.R;
 import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.activity.SettingsActivity;
+import com.ss.localchat.preferences.Preferences;
+
+import java.util.UUID;
 
 public class AdvertiseService extends BaseService {
 
@@ -43,11 +46,6 @@ public class AdvertiseService extends BaseService {
 
     }
 
-    @Override
-    public void onStart(@Nullable Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -64,9 +62,11 @@ public class AdvertiseService extends BaseService {
     }
 
     private void advertising() {
-        String name = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("name", "");
-        String id = PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", "");
-        String ownerName = name + ":" + id;
+        String myUserName = Preferences.getUserName(getApplicationContext());
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+        String ownerName = myUserName + ":" + myUserId.toString();
+        Log.v("____", "Advertising: " + ownerName);
         mConnectionsClient.startAdvertising(ownerName, getPackageName(), mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
                 .setStrategy(STRATEGY)
                 .build());
@@ -77,7 +77,7 @@ public class AdvertiseService extends BaseService {
         startForeground(1, createAdvertiseNotification(NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
-    protected Notification createAdvertiseNotification(String title, String message){
+    protected Notification createAdvertiseNotification(String title, String message) {
         Intent intent = new Intent(this, SettingsActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(MainActivity.class);

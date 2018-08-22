@@ -63,8 +63,6 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private DiscoverService.DiscoverBinder mDiscoverBinder;
 
-    private UserViewModel mUserViewModel;
-
     public DiscoveredUsersFragment() {
 
     }
@@ -88,13 +86,10 @@ public class DiscoveredUsersFragment extends Fragment {
     }
 
     private void init(View view) {
-        mUserViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
-
         mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();
         mDiscoveredUsersListAdapter.setOnItemClickListener(new DiscoveredUsersListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
-                mUserViewModel.insert(user);
                 Intent intent = new Intent(getActivity(), ChatActivity.class);
                 intent.putExtra(ChatActivity.USER_EXTRA, user);
                 startActivity(intent);

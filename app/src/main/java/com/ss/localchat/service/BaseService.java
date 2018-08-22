@@ -5,6 +5,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -29,6 +31,7 @@ import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 import com.ss.localchat.R;
 import com.ss.localchat.db.MessageRepository;
+import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.Message;
 
 import org.json.JSONException;
@@ -41,18 +44,23 @@ import java.util.UUID;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.NotificationBroadcastReceiver;
 
 public abstract class BaseService extends IntentService {
 
     private static final String CHANNEL_ID = "send.message.service";
+
     public static final String KEY_TEXT_REPLY = "key.text.reply";
+
     public static final String REPLY_ACTION = "reply.action";
+
     public static final String USER_EXTRA = "user.extra";
 
     public static final int NOTIFICATION_ID = 100;
 
     public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
+
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
@@ -63,11 +71,15 @@ public abstract class BaseService extends IntentService {
 
         @Override
         public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
+
         }
 
         @Override
         public void onDisconnected(@NonNull String id) {
-            mConnectionsClient.requestConnection("User", id, mConnectionLifecycleCallback);
+            Log.v("____", "Disconnected from " + id);
+            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+
         }
     };
 
@@ -82,20 +94,18 @@ public abstract class BaseService extends IntentService {
                     JSONObject jsonObject = new JSONObject(payloadText);
                     UUID senderId = UUID.fromString(jsonObject.getString("id"));
                     String messageText = jsonObject.getString("message");
-                    UUID userId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString("id", ""));
 
-                    // TODO get user name and show notification
-                    mUser = new User();
-                    showNotification(mUser.getName(), new String(payload.asBytes()));
+                    UUID myUserId = Preferences.getUserId(getApplicationContext());
 
                     Message message = new Message();
                     message.setText(messageText);
                     message.setRead(false);
-                    message.setReceiverId(userId);
+                    message.setReceiverId(myUserId);
                     message.setSenderId(senderId);
                     message.setDate(new Date());
                     mMessageRepository.insert(message);
 
+                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -113,14 +123,15 @@ public abstract class BaseService extends IntentService {
 
     private MessageRepository mMessageRepository;
 
+    protected UserRepository mUserRepository;
+
     private User mUser;
 
 
     public BaseService(String name) {
         super(name);
         mMessageRepository = new MessageRepository(getApplication());
-
-        createNotificationChannel(CHANNEL_ID);
+        mUserRepository = new UserRepository(getApplication());
     }
 
     @Nullable
@@ -138,6 +149,7 @@ public abstract class BaseService extends IntentService {
     public void onCreate() {
         super.onCreate();
         mConnectionsClient = Nearby.getConnectionsClient(this);
+        createNotificationChannel(CHANNEL_ID);
     }
 
     private void showNotification(String title, String message) {

@@ -1,7 +1,6 @@
 package com.ss.localchat.adapter;
 
 import android.content.Context;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,6 +11,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.ReceivedMessageHolder;
 import com.ss.localchat.adapter.viewholder.SentMessageHolder;
 import com.ss.localchat.db.entity.Message;
+import com.ss.localchat.preferences.Preferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,28 +72,19 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemViewType(int position) {
-        UUID ownerId = UUID.fromString(PreferenceManager.getDefaultSharedPreferences(mContext).getString("id", ""));
+        UUID myUserId = Preferences.getUserId(mContext.getApplicationContext());
         Message message = mMessages.get(position);
-        if (message.getSenderId().equals(ownerId)) {
+        if (message.getSenderId().equals(myUserId)) {
             return SENT_MESSAGE_TYPE;
         } else {
             return RECEIVED_MESSAGE_TYPE;
         }
     }
 
-    public void setMessages(List<Message> messages) {
-        mMessages = messages;
-        notifyDataSetChanged();
-    }
-
     public void addMessages(List<Message> messages) {
         int startPosition = mMessages.size();
         mMessages.addAll(messages);
-        notifyItemRangeInserted(startPosition, messages.size());
-    }
 
-    public void addMessage(Message message) {
-        mMessages.add(message);
-        notifyItemInserted(mMessages.size() - 1);
+        notifyItemRangeInserted(startPosition, messages.size());
     }
 }

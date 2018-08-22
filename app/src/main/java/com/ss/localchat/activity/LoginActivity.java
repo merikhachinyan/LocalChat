@@ -14,40 +14,44 @@ import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.ss.localchat.R;
+import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 
 public class LoginActivity extends AppCompatActivity {
-    private CallbackManager callbackManager;
-    private LoginButton loginButton;
-    private User user;
-    private Preferences preferences;
+
+    private CallbackManager mCallbackManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        mCallbackManager = CallbackManager.Factory.create();
+
 
         Button login = findViewById(R.id.btnLogin);
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getApplicationContext(), LoginNoInternet.class));
+                startActivity(new Intent(getApplicationContext(), SignUpActivity.class));
             }
         });
-        callbackManager = CallbackManager.Factory.create();
-        loginButton = findViewById(R.id.login_button);
 
-        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        LoginButton loginButton = findViewById(R.id.login_button);
+        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Profile profile = Profile.getCurrentProfile();
-                user = new User();
+                User user = new User();
                 user.setName(profile.getName());
-                user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
-                goMainScreen();
+                user.setPhotoUrl(profile.getProfilePictureUri(400, 400));
 
+                new UserRepository(getApplication()).insert(user);
+                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
+                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
+
+                startMainActivity();
             }
 
             @Override
@@ -63,17 +67,16 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    private void goMainScreen() {
+    private void startMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
-        preferences.putStringToPreferences(getApplicationContext(), "user.id", user.getId().toString());
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finish();
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        callbackManager.onActivityResult(requestCode, resultCode, data);
+        mCallbackManager.onActivityResult(requestCode, resultCode, data);
     }
 }

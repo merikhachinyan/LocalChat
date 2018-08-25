@@ -29,6 +29,10 @@ public class UserViewModel extends AndroidViewModel {
         return userRepository.getUserById(id);
     }
 
+    public LiveData<User> getUserByEndpointId(String endpointId) {
+        return userRepository.getUserByEndpointId(endpointId);
+    }
+
     public void insert(User user) {
         userRepository.insert(user);
     }

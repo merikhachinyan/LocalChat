@@ -1,6 +1,5 @@
 package com.ss.localchat.fragment;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,30 +22,34 @@ import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
 import com.ss.localchat.db.entity.User;
-import com.ss.localchat.service.DiscoverService;
-import com.ss.localchat.viewmodel.UserViewModel;
+import com.ss.localchat.service.ChatService;
 
 public class DiscoveredUsersFragment extends Fragment {
 
     public static final String FRAGMENT_TITLE = "Discover";
 
 
-    private ServiceConnection mDiscoverUsersServiceConnection = new ServiceConnection() {
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mDiscoverBinder = (DiscoverService.DiscoverBinder) service;
+            mDiscoverBinder = (ChatService.ServiceBinder) service;
+
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
-            mDiscoverBinder.startDiscovery();
+//            mDiscoverBinder.startDiscovery();
+
+            isBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mDiscoverBinder = null;
+
+            isBound = false;
         }
     };
 
-    private DiscoverService.OnDiscoverUsersListener mOnDiscoverUsersListener =
-            new DiscoverService.OnDiscoverUsersListener() {
+    private ChatService.OnDiscoverUsersListener mOnDiscoverUsersListener =
+            new ChatService.OnDiscoverUsersListener() {
                 @Override
                 public void OnUserFound(User user) {
                     mDiscoveredUsersListAdapter.addUser(user);
@@ -61,7 +65,9 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private DiscoveredUsersListAdapter mDiscoveredUsersListAdapter;
 
-    private DiscoverService.DiscoverBinder mDiscoverBinder;
+    private ChatService.ServiceBinder mDiscoverBinder;
+
+    private boolean isBound;
 
     public DiscoveredUsersFragment() {
 
@@ -75,6 +81,14 @@ public class DiscoveredUsersFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getActivity().bindService(new Intent(getActivity(), ChatService.class),
+                mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
@@ -83,6 +97,19 @@ public class DiscoveredUsersFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            mDiscoverBinder.stopDiscovery();
+
+            getActivity().unbindService(mServiceConnection);
+
+            Log.v("___", "unbind discover");
+        }
     }
 
     private void init(View view) {
@@ -108,8 +135,11 @@ public class DiscoveredUsersFragment extends Fragment {
                 mStartDiscoverButton.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
 
-                getActivity().bindService(new Intent(getActivity(), DiscoverService.class),
-                        mDiscoverUsersServiceConnection, Context.BIND_AUTO_CREATE);
+                if (isBound) {
+                    mDiscoverBinder.startDiscovery();
+                }
+//                getActivity().bindService(new Intent(getActivity(), ChatService.class),
+//                        mServiceConnection, Context.BIND_AUTO_CREATE);
             }
         });
     }

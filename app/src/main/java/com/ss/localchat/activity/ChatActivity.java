@@ -31,8 +31,9 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.preferences.Preferences;
-import com.ss.localchat.service.SendMessageService;
+import com.ss.localchat.service.ChatService;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
@@ -47,25 +48,28 @@ public class ChatActivity extends AppCompatActivity {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mSendMessageBinder = (SendMessageService.SendMessageBinder) service;
-            mSendMessageBinder.send(mUser.getEndpointId(), mMessageText);
+            mSendMessageBinder = (ChatService.ServiceBinder) service;
 
-            unbindService(mServiceConnection);
+            isBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mSendMessageBinder = null;
+
+            isBound = false;
         }
     };
 
     public static boolean isCurrentlyRunning;
 
+    public static UUID currentUserId;
+
     private EditText mMessageInputEditText;
 
     private MessageListAdapter mMessageListAdapter;
 
-    private SendMessageService.SendMessageBinder mSendMessageBinder;
+    private ChatService.ServiceBinder mSendMessageBinder;
 
     private MessageViewModel mMessageViewModel;
 
@@ -74,6 +78,9 @@ public class ChatActivity extends AppCompatActivity {
     private User mUser;
 
     private String mMessageText;
+
+    private boolean isBound;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,9 +99,13 @@ public class ChatActivity extends AppCompatActivity {
 
         if (getIntent() != null) {
             mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
+
+            currentUserId = mUser.getId();
         }
 
         init();
+
+        bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -109,6 +120,15 @@ public class ChatActivity extends AppCompatActivity {
         super.onStop();
 
         isCurrentlyRunning = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            unbindService(mServiceConnection);
+        }
     }
 
     private void initActionBar() {
@@ -176,6 +196,8 @@ public class ChatActivity extends AppCompatActivity {
         });
 
 
+        NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
+
 
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
@@ -208,6 +230,9 @@ public class ChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 mMessageText = mMessageInputEditText.getText().toString().trim();
                 if (!mMessageText.isEmpty()) {
+                    if (isBound) {
+                        mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
+                    }
                     sendMessage(mMessageText);
                     mMessageInputEditText.setText("");
                 }
@@ -216,8 +241,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage(String text) {
-        bindSendMessageService();
-
         UUID myUserId = Preferences.getUserId(getApplicationContext());
 
         Message message = new Message();
@@ -226,11 +249,6 @@ public class ChatActivity extends AppCompatActivity {
         message.setReceiverId(mUser.getId());
         message.setSenderId(myUserId);
         mMessageViewModel.insert(message);
-    }
-
-    private void bindSendMessageService() {
-        Intent intent = new Intent(this, SendMessageService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override

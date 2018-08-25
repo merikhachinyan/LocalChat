@@ -1,6 +1,5 @@
 package com.ss.localchat.activity;
 
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -9,13 +8,14 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import com.ss.localchat.R;
-import com.ss.localchat.service.AdvertiseService;
+import com.ss.localchat.service.ChatService;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -24,49 +24,80 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String STOP_ADVERTISING = "Stop Advertising";
 
 
-//    private ServiceConnection mAdvertiseServiceConnection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            mAdvertiseBinder = (AdvertiseService.AdvertiseBinder)service;
-//
-//
-//            //mAdvertiseBinder.advertise();
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//            mAdvertiseBinder = null;
-//        }
-//    };
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mAdvertiseBinder = (ChatService.ServiceBinder)service;
+
+            isBound = true;
+
+            if (mAdvertiseBinder.isRunningService()) {
+                mAdvertiseTextView.setText(STOP_ADVERTISING);
+
+                mAdvertisingSwitch.setChecked(true);
+            } else {
+                mAdvertiseTextView.setText(START_ADVERTISING);
+
+                mAdvertisingSwitch.setChecked(false);
+            }
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mAdvertiseBinder = null;
+
+            isBound = false;
+        }
+    };
 
     private TextView mAdvertiseTextView;
+
+    private Switch mAdvertisingSwitch;
+
+    private ChatService.ServiceBinder mAdvertiseBinder;
+
+    private boolean isBound;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+
         init();
     }
 
-    private void init() {
-        final Intent intent = new Intent(this, AdvertiseService.class);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
-        Switch advertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
+        if (isBound) {
+            unbindService(mServiceConnection);
+
+            Log.v("___", "unbind settings");
+        }
+    }
+
+    private void init() {
+        final Intent intent = new Intent(this, ChatService.class);
+
+        mAdvertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
 
         mAdvertiseTextView = findViewById(R.id.advertising_text);
 
-
-        advertisingSwitch.setChecked(isRunningAdvertiseService(AdvertiseService.class));
-
-        advertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mAdvertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    startService(intent);
-                    mAdvertiseTextView.setText(STOP_ADVERTISING);
+                    if (!mAdvertiseBinder.isRunningService()){
+                        startService(intent);
+                        mAdvertiseTextView.setText(STOP_ADVERTISING);
+                    }
                 } else {
-                    stopService(intent);
+                    mAdvertiseBinder.stopService();
                     mAdvertiseTextView.setText(START_ADVERTISING);
                 }
             }
@@ -83,15 +114,16 @@ public class SettingsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean isRunningAdvertiseService(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                mAdvertiseTextView.setText(STOP_ADVERTISING);
-                return true;
-            }
-        }
-        mAdvertiseTextView.setText(START_ADVERTISING);
-        return false;
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        sendResult();
+    }
+
+    private void sendResult() {
+        Intent intent = new Intent();
+        setResult(RESULT_OK, intent);
+        finish();
     }
 }

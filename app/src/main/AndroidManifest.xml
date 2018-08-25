@@ -41,9 +41,7 @@
 
         <activity android:name=".activity.LoginActivity" />
 
-        <service android:name=".service.AdvertiseService" />
-        <service android:name=".service.DiscoverService" />
-        <service android:name=".service.SendMessageService" />
+        <service android:name=".service.ChatService" />
 
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"

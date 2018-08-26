@@ -9,21 +9,29 @@ public class DateFormatUtil {
 
     private static final SimpleDateFormat sFormatTime = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    private static final SimpleDateFormat sFormatDate = new SimpleDateFormat("MMM d", Locale.getDefault());
+    private static final SimpleDateFormat sFormatDateShort = new SimpleDateFormat("MMM d", Locale.getDefault());
+
+    private static final SimpleDateFormat sFormatDateLong = new SimpleDateFormat("d MMMM, yyyy", Locale.getDefault());
 
     public static String formatChatDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        Calendar currentCalendar = Calendar.getInstance();
 
-        if (day == Calendar.getInstance().get(Calendar.DAY_OF_MONTH)) {
+        if (calendar.get(Calendar.DAY_OF_MONTH) == currentCalendar.get(Calendar.DAY_OF_MONTH)
+                && calendar.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH)
+                && calendar.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR)) {
             return sFormatTime.format(date);
         } else {
-            return sFormatDate.format(date);
+            return sFormatDateShort.format(date);
         }
     }
 
     public static String formatMessageDate(Date date) {
         return sFormatTime.format(date);
+    }
+
+    public static String formatDate(Date date) {
+        return sFormatDateLong.format(date);
     }
 }

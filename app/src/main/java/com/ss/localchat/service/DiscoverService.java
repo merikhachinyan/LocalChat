@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
@@ -26,10 +27,10 @@ public class DiscoverService extends BaseService {
         public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
 
             Log.v("____", id + " " + discoveredEndpointInfo.getEndpointName() + " " + discoveredEndpointInfo.getServiceId());
-            if (discoveredEndpointInfo.getEndpointName().isEmpty())
+            if (discoveredEndpointInfo.getEndpointName().length() < 3) {
                 return;
+            }
 
-            //Todo request user name from shared preferences& user photo is null
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
@@ -41,7 +42,6 @@ public class DiscoverService extends BaseService {
             user.setName(name);
             user.setEndpointId(id);
 
-            mUserRepository.insert(user);
             mOnDiscoverUsersListener.OnUserFound(user);
         }
 

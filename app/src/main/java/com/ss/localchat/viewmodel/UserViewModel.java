@@ -6,6 +6,7 @@ import android.arch.lifecycle.LiveData;
 import android.support.annotation.NonNull;
 
 import com.ss.localchat.db.UserRepository;
+import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.User;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class UserViewModel extends AndroidViewModel {
         userRepository = new UserRepository(application);
     }
 
-    public LiveData<List<User>> getUsersExceptOwner(UUID owner) {
+    public LiveData<List<Chat>> getUsersExceptOwner(UUID owner) {
         return userRepository.getUsersExceptOwner(owner);
     }
 

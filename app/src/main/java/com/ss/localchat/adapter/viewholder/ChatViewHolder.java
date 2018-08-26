@@ -1,7 +1,9 @@
 package com.ss.localchat.adapter.viewholder;
 
 import android.support.v7.widget.AppCompatTextView;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,6 +15,8 @@ import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.util.DateFormatUtil;
+
+import java.util.Date;
 
 
 public class ChatViewHolder extends RecyclerView.ViewHolder {
@@ -82,6 +86,16 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
                 if (mListener != null) {
                     mListener.onClick(user);
                 }
+            }
+        });
+
+        itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (mListener != null) {
+                    mListener.onLongClick(user, v);
+                }
+                return true;
             }
         });
     }

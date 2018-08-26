@@ -5,6 +5,7 @@ import android.arch.lifecycle.LiveData;
 import android.os.AsyncTask;
 
 import com.ss.localchat.db.dao.UserDao;
+import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.User;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class UserRepository {
         userDao = AppDatabase.getInstance(application).userDao();
     }
 
-    public LiveData<List<User>> getUsersExceptOwner(UUID owner) {
+    public LiveData<List<Chat>> getUsersExceptOwner(UUID owner) {
         return userDao.getUsersExceptOwner(owner);
     }
 

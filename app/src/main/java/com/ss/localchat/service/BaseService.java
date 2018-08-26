@@ -66,6 +66,16 @@ public abstract class BaseService extends IntentService {
         @Override
         public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
             mConnectionsClient.acceptConnection(id, mPayloadCallback);
+
+            String name = connectionInfo.getEndpointName().split(":")[0];
+            String uuidString = connectionInfo.getEndpointName().split(":")[1];
+
+            User user = new User();
+            user.setId(UUID.fromString(uuidString));
+            user.setName(name);
+            user.setEndpointId(id);
+
+            mUserRepository.insert(user);
             Log.v("____", "Connected to " + connectionInfo.getEndpointName());
         }
 
@@ -123,15 +133,12 @@ public abstract class BaseService extends IntentService {
 
     private MessageRepository mMessageRepository;
 
-    protected UserRepository mUserRepository;
+    private UserRepository mUserRepository;
 
     private User mUser;
 
-
     public BaseService(String name) {
         super(name);
-        mMessageRepository = new MessageRepository(getApplication());
-        mUserRepository = new UserRepository(getApplication());
     }
 
     @Nullable
@@ -149,6 +156,8 @@ public abstract class BaseService extends IntentService {
     public void onCreate() {
         super.onCreate();
         mConnectionsClient = Nearby.getConnectionsClient(this);
+        mMessageRepository = new MessageRepository(getApplication());
+        mUserRepository = new UserRepository(getApplication());
         createNotificationChannel(CHANNEL_ID);
     }
 

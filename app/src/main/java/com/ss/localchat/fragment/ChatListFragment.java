@@ -8,15 +8,17 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.ChatListAdapter;
-import com.ss.localchat.db.entity.Message;
+import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.DividerItemDecoration;
@@ -31,6 +33,9 @@ import java.util.UUID;
 public class ChatListFragment extends Fragment {
 
     public static final String FRAGMENT_TITLE = "Chats";
+
+
+    private MessageViewModel mMessageViewModel;
 
     public ChatListFragment() {
     }
@@ -59,7 +64,9 @@ public class ChatListFragment extends Fragment {
     }
 
     public void init(View v) {
-        final ChatListAdapter chatListAdapter = new ChatListAdapter(getActivity());
+        mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
+
+        final ChatListAdapter chatListAdapter = new ChatListAdapter();
         chatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
@@ -67,37 +74,26 @@ public class ChatListFragment extends Fragment {
                 intent.putExtra(ChatActivity.USER_EXTRA, user);
                 startActivity(intent);
             }
-        });
 
-        UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
-        final MessageViewModel messageViewModel = ViewModelProviders.of(getActivity()).get(MessageViewModel.class);
-
-        UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
-        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<User>>() {
             @Override
-            public void onChanged(@Nullable List<User> users) {
-                if (users == null || users.size() == 0)
-                    return;
-
-                for (final User user : users) {
-                    messageViewModel.getMessagesWith(user.getId()).observe(getActivity(), new Observer<List<Message>>() {
-                        @Override
-                        public void onChanged(@Nullable List<Message> messages) {
-                            if (messages == null || messages.size() == 0)
-                                return;
-
-                            int unreadMessagesCount = 0;
-                            int i = messages.size() - 1;
-                            while (i >= 0 && !messages.get(i).isRead()) {
-                                unreadMessagesCount++;
-                                i--;
-                            }
-                            chatListAdapter.setUser(user, messages.get(messages.size() - 1), unreadMessagesCount);
-                        }
-                    });
-                }
+            public void onLongClick(User user, View view) {
+                showPopup(user, view);
             }
         });
+
+        UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
+
+        UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
+        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
+            @Override
+            public void onChanged(@Nullable List<Chat> chats) {
+                if (chats == null)
+                    return;
+
+                chatListAdapter.setUsers(chats);
+            }
+        });
+
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 88));
 
@@ -106,5 +102,23 @@ public class ChatListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.addItemDecoration(dividerItemDecoration);
         recyclerView.setAdapter(chatListAdapter);
+    }
+
+    private void showPopup(final User user, View view) {
+        PopupMenu popupMenu = new PopupMenu(getActivity(), view);
+        getActivity().getMenuInflater().inflate(R.menu.popup_menu_chat_list_fragment, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_delete_chat:
+                        mMessageViewModel.clearHistory(user.getId());
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
+        popupMenu.show();
     }
 }

@@ -21,16 +21,8 @@ public class MessageViewModel extends AndroidViewModel {
         messageRepository = new MessageRepository(application);
     }
 
-    public LiveData<List<Message>> getAllMessages() {
-        return messageRepository.getAllMessages();
-    }
-
     public LiveData<List<Message>> getMessagesWith(UUID user_id) {
         return messageRepository.getMessagesWith(user_id);
-    }
-
-    public LiveData<Message> getLastMessage(UUID user_id) {
-        return messageRepository.getLastMessage(user_id);
     }
 
     public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read) {

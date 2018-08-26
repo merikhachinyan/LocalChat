@@ -170,12 +170,13 @@ public class ChatActivity extends AppCompatActivity {
         mUserViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
+                if (user == null) {
+                    return;
+                }
                 mUser = user;
                 initActionBar();
             }
         });
-
-
 
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
@@ -235,24 +236,18 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.chat_activity_menu, menu);
+        getMenuInflater().inflate(R.menu.menu_chat_activity, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
-            case R.id.action_search_in_chat:
-                Toast.makeText(this, "Search", Toast.LENGTH_SHORT).show();
+             case R.id.action_clear_history_in_chat:
+                mMessageViewModel.clearHistory(mUser.getId());
+                mMessageListAdapter.clear();
                 return true;
-            case R.id.action_clear_history_in_chat:
-                Toast.makeText(this, "Clear history", Toast.LENGTH_SHORT).show();
-                return true;
-            case R.id.action_delete_in_chat:
-                Toast.makeText(this, "Delete chat", Toast.LENGTH_SHORT).show();
-                return true;
-            case android.R.id.home:
+             case android.R.id.home:
                 onBackPressed();
                 return true;
             default:

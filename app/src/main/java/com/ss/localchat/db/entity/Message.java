@@ -13,7 +13,6 @@ import java.util.UUID;
 public class Message {
 
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "_id")
     @NonNull
     private Long id;
 

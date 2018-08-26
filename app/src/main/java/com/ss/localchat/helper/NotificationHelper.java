@@ -63,7 +63,7 @@ public class NotificationHelper {
         return builder.build();
     }
 
-    public static Notification createNotification(Context context, User user, String message) {
+    public static Notification createNotification(Context context, User user, String messageText) {
         Intent intent = new Intent(context, ChatActivity.class);
         intent.putExtra(ChatActivity.USER_EXTRA, user);
 
@@ -75,14 +75,16 @@ public class NotificationHelper {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle(user.getName())
-                .setContentText(message)
+                .setContentText(messageText)
                 .setContentIntent(pendingIntent)
                 .setColor(context.getResources().getColor(R.color.colorAccent))
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                 .setWhen(System.currentTimeMillis())
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(messageText));
 
         return builder.build();
     }

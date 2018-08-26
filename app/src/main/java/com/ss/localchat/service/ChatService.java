@@ -5,12 +5,14 @@ import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.databinding.ObservableArrayMap;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
 
 import com.google.android.gms.nearby.Nearby;
@@ -32,6 +34,7 @@ import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.helper.NotificationHelper;
+import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.ConnectionsBroadcastReceiver;
 import com.ss.localchat.viewmodel.UserViewModel;
@@ -41,7 +44,9 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
+
 
 public class ChatService extends IntentService{
 
@@ -58,17 +63,26 @@ public class ChatService extends IntentService{
         @Override
         public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
             mConnectionsClient.acceptConnection(id, mPayloadCallback);
+
+            mEndpoints.put(id, ConnectionState.CONNECTING);
+
             Log.v("____", "Connected to " + connectionInfo.getEndpointName());
+
         }
 
         @Override
         public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
-
+            if (connectionResolution.getStatus().isSuccess()) {
+                mEndpoints.put(id, ConnectionState.CONNECTED);
+            }
         }
 
         @Override
         public void onDisconnected(@NonNull String id) {
+            mEndpoints.put(id, ConnectionState.DISCONNECTED);
+
             Log.v("____", "Disconnected from " + id);
+
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
@@ -123,6 +137,8 @@ public class ChatService extends IntentService{
             //Todo request user name from shared preferences& user photo is null
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+
+            mEndpoints.put(id, ConnectionState.CONNECTING);
 
             String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
             String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
@@ -218,6 +234,10 @@ public class ChatService extends IntentService{
     private boolean isWifiDisabled;
     private boolean isLocationDisabled;
 
+    private ObservableArrayMap<String, ConnectionState> mEndpoints;
+
+    private OnMapChangedListener mMapChangedListener;
+
 
     public ChatService() {
         super("Service");
@@ -286,6 +306,17 @@ public class ChatService extends IntentService{
         mIntentFilter.addAction(ConnectionsBroadcastReceiver.LOCATION_ACTION);
 
         mConnectionsBroadcastReceiver.setOnConnectionsStateChangedListener(mListener);
+
+        mEndpoints = new ObservableArrayMap<>();
+
+        mEndpoints.addOnMapChangedCallback(new android.databinding.ObservableMap.OnMapChangedCallback<android.databinding.ObservableMap<String, ConnectionState>, String, ConnectionState>() {
+            @Override
+            public void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> sender, String key) {
+                if (mMapChangedListener != null) {
+                    mMapChangedListener.onMapChanged(sender);
+                }
+            }
+        });
     }
 
     private void startAdvertising() {
@@ -333,6 +364,10 @@ public class ChatService extends IntentService{
 
         isRunningService = false;
         Log.v("___", "Stop");
+
+        for (Map.Entry<String, ConnectionState> entry : mEndpoints.entrySet()) {
+            mEndpoints.put(entry.getKey(), ConnectionState.DISCONNECTED);
+        }
     }
 
     private void showMessageNotification(final String endpointId, final String messageText) {
@@ -372,8 +407,16 @@ public class ChatService extends IntentService{
             return isRunningService;
         }
 
-        public void setOnDiscoverUsersListener(OnDiscoverUsersListener OnDiscoverUsersListener) {
-            mDiscoverUsersListener = OnDiscoverUsersListener;
+        public ObservableArrayMap<String, ConnectionState> getEndpoints() {
+            return mEndpoints;
+        }
+
+        public void setOnDiscoverUsersListener(OnDiscoverUsersListener listener) {
+            mDiscoverUsersListener = listener;
+        }
+
+        public void setOnMapChangedListener(OnMapChangedListener listener) {
+            mMapChangedListener = listener;
         }
     }
 
@@ -381,5 +424,9 @@ public class ChatService extends IntentService{
         void OnUserFound(User user);
 
         void onUserLost(String id);
+    }
+
+    public interface OnMapChangedListener {
+        void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> map);
     }
 }

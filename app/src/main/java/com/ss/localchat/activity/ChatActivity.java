@@ -7,9 +7,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.databinding.ObservableArrayMap;
+import android.databinding.ObservableMap;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,12 +29,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.squareup.picasso.Picasso;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.helper.NotificationHelper;
+import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
 import com.ss.localchat.util.CircularTransformation;
@@ -45,10 +50,16 @@ public class ChatActivity extends AppCompatActivity {
 
     public static final String USER_EXTRA = "chat.user";
 
+    private static final String CONNECTING = "Connecting";
+    private static final String CONNECTED = "Connected";
+    private static final String DISCONNECTED = "Disconnected";
+
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mSendMessageBinder = (ChatService.ServiceBinder) service;
+
+            mSendMessageBinder.setOnMapChangedListener(mListener);
 
             isBound = true;
         }
@@ -60,6 +71,29 @@ public class ChatActivity extends AppCompatActivity {
             isBound = false;
         }
     };
+
+    private ChatService.OnMapChangedListener mListener = new ChatService.OnMapChangedListener() {
+        @Override
+        public void onMapChanged(ObservableMap<String, ConnectionState> map) {
+//            if (map.containsKey(mUser.getEndpointId())) {
+//                ConnectionState state = map.get(mUser.getEndpointId());
+//
+//                switch (state) {
+//                    case CONNECTING:
+//                        userInfo.setText("Connecting");
+//                        break;
+//                    case CONNECTED:
+//                        userInfo.setText("Connected");
+//                        break;
+//                    case DISCONNECTED:
+//                        userInfo.setText("Disconnected");
+//                        break;
+//                }
+//            }
+            setUserInfo((ObservableArrayMap<String, ConnectionState>) map);
+        }
+    };
+
 
     public static boolean isCurrentlyRunning;
 
@@ -76,6 +110,8 @@ public class ChatActivity extends AppCompatActivity {
     private UserViewModel mUserViewModel;
 
     private User mUser;
+
+    private ConnectionState mState;
 
     private String mMessageText;
 
@@ -131,6 +167,8 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private TextView userInfo;
+
     private void initActionBar() {
         View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
 
@@ -138,7 +176,8 @@ public class ChatActivity extends AppCompatActivity {
 
         TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
 
-        TextView userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+        userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+
 
         userName.setText(mUser.getName());
 
@@ -159,6 +198,9 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setCustomView(actionBarView);
         }
 
+        ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
+
+        setUserInfo(endpoints);
     }
 
     private void init() {
@@ -229,12 +271,16 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 mMessageText = mMessageInputEditText.getText().toString().trim();
-                if (!mMessageText.isEmpty()) {
-                    if (isBound) {
-                        mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
+                if (mState == ConnectionState.DISCONNECTED) {
+                    Snackbar.make(v, DISCONNECTED + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
+                } else {
+                    if (!mMessageText.isEmpty()) {
+                        if (isBound) {
+                            mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
+                        }
+                        sendMessage(mMessageText);
+                        mMessageInputEditText.setText("");
                     }
-                    sendMessage(mMessageText);
-                    mMessageInputEditText.setText("");
                 }
             }
         });
@@ -249,6 +295,27 @@ public class ChatActivity extends AppCompatActivity {
         message.setReceiverId(mUser.getId());
         message.setSenderId(myUserId);
         mMessageViewModel.insert(message);
+    }
+
+    private void setUserInfo(ObservableArrayMap<String, ConnectionState> endpoints) {
+        if (endpoints.containsKey(mUser.getEndpointId())) {
+            mState = endpoints.get(mUser.getEndpointId());
+
+            switch (mState) {
+                case CONNECTING:
+                    userInfo.setText(CONNECTING);
+                    break;
+                case CONNECTED:
+                    userInfo.setText(CONNECTED);
+                    break;
+                case DISCONNECTED:
+                    userInfo.setText(DISCONNECTED);
+                    break;
+            }
+        } else {
+            mState = ConnectionState.DISCONNECTED;
+            userInfo.setText(DISCONNECTED);
+        }
     }
 
     @Override

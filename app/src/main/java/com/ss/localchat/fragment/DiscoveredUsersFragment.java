@@ -1,119 +1,151 @@
-package com.ss.localchat.adapter;
+package com.ss.localchat.fragment;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.ss.localchat.R;
-import
-        com.ss.localchat.adapter.viewholder.DiscoveredUserHolde
-r;
-import
-        com.ss.localchat.adapter.viewholder.LoadingIndicatorView
-Holder;
+import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.service.ChatService;
 
-import java.util.ArrayList;
-import java.util.List;
+public class DiscoveredUsersFragment extends Fragment {
 
-public class DiscoveredUsersListAdapter extends
-        RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    public static final String FRAGMENT_TITLE = "Discover";
 
-    private static final int DISCOVERED_USER_TYPE = 1;
-
-    private static final int LOADING_INDICATOR_TYPE = 2;
+    private boolean temp_is_discovery_started = false;
 
 
-    private OnItemClickListener mListener;
 
-    private List<User> mUsers;
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mDiscoverBinder = (ChatService.ServiceBinder) service;
 
-    public DiscoveredUsersListAdapter() {
-        mUsers = new ArrayList<>();
+            mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
+//            mDiscoverBinder.startDiscovery();
+
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mDiscoverBinder = null;
+
+            isBound = false;
+        }
+    };
+
+    private ChatService.OnDiscoverUsersListener mOnDiscoverUsersListener =
+            new ChatService.OnDiscoverUsersListener() {
+                @Override
+                public void OnUserFound(User user) {
+                    mDiscoveredUsersListAdapter.addUser(user);
+                }
+
+                @Override
+                public void onUserLost(String id) {
+                    mDiscoveredUsersListAdapter.removeUserById(id);
+                }
+            };
+
+    private Button mStartDiscoverButton;
+
+    private DiscoveredUsersListAdapter mDiscoveredUsersListAdapter;
+
+    private ChatService.ServiceBinder mDiscoverBinder;
+
+    private boolean isBound;
+
+    public DiscoveredUsersFragment() {
+
     }
 
-    @NonNull
+    public static DiscoveredUsersFragment newInstance() {
+        DiscoveredUsersFragment fragment = new DiscoveredUsersFragment();
+        Bundle args = new Bundle();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder
-            (@NonNull ViewGroup parent, int viewType) {
-        View view;
-        switch (viewType) {
-            case DISCOVERED_USER_TYPE:
-                view = LayoutInflater.from(parent.getContext
-                        ()).inflate(R.layout.discovered_user_item_view, parent,
-                        false);
-                return new DiscoveredUserHolder(view,
-                        mListener);
-            case LOADING_INDICATOR_TYPE:
-                view = LayoutInflater.from(parent.getContext
-                        ()).inflate(R.layout.loading_indicator_item_view, parent,
-                        false);
-                return new LoadingIndicatorViewHolder(view);
-            default:
-                throw new IllegalArgumentException("No such
-                        input type in RecyclerView");
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getActivity().bindService(new Intent(getActivity(), ChatService.class),
+                mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_discovered_users, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        init(view);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            mDiscoverBinder.stopDiscovery();
+
+            getActivity().unbindService(mServiceConnection);
+
+            Log.v("___", "unbind discover");
         }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull
-                                         RecyclerView.ViewHolder holder, int position) {
-        if (holder.getItemViewType() ==
-                DISCOVERED_USER_TYPE) {
-            User user = mUsers.get(position);
-            ((DiscoveredUserHolder) holder).bind(user);
-        }
-    }
-
-    @Override
-    public int getItemCount() {
-        return mUsers.size();
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        if (position == mUsers.size() - 1 && mUsers.get
-                (position) == null)
-            return LOADING_INDICATOR_TYPE;
-        else
-            return DISCOVERED_USER_TYPE;
-    }
-
-    public void addUser(User user) {
-        mUsers.add(mUsers.size() - 1, user);
-        notifyItemInserted(mUsers.size() - 2);
-    }
-
-    public void removeUserById(String id) {
-        for (User user : mUsers) {
-            if (id.equals(user.getEndpointId())) {
-                int index = mUsers.indexOf(user);
-                mUsers.remove(user);
-                notifyItemRemoved(index);
-                break;
+    private void init(View view) {
+        mDiscoveredUsersListAdapter = new DiscoveredUsersListAdapter();
+        mDiscoveredUsersListAdapter.setOnItemClickListener(new DiscoveredUsersListAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(User user) {
+                Intent intent = new Intent(getActivity(), ChatActivity.class);
+                intent.putExtra(ChatActivity.USER_EXTRA, user);
+                startActivity(intent);
             }
-        }
-    }
+        });
 
-    public void showLoadingIndicator(boolean flag) {
-        if (flag) {
-            mUsers.add(null);
-            notifyItemInserted(mUsers.size() - 1);
-        } else {
-            int i = mUsers.size() - 1;
-            mUsers.remove(i);
-            notifyItemRemoved(i);
-        }
-    }
+        final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setAdapter(mDiscoveredUsersListAdapter);
 
-    public void setOnItemClickListener(OnItemClickListener
-                                               listener) {
-        mListener = listener;
-    }
+        mStartDiscoverButton = view.findViewById(R.id.start_discover_users_button);
+        mStartDiscoverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO implement is discover server is started or not
+                mDiscoveredUsersListAdapter.showLoadingIndicator(!temp_is_discovery_started);
+//                mStartDiscoverButton.setVisibility(View.GONE);
+                temp_is_discovery_started = !temp_is_discovery_started;
+                if (temp_is_discovery_started)
+                    mStartDiscoverButton.setText("Stop");
+                else
+                    mStartDiscoverButton.setText("Start");
 
-    public interface OnItemClickListener {
-        void onClick(User user);
+                if (isBound) {
+                    mDiscoverBinder.startDiscovery();
+                }
+            }
+        });
     }
 }

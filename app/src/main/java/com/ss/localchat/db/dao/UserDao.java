@@ -30,6 +30,9 @@ public interface UserDao {
     @Query("SELECT * FROM users WHERE _id = :id")
     LiveData<User> getUserById(UUID id);
 
+    @Query("SELECT * FROM users WHERE endpoint_id = :endpointId")
+    LiveData<User> getUserByEndpointId(String endpointId);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(User user);
 

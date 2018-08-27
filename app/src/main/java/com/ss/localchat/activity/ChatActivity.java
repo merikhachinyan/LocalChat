@@ -7,9 +7,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.databinding.ObservableArrayMap;
+import android.databinding.ObservableMap;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,13 +29,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.squareup.picasso.Picasso;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.helper.NotificationHelper;
+import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
-import com.ss.localchat.service.SendMessageService;
+import com.ss.localchat.service.ChatService;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
@@ -44,28 +50,57 @@ public class ChatActivity extends AppCompatActivity {
 
     public static final String USER_EXTRA = "chat.user";
 
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mSendMessageBinder = (SendMessageService.SendMessageBinder) service;
-            mSendMessageBinder.send(mUser.getEndpointId(), mMessageText);
+    private static final String CONNECTING = "Connecting";
 
-            unbindService(mServiceConnection);
-        }
+    private static final String CONNECTED = "Connected";
 
+    private static final String DISCONNECTED =
+            "Disconnected";
+
+
+    private ServiceConnection mServiceConnection = new
+            ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName
+                                                       name, IBinder service) {
+                    mSendMessageBinder =
+                            (ChatService.ServiceBinder) service;
+
+                    mSendMessageBinder.setOnMapChangedListener
+                            (mListener);
+
+                    isBound = true;
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName
+                                                          name) {
+                    mSendMessageBinder = null;
+
+                    isBound = false;
+                }
+            };
+
+    private ChatService.OnMapChangedListener mListener
+            = new ChatService.OnMapChangedListener() {
         @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mSendMessageBinder = null;
+        public void onMapChanged(ObservableMap<String,
+                ConnectionState> map) {
+            setUserInfo((ObservableArrayMap<String,
+                    ConnectionState>) map);
         }
     };
 
     public static boolean isCurrentlyRunning;
 
+    public static UUID currentUserId;
+
     private EditText mMessageInputEditText;
 
     private MessageListAdapter mMessageListAdapter;
 
-    private SendMessageService.SendMessageBinder mSendMessageBinder;
+    private ChatService.ServiceBinder
+            mSendMessageBinder;
 
     private MessageViewModel mMessageViewModel;
 
@@ -73,7 +108,12 @@ public class ChatActivity extends AppCompatActivity {
 
     private User mUser;
 
+    private ConnectionState mState;
+
     private String mMessageText;
+
+    private boolean isBound;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,10 +131,16 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         if (getIntent() != null) {
-            mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
+            mUser = (User) getIntent().getSerializableExtra
+                    (USER_EXTRA);
+
+            currentUserId = mUser.getId();
         }
 
         init();
+
+        bindService(new Intent(this, ChatService.class),
+                mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -111,14 +157,30 @@ public class ChatActivity extends AppCompatActivity {
         isCurrentlyRunning = false;
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            unbindService(mServiceConnection);
+        }
+    }
+
+    private TextView userInfo;
+
     private void initActionBar() {
-        View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
+        View actionBarView = LayoutInflater.from(this).inflate
+                (R.layout.chat_activity_action_bar_custom_view, null);
 
-        ImageView userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
+        ImageView userImage = actionBarView.findViewById
+                (R.id.user_circle_image_view_on_toolbar);
 
-        TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
+        TextView userName = actionBarView.findViewById
+                (R.id.user_name_text_view_on_toolbar);
 
-        TextView userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+        userInfo = actionBarView.findViewById
+                (R.id.user_info_text_view_on_toolbar);
+
 
         userName.setText(mUser.getName());
 
@@ -139,35 +201,53 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setCustomView(actionBarView);
         }
 
+        ObservableArrayMap<String, ConnectionState>
+                endpoints = mSendMessageBinder.getEndpoints();
+
+        setUserInfo(endpoints);
     }
 
     private void init() {
 
-        mMessageInputEditText = findViewById(R.id.message_input_edit_text_chat_activity);
-        mMessageInputEditText.setInputType(InputType.TYPE_CLASS_TEXT |
-                InputType.TYPE_TEXT_FLAG_MULTI_LINE |
-                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        mMessageInputEditText = findViewById
+                (R.id.message_input_edit_text_chat_activity);
+        mMessageInputEditText.setInputType
+                (InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_FLAG_MULTI_LINE |
+
+                        InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         mMessageInputEditText.requestFocus();
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        getWindow().setSoftInputMode
+                (WindowManager.LayoutParams.SOFT_INPUT_STATE_A
+                        LWAYS_HIDDEN);
 
 
-        final RecyclerView recyclerView = findViewById(R.id.recycler_view_chat_activity);
+        final RecyclerView recyclerView = findViewById
+                (R.id.recycler_view_chat_activity);
 
-        mMessageListAdapter = new MessageListAdapter(this);
-        mMessageListAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                recyclerView.smoothScrollToPosition(mMessageListAdapter.getItemCount());
-            }
-        });
+        mMessageListAdapter = new MessageListAdapter
+                (this);
+        mMessageListAdapter.registerAdapterDataObserver
+                (new RecyclerView.AdapterDataObserver() {
+                    @Override
+                    public void onItemRangeInserted(int positionStart,
+                                                    int itemCount) {
+                        recyclerView.smoothScrollToPosition
+                                (mMessageListAdapter.getItemCount());
+                    }
+                });
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        LinearLayoutManager linearLayoutManager = new
+                LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
-        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setLayoutManager
+                (linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
 
-        mUserViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
-        mUserViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
+        mUserViewModel = ViewModelProviders.of(this).get
+                (UserViewModel.class);
+        mUserViewModel.getUserById(mUser.getId
+                ()).observe(this, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user == null) {
@@ -178,48 +258,79 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
-        final LiveData<List<Message>> messagesLiveData = mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), true);
-        messagesLiveData.observe(this, new Observer<List<Message>>() {
-            @Override
-            public void onChanged(@Nullable List<Message> messages) {
-                mMessageListAdapter.addMessages(messages);
-                messagesLiveData.removeObserver(this);
+        NotificationHelper.getManager(this).cancel
+                (mUser.getId().toString(),
+                        NotificationHelper.MESSAGE_NOTIFICATION_ID);
 
-                mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), false).observe(ChatActivity.this, new Observer<List<Message>>() {
+
+        mMessageViewModel = ViewModelProviders.of
+                (this).get(MessageViewModel.class);
+
+        final LiveData<List<Message>> messagesLiveData =
+                mMessageViewModel.getReadOrUnreadMessagesWith
+                        (mUser.getId(), true);
+        messagesLiveData.observe(this, new
+                Observer<List<Message>>() {
                     @Override
-                    public void onChanged(@Nullable List<Message> messages) {
-                        if (messages == null || messages.size() == 0)
-                            return;
+                    public void onChanged(@Nullable List<Message>
+                                                  messages) {
+                        mMessageListAdapter.addMessages
+                                (messages);
+                        messagesLiveData.removeObserver(this);
 
-                        for (Message message : messages) {
-                            message.setRead(true);
-                        }
-                        mMessageViewModel.update(messages.toArray(new Message[messages.size()]));
-                        mMessageListAdapter.addMessages(messages);
+
+                        mMessageViewModel.getReadOrUnreadMessagesWith
+                                (mUser.getId(), false).observe(ChatActivity.this, new
+                                Observer<List<Message>>() {
+                                    @Override
+                                    public void onChanged(@Nullable
+                                                                  List<Message> messages) {
+                                        if (messages == null || messages.size() ==
+                                                0)
+                                            return;
+
+                                        for (Message message : messages) {
+                                            message.setRead(true);
+                                        }
+                                        mMessageViewModel.update
+                                                (messages.toArray(new Message[messages.size()]));
+                                        mMessageListAdapter.addMessages
+                                                (messages);
+                                    }
+                                });
                     }
                 });
-            }
-        });
 
 
-        findViewById(R.id.send_button_chat_activity).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMessageText = mMessageInputEditText.getText().toString().trim();
-                if (!mMessageText.isEmpty()) {
-                    sendMessage(mMessageText);
-                    mMessageInputEditText.setText("");
-                }
-            }
-        });
+        findViewById
+                (R.id.send_button_chat_activity).setOnClickListener(new
+                                                                            View.OnClickListener() {
+                                                                                @Override
+                                                                                public void onClick(View v) {
+                                                                                    mMessageText =
+                                                                                            mMessageInputEditText.getText().toString().trim();
+                                                                                    if (mState ==
+                                                                                            ConnectionState.DISCONNECTED) {
+                                                                                        Snackbar.make(v, DISCONNECTED + " from "
+                                                                                                + mUser.getName(), Snackbar.LENGTH_LONG).show();
+                                                                                    } else {
+                                                                                        if (!mMessageText.isEmpty()) {
+                                                                                            if (isBound) {
+                                                                                                mSendMessageBinder.sendMessageTo
+                                                                                                        (mUser.getEndpointId(), mMessageText);
+                                                                                            }
+                                                                                            sendMessage(mMessageText);
+                                                                                            mMessageInputEditText.setText("");
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            });
     }
 
     private void sendMessage(String text) {
-        bindSendMessageService();
-
-        UUID myUserId = Preferences.getUserId(getApplicationContext());
+        UUID myUserId = Preferences.getUserId
+                (getApplicationContext());
 
         Message message = new Message();
         message.setText(text);
@@ -229,25 +340,44 @@ public class ChatActivity extends AppCompatActivity {
         mMessageViewModel.insert(message);
     }
 
-    private void bindSendMessageService() {
-        Intent intent = new Intent(this, SendMessageService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+    private void setUserInfo(ObservableArrayMap<String,
+            ConnectionState> endpoints) {
+        if (endpoints.containsKey(mUser.getEndpointId())) {
+            mState = endpoints.get(mUser.getEndpointId());
+
+            switch (mState) {
+                case CONNECTING:
+                    userInfo.setText(CONNECTING);
+                    break;
+                case CONNECTED:
+                    userInfo.setText(CONNECTED);
+                    break;
+                case DISCONNECTED:
+                    userInfo.setText(DISCONNECTED);
+                    break;
+            }
+        } else {
+            mState = ConnectionState.DISCONNECTED;
+            userInfo.setText(DISCONNECTED);
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_chat_activity, menu);
+        getMenuInflater().inflate(R.menu.menu_chat_activity,
+                menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-             case R.id.action_clear_history_in_chat:
-                mMessageViewModel.clearHistory(mUser.getId());
+            case R.id.action_clear_history_in_chat:
+                mMessageViewModel.clearHistory(mUser.getId
+                        ());
                 mMessageListAdapter.clear();
                 return true;
-             case android.R.id.home:
+            case android.R.id.home:
                 onBackPressed();
                 return true;
             default:

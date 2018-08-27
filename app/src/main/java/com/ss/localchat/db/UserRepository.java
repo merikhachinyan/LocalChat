@@ -28,6 +28,10 @@ public class UserRepository {
         return userDao.getUserById(id);
     }
 
+    public LiveData<User> getUserByEndpointId(String endpointId) {
+        return userDao.getUserByEndpointId(endpointId);
+    }
+
     public void insert(User user) {
         new InsertAsyncTask(userDao).execute(user);
     }

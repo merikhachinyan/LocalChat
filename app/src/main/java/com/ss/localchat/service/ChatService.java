@@ -13,7 +13,6 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
@@ -28,7 +27,6 @@ import com.google.android.gms.nearby.connection.Payload;
 import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
-
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.db.MessageRepository;
 import com.ss.localchat.db.UserRepository;
@@ -49,9 +47,9 @@ import java.util.Map;
 import java.util.UUID;
 
 
-public class ChatService extends IntentService {
+public class ChatService extends IntentService{
 
-    public static final String NOTIFICATION_TITLE = "Local  Chat";
+    public static final String NOTIFICATION_TITLE = "Local Chat";
 
     public static final String NOTIFICATION_CONTENT = "Advertising...";
 
@@ -61,120 +59,121 @@ public class ChatService extends IntentService {
 
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
-                @Override
-                public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
-                    mConnectionsClient.acceptConnection(id, mPayloadCallback);
+        @Override
+        public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
+            mConnectionsClient.acceptConnection(id, mPayloadCallback);
 
-                    mEndpoints.put(id, ConnectionState.CONNECTING);
+            mEndpoints.put(id, ConnectionState.CONNECTING);
 
-                    String name = connectionInfo.getEndpointName().split(":")[0];
-                    String uuidString = connectionInfo.getEndpointName().split(":")[1];
+            String name = connectionInfo.getEndpointName().split(":")[0];
+            String uuidString = connectionInfo.getEndpointName().split(":")[1];
 
-                    User user = new User();
-                    user.setId(UUID.fromString(uuidString));
-                    user.setName(name);
-                    user.setEndpointId(id);
+            User user = new User();
+            user.setId(UUID.fromString(uuidString));
+            user.setName(name);
+            user.setEndpointId(id);
 
-                    mUserRepository.insert(user);
+            mUserRepository.insert(user);
 
-                    Log.v("____", "Connected to " + connectionInfo.getEndpointName());
-                }
+            Log.v("____", "Connected to " + connectionInfo.getEndpointName());
 
-                @Override
-                public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
-                    if (connectionResolution.getStatus().isSuccess()) {
-                        mEndpoints.put(id, ConnectionState.CONNECTED);
-                    }
-                }
+        }
 
-                @Override
-                public void onDisconnected(@NonNull String id) {
-                    mEndpoints.put(id, ConnectionState.DISCONNECTED);
+        @Override
+        public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
+            if (connectionResolution.getStatus().isSuccess()) {
+                mEndpoints.put(id, ConnectionState.CONNECTED);
+            }
+        }
 
-                    Log.v("____", "Disconnected from " + id);
+        @Override
+        public void onDisconnected(@NonNull String id) {
+            mEndpoints.put(id, ConnectionState.DISCONNECTED);
 
-                    String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
-                    mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
-                }
-            };
+            Log.v("____", "Disconnected from " + id);
+
+            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+
+        }
+    };
 
     protected PayloadCallback mPayloadCallback = new PayloadCallback() {
-                @Override
-                public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
+        @Override
+        public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
 
-                    if (payload.getType() == Payload.Type.BYTES) {
-                        try {
-                            String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
+            if (payload.getType() == Payload.Type.BYTES) {
+                try {
+                    String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
 
-                            JSONObject jsonObject = new JSONObject(payloadText);
-                            UUID senderId = UUID.fromString(jsonObject.getString("id"));
-                            String messageText = jsonObject.getString("message");
+                    JSONObject jsonObject = new JSONObject(payloadText);
+                    UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                    String messageText = jsonObject.getString("message");
 
-                            UUID myUserId = Preferences.getUserId(getApplicationContext());
+                    UUID myUserId = Preferences.getUserId(getApplicationContext());
 
-                            Message message = new Message();
-                            message.setText(messageText);
-                            message.setRead(false);
-                            message.setReceiverId(myUserId);
-                            message.setSenderId(senderId);
-                            message.setDate(new Date());
-                            mMessageRepository.insert(message);
+                    Message message = new Message();
+                    message.setText(messageText);
+                    message.setRead(false);
+                    message.setReceiverId(myUserId);
+                    message.setSenderId(senderId);
+                    message.setDate(new Date());
+                    mMessageRepository.insert(message);
 
 
-                            showMessageNotification(s, messageText);
+                    showMessageNotification(s, messageText);
 
-//                    Toast.makeText(BaseService.this,messageText, Toast.LENGTH_SHORT).show();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
+//                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+            }
+        }
 
-                @Override
-                public void onPayloadTransferUpdate(@NonNull String s, @NonNull PayloadTransferUpdate payloadTransferUpdate) {
-                }
-            };
+        @Override
+        public void onPayloadTransferUpdate(@NonNull String s, @NonNull PayloadTransferUpdate payloadTransferUpdate) {
+        }
+    };
 
     protected EndpointDiscoveryCallback mEndpointDiscoveryCallback = new EndpointDiscoveryCallback() {
-                @Override
-                public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
+        @Override
+        public void onEndpointFound(@NonNull String id, @NonNull DiscoveredEndpointInfo discoveredEndpointInfo) {
 
-                    Log.v("____", id + " " + discoveredEndpointInfo.getEndpointName() + " " + discoveredEndpointInfo.getServiceId());
-                    if (discoveredEndpointInfo.getEndpointName().length() < 3)
-                        return;
+            Log.v("____", id + " " + discoveredEndpointInfo.getEndpointName() + " " + discoveredEndpointInfo.getServiceId());
+            if (discoveredEndpointInfo.getEndpointName().length() < 3)
+                return;
 
-                    //Todo request user name from shared preferences& user photo is null
-                    String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
-                    mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+            //Todo request user name from shared preferences& user photo is null
+            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
-                    mEndpoints.put(id, ConnectionState.CONNECTING);
+            mEndpoints.put(id, ConnectionState.CONNECTING);
 
-                    String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
-                    String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
+            String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
+            String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
 
-                    User user = new User();
-                    user.setId(UUID.fromString(uuidString));
-                    user.setName(name);
-                    user.setEndpointId(id);
+            User user = new User();
+            user.setId(UUID.fromString(uuidString));
+            user.setName(name);
+            user.setEndpointId(id);
 
-//                    mUserRepository.insert(user);
-                    mDiscoverUsersListener.OnUserFound(user);
-                }
+//            mUserRepository.insert(user);
+            mDiscoverUsersListener.OnUserFound(user);
+        }
 
-                @Override
-                public void onEndpointLost(@NonNull String id) {
-                    mDiscoverUsersListener.onUserLost(id);
-                    Log.v("____", "Lost");
-                }
-            };
+        @Override
+        public void onEndpointLost(@NonNull String id) {
+            mDiscoverUsersListener.onUserLost(id);
+            Log.v("____", "Lost");
+        }
+    };
 
     private ConnectionsBroadcastReceiver.OnConnectionsStateChangedListener mListener =
             new ConnectionsBroadcastReceiver.OnConnectionsStateChangedListener() {
                 @Override
                 public void onBluetoothDisabled(boolean flag) {
                     if (flag) {
-                        if (Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.O) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (isLocationDisabled) {
                                 mConnectionsClient.stopDiscovery();
                             }
@@ -208,11 +207,9 @@ public class ChatService extends IntentService {
                 }
 
                 @Override
-                public void onLocationStateDisabled(boolean
-                                                            flag) {
+                public void onLocationStateDisabled(boolean flag) {
                     if (flag) {
-                        if (Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.O) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if(isBluetoothDisabled) {
                                 mConnectionsClient.stopDiscovery();
                             }
@@ -223,7 +220,7 @@ public class ChatService extends IntentService {
                         isLocationDisabled = false;
                     }
                 }
-    };
+            };
 
 
     private static boolean isRunningService;
@@ -257,11 +254,11 @@ public class ChatService extends IntentService {
 
     public ChatService(String name) {
         super(name);
+
     }
 
     @Override
-    public int onStartCommand(@Nullable Intent intent, int
-            flags, int startId) {
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         startAdvertising();
 
         startForegroundAdvertiseService();
@@ -282,8 +279,7 @@ public class ChatService extends IntentService {
 
         init();
 
-        registerReceiver(mConnectionsBroadcastReceiver,
-                mIntentFilter);
+        registerReceiver(mConnectionsBroadcastReceiver, mIntentFilter);
     }
 
     @Nullable
@@ -300,8 +296,7 @@ public class ChatService extends IntentService {
     public void onDestroy() {
         super.onDestroy();
 
-        unregisterReceiver
-                (mConnectionsBroadcastReceiver);
+        unregisterReceiver(mConnectionsBroadcastReceiver);
     }
 
     private void init() {
@@ -319,19 +314,15 @@ public class ChatService extends IntentService {
         mIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mIntentFilter.addAction(ConnectionsBroadcastReceiver.LOCATION_ACTION);
 
-
         mConnectionsBroadcastReceiver.setOnConnectionsStateChangedListener(mListener);
 
         mEndpoints = new ObservableArrayMap<>();
 
         mEndpoints.addOnMapChangedCallback(new android.databinding.ObservableMap.OnMapChangedCallback<android.databinding.ObservableMap<String, ConnectionState>, String, ConnectionState>() {
             @Override
-            public void onMapChanged
-            (android.databinding.ObservableMap<String,
-                    ConnectionState> sender, String key) {
+            public void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> sender, String key) {
                 if (mMapChangedListener != null) {
-                    mMapChangedListener.onMapChanged
-                            (sender);
+                    mMapChangedListener.onMapChanged(sender);
                 }
             }
         });
@@ -344,14 +335,15 @@ public class ChatService extends IntentService {
         String ownerName = myUserName + ":" + myUserId.toString();
         Log.v("____", "Advertising: " + ownerName);
         mConnectionsClient.startAdvertising(ownerName, getPackageName(), mConnectionLifecycleCallback, new AdvertisingOptions.Builder()
-                        .setStrategy(STRATEGY)
-                        .build());
+                .setStrategy(STRATEGY)
+                .build());
     }
 
     private void discover() {
-        mConnectionsClient.startDiscovery(getPackageName(), mEndpointDiscoveryCallback, new DiscoveryOptions.Builder()
-                                .setStrategy(STRATEGY)
-                                .build());
+        mConnectionsClient.startDiscovery(getPackageName(), mEndpointDiscoveryCallback,
+                new DiscoveryOptions.Builder()
+                        .setStrategy(STRATEGY)
+                        .build());
     }
 
     private void sendMessage(String id, String messageText) {
@@ -369,10 +361,7 @@ public class ChatService extends IntentService {
     }
 
     public void startForegroundAdvertiseService() {
-        startForeground
-                (FOREGROUND_NOTIFICATION_ID,
-                        NotificationHelper.createAdvertiseNotification(this,
-                                NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
+        startForeground(FOREGROUND_NOTIFICATION_ID, NotificationHelper.createAdvertiseNotification(this, NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
     private void stopAdvertising() {
@@ -385,32 +374,23 @@ public class ChatService extends IntentService {
         isRunningService = false;
         Log.v("___", "Stop");
 
-        for (Map.Entry<String, ConnectionState> entry :
-                mEndpoints.entrySet()) {
-            mEndpoints.put(entry.getKey(),
-                    ConnectionState.DISCONNECTED);
+        for (Map.Entry<String, ConnectionState> entry : mEndpoints.entrySet()) {
+            mEndpoints.put(entry.getKey(), ConnectionState.DISCONNECTED);
         }
     }
 
-    private void showMessageNotification(final String
-                                                 endpointId, final String messageText) {
-        final UserViewModel userViewModel = new
-                UserViewModel(getApplication());
+    private void showMessageNotification(final String endpointId, final String messageText) {
+        final UserViewModel userViewModel = new UserViewModel(getApplication());
 
-        userViewModel.getUserByEndpointId
-                (endpointId).observeForever(new Observer<User>() {
+        userViewModel.getUserByEndpointId(endpointId).observeForever(new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
-                    if (!ChatActivity.isCurrentlyRunning ||
-                            (ChatActivity.isCurrentlyRunning && !
-                                    ChatActivity.currentUserId.equals(user.getId()))) {
-                        NotificationHelper.showNotification
-                                (getApplicationContext(), user, messageText);
+                    if (!ChatActivity.isCurrentlyRunning || (ChatActivity.isCurrentlyRunning && !ChatActivity.currentUserId.equals(user.getId()))) {
+                        NotificationHelper.showNotification(getApplicationContext(), user, messageText);
                     }
                 }
-                userViewModel.getUserByEndpointId
-                        (endpointId).removeObserver(this);
+                userViewModel.getUserByEndpointId(endpointId).removeObserver(this);
             }
         });
     }
@@ -424,8 +404,7 @@ public class ChatService extends IntentService {
             mConnectionsClient.stopDiscovery();
         }
 
-        public void sendMessageTo(String id, String
-                messageText) {
+        public void sendMessageTo(String id, String messageText) {
             sendMessage(id, messageText);
         }
 
@@ -437,18 +416,15 @@ public class ChatService extends IntentService {
             return isRunningService;
         }
 
-        public ObservableArrayMap<String, ConnectionState>
-        getEndpoints() {
+        public ObservableArrayMap<String, ConnectionState> getEndpoints() {
             return mEndpoints;
         }
 
-        public void setOnDiscoverUsersListener
-                (OnDiscoverUsersListener listener) {
+        public void setOnDiscoverUsersListener(OnDiscoverUsersListener listener) {
             mDiscoverUsersListener = listener;
         }
 
-        public void setOnMapChangedListener
-                (OnMapChangedListener listener) {
+        public void setOnMapChangedListener(OnMapChangedListener listener) {
             mMapChangedListener = listener;
         }
     }
@@ -460,8 +436,6 @@ public class ChatService extends IntentService {
     }
 
     public interface OnMapChangedListener {
-        void onMapChanged
-                (android.databinding.ObservableMap<String,
-                        ConnectionState> map);
+        void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> map);
     }
 }

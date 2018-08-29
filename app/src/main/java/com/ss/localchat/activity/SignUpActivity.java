@@ -79,6 +79,8 @@ public class SignUpActivity extends AppCompatActivity {
                     new UserRepository(getApplication()).insert(user);
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY,
+                            user.getPhotoUrl() == null ? null : user.getPhotoUrl().toString());
 
                     startMainActivity();
                 }

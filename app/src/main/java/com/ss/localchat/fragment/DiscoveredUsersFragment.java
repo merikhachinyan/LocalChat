@@ -71,6 +71,8 @@ public class DiscoveredUsersFragment extends Fragment {
 
     private boolean isBound;
 
+    private boolean isStarted;
+
     public DiscoveredUsersFragment() {
 
     }
@@ -135,15 +137,19 @@ public class DiscoveredUsersFragment extends Fragment {
             public void onClick(View v) {
                 // TODO implement is discover server is started or not
                 mDiscoveredUsersListAdapter.showLoadingIndicator(!temp_is_discovery_started);
-//                mStartDiscoverButton.setVisibility(View.GONE);
                 temp_is_discovery_started = !temp_is_discovery_started;
-                if (temp_is_discovery_started)
+                if (temp_is_discovery_started) {
                     mStartDiscoverButton.setText("Stop");
-                else
+
+                    if (isBound) {
+                        mDiscoverBinder.startDiscovery();
+                    }
+                } else {
                     mStartDiscoverButton.setText("Start");
 
-                if (isBound) {
-                    mDiscoverBinder.startDiscovery();
+                    if (isBound) {
+                        mDiscoverBinder.stopDiscovery();
+                    }
                 }
             }
         });

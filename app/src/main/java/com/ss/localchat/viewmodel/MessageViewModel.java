@@ -29,6 +29,10 @@ public class MessageViewModel extends AndroidViewModel {
         return messageRepository.getReadOrUnreadMessagesWith(user_id, is_read);
     }
 
+    public LiveData<List<Message>> getUnreadMessagesWith(UUID user_id, boolean is_read_receiver) {
+        return messageRepository.getUnreadMessagesWith(user_id, is_read_receiver);
+    }
+
     public void update(Message... messages) {
         messageRepository.update(messages);
     }

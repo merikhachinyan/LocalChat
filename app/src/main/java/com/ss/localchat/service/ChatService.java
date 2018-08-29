@@ -1,11 +1,14 @@
 package com.ss.localchat.service;
 
 import android.app.IntentService;
+import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.databinding.ObservableArrayList;
 import android.databinding.ObservableArrayMap;
+import android.databinding.ObservableList;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
@@ -36,6 +39,8 @@ import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.ConnectionsBroadcastReceiver;
+import com.ss.localchat.viewmodel.MessageViewModel;
+import com.ss.localchat.viewmodel.ReadMessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import org.json.JSONException;
@@ -43,6 +48,7 @@ import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -103,6 +109,27 @@ public class ChatService extends IntentService{
         public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
 
             if (payload.getType() == Payload.Type.BYTES) {
+
+                try {
+                    String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
+
+                    JSONObject jsonObject = new JSONObject(payloadText);
+                    UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                    String messageText = jsonObject.getString("isRead");
+
+                    if (messageText.equals(ChatActivity.READ_MESSAGE)) {
+//                        mReceivers.clear();
+//                        mReceivers.add(senderId);
+                        markAsRead(senderId);
+                    }
+
+//                    if (messageText.equals(ChatActivity.READ_MESSAGE)) {
+//                        mReadMessageViewModel.setReadMessages(senderId);
+//                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 try {
                     String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
 
@@ -147,7 +174,9 @@ public class ChatService extends IntentService{
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
-            mEndpoints.put(id, ConnectionState.CONNECTING);
+            if (mEndpoints.get(id) != ConnectionState.CONNECTED) {
+                mEndpoints.put(id, ConnectionState.CONNECTING);
+            }
 
             String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
             String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
@@ -225,6 +254,8 @@ public class ChatService extends IntentService{
 
     private static boolean isRunningService;
 
+    private static boolean isRunningDiscovery;
+
     private ConnectionsClient mConnectionsClient;
 
     private MessageRepository mMessageRepository;
@@ -245,7 +276,11 @@ public class ChatService extends IntentService{
 
     private ObservableArrayMap<String, ConnectionState> mEndpoints;
 
+    private ObservableArrayList<UUID> mReceivers;
+
     private OnMapChangedListener mMapChangedListener;
+
+    private ReadMessageViewModel mReadMessageViewModel;
 
 
     public ChatService() {
@@ -326,7 +361,57 @@ public class ChatService extends IntentService{
                 }
             }
         });
+
+        mReceivers = new ObservableArrayList<>();
+
+        mReceivers.addOnListChangedCallback(new ObservableList.OnListChangedCallback<ObservableList<UUID>>() {
+            @Override
+            public void onChanged(ObservableList<UUID> uuids) {
+                if (mMapChangedListener != null) {
+                    mMapChangedListener.onListChanged(uuids);
+                }
+            }
+
+            @Override
+            public void onItemRangeChanged(ObservableList<UUID> uuids, int i, int i1) {
+
+            }
+
+            @Override
+            public void onItemRangeInserted(ObservableList<UUID> uuids, int i, int i1) {
+
+            }
+
+            @Override
+            public void onItemRangeMoved(ObservableList<UUID> uuids, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onItemRangeRemoved(ObservableList<UUID> uuids, int i, int i1) {
+
+            }
+        });
+
+        //mReadMessageViewModel = new ReadMessageViewModel();
     }
+
+    private void markAsRead(UUID uuid) {
+        final MessageViewModel model = new MessageViewModel(getApplication());
+
+                final LiveData<List<Message>> liveData = model.getUnreadMessagesWith(uuid, false);
+                liveData.observeForever(new Observer<List<Message>>() {
+                    @Override
+                    public void onChanged(@Nullable List<Message> messages) {
+                        for (Message message : messages) {
+                            message.setReadReceiver(true);
+                        }
+                        model.update(messages.toArray(new Message[messages.size()]));
+
+                        liveData.removeObserver(this);
+                    }
+                });
+            }
 
     private void startAdvertising() {
         String myUserName = Preferences.getUserName(getApplicationContext());
@@ -344,6 +429,8 @@ public class ChatService extends IntentService{
                 new DiscoveryOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());
+
+        isRunningDiscovery = true;
     }
 
     private void sendMessage(String id, String messageText) {
@@ -353,6 +440,20 @@ public class ChatService extends IntentService{
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", myUserId.toString());
             jsonObject.put("message", messageText);
+            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readMessage(String id, String readMessage) {
+        try {
+            UUID userId = Preferences.getUserId(getApplicationContext());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", userId.toString());
+            jsonObject.put("isRead", readMessage);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
@@ -402,10 +503,16 @@ public class ChatService extends IntentService{
 
         public void stopDiscovery() {
             mConnectionsClient.stopDiscovery();
+
+            isRunningDiscovery = false;
         }
 
         public void sendMessageTo(String id, String messageText) {
             sendMessage(id, messageText);
+        }
+
+        public void markMessageAsRead(String id, String readMessage) {
+            readMessage(id, readMessage);
         }
 
         public void stopService() {
@@ -416,8 +523,20 @@ public class ChatService extends IntentService{
             return isRunningService;
         }
 
+        public boolean isRunningDiscovery() {
+            return isRunningDiscovery;
+        }
+
+        public void clear() {
+            mReceivers.clear();
+        }
+
         public ObservableArrayMap<String, ConnectionState> getEndpoints() {
             return mEndpoints;
+        }
+
+        public ObservableArrayList<UUID> getReceivers() {
+            return mReceivers;
         }
 
         public void setOnDiscoverUsersListener(OnDiscoverUsersListener listener) {
@@ -437,5 +556,7 @@ public class ChatService extends IntentService{
 
     public interface OnMapChangedListener {
         void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> map);
+
+        void onListChanged(ObservableList<UUID> list);
     }
 }

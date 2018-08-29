@@ -63,7 +63,13 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 ((ReceivedMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case SENT_MESSAGE_TYPE:
-                ((SentMessageHolder) holder).bind(mMessages.get(position));
+                if (mMessages.get(position).isReadReceiver()) {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.read_message);
+            } else {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.unread_message);
+
+            }
+                //((SentMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));

@@ -7,7 +7,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.databinding.ObservableArrayList;
 import android.databinding.ObservableArrayMap;
+import android.databinding.ObservableList;
 import android.databinding.ObservableMap;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -41,6 +43,7 @@ import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
+import com.ss.localchat.viewmodel.ReadMessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.List;
@@ -55,6 +58,8 @@ public class ChatActivity extends AppCompatActivity {
     private static final String CONNECTED = "Connected";
 
     private static final String DISCONNECTED = "Disconnected";
+
+    public static final String READ_MESSAGE = "00read00";
 
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -80,6 +85,11 @@ public class ChatActivity extends AppCompatActivity {
         public void onMapChanged(ObservableMap<String, ConnectionState> map) {
             setUserInfo((ObservableArrayMap<String, ConnectionState>) map);
         }
+
+        @Override
+        public void onListChanged(ObservableList<UUID> list) {
+            //markAsRead((ObservableArrayList<UUID>)list);
+        }
     };
 
     public static boolean isCurrentlyRunning;
@@ -87,6 +97,8 @@ public class ChatActivity extends AppCompatActivity {
     public static UUID currentUserId;
 
     private EditText mMessageInputEditText;
+
+    private TextView mUserInfo;
 
     private MessageListAdapter mMessageListAdapter;
 
@@ -103,6 +115,10 @@ public class ChatActivity extends AppCompatActivity {
     private String mMessageText;
 
     private boolean isBound;
+
+    private ObservableArrayMap<String, ConnectionState> endpoints;
+
+    ObservableArrayList<UUID> receivers;
 
 
     @Override
@@ -126,17 +142,20 @@ public class ChatActivity extends AppCompatActivity {
             currentUserId = mUser.getId();
         }
 
-        init();
-
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        init();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
+        cancelNotification();
+
         isCurrentlyRunning = true;
     }
+
 
     @Override
     protected void onStop() {
@@ -154,8 +173,6 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private TextView userInfo;
-
     private void initActionBar() {
         View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
 
@@ -163,7 +180,7 @@ public class ChatActivity extends AppCompatActivity {
 
         TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
 
-        userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+        mUserInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
 
 
         userName.setText(mUser.getName());
@@ -185,9 +202,17 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setCustomView(actionBarView);
         }
 
-        ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
+        endpoints = mSendMessageBinder.getEndpoints();
 
         setUserInfo(endpoints);
+
+        if (endpoints != null) {
+            if (endpoints.containsKey(mUser.getEndpointId()) && endpoints.get(mUser.getEndpointId()).equals(ConnectionState.CONNECTED)) {
+                mSendMessageBinder.markMessageAsRead(mUser.getEndpointId(), READ_MESSAGE);
+            }
+        }
+
+        receivers = mSendMessageBinder.getReceivers();
     }
 
     private void init() {
@@ -198,6 +223,7 @@ public class ChatActivity extends AppCompatActivity {
                 InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         mMessageInputEditText.requestFocus();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
 
 
         final RecyclerView recyclerView = findViewById(R.id.recycler_view_chat_activity);
@@ -226,9 +252,6 @@ public class ChatActivity extends AppCompatActivity {
                 initActionBar();
             }
         });
-
-
-        NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
 
 
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
@@ -274,6 +297,13 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mMessageViewModel.getUnreadMessagesWith(mUser.getId(), true).observe(this, new Observer<List<Message>>() {
+            @Override
+            public void onChanged(@Nullable List<Message> messages) {
+                mMessageListAdapter.addMessages(messages);
+            }
+        });
     }
 
     private void sendMessage(String text) {
@@ -293,19 +323,24 @@ public class ChatActivity extends AppCompatActivity {
 
             switch (mState) {
                 case CONNECTING:
-                    userInfo.setText(CONNECTING);
+                    mUserInfo.setText(CONNECTING);
                     break;
                 case CONNECTED:
-                    userInfo.setText(CONNECTED);
+                    mUserInfo.setText(CONNECTED);
                     break;
                 case DISCONNECTED:
-                    userInfo.setText(DISCONNECTED);
+                    mUserInfo.setText(DISCONNECTED);
                     break;
             }
         } else {
             mState = ConnectionState.DISCONNECTED;
-            userInfo.setText(DISCONNECTED);
+            mUserInfo.setText(DISCONNECTED);
         }
+    }
+
+
+    private void cancelNotification() {
+        NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
     }
 
     @Override

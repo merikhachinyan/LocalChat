@@ -118,14 +118,8 @@ public class ChatService extends IntentService{
                     String messageText = jsonObject.getString("isRead");
 
                     if (messageText.equals(ChatActivity.READ_MESSAGE)) {
-//                        mReceivers.clear();
-//                        mReceivers.add(senderId);
                         markAsRead(senderId);
                     }
-
-//                    if (messageText.equals(ChatActivity.READ_MESSAGE)) {
-//                        mReadMessageViewModel.setReadMessages(senderId);
-//                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -276,8 +270,6 @@ public class ChatService extends IntentService{
 
     private ObservableArrayMap<String, ConnectionState> mEndpoints;
 
-    private ObservableArrayList<UUID> mReceivers;
-
     private OnMapChangedListener mMapChangedListener;
 
     private ReadMessageViewModel mReadMessageViewModel;
@@ -359,37 +351,6 @@ public class ChatService extends IntentService{
                 if (mMapChangedListener != null) {
                     mMapChangedListener.onMapChanged(sender);
                 }
-            }
-        });
-
-        mReceivers = new ObservableArrayList<>();
-
-        mReceivers.addOnListChangedCallback(new ObservableList.OnListChangedCallback<ObservableList<UUID>>() {
-            @Override
-            public void onChanged(ObservableList<UUID> uuids) {
-                if (mMapChangedListener != null) {
-                    mMapChangedListener.onListChanged(uuids);
-                }
-            }
-
-            @Override
-            public void onItemRangeChanged(ObservableList<UUID> uuids, int i, int i1) {
-
-            }
-
-            @Override
-            public void onItemRangeInserted(ObservableList<UUID> uuids, int i, int i1) {
-
-            }
-
-            @Override
-            public void onItemRangeMoved(ObservableList<UUID> uuids, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onItemRangeRemoved(ObservableList<UUID> uuids, int i, int i1) {
-
             }
         });
 
@@ -527,16 +488,8 @@ public class ChatService extends IntentService{
             return isRunningDiscovery;
         }
 
-        public void clear() {
-            mReceivers.clear();
-        }
-
         public ObservableArrayMap<String, ConnectionState> getEndpoints() {
             return mEndpoints;
-        }
-
-        public ObservableArrayList<UUID> getReceivers() {
-            return mReceivers;
         }
 
         public void setOnDiscoverUsersListener(OnDiscoverUsersListener listener) {
@@ -556,7 +509,5 @@ public class ChatService extends IntentService{
 
     public interface OnMapChangedListener {
         void onMapChanged(android.databinding.ObservableMap<String, ConnectionState> map);
-
-        void onListChanged(ObservableList<UUID> list);
     }
 }

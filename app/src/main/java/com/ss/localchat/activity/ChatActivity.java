@@ -85,11 +85,6 @@ public class ChatActivity extends AppCompatActivity {
         public void onMapChanged(ObservableMap<String, ConnectionState> map) {
             setUserInfo((ObservableArrayMap<String, ConnectionState>) map);
         }
-
-        @Override
-        public void onListChanged(ObservableList<UUID> list) {
-            //markAsRead((ObservableArrayList<UUID>)list);
-        }
     };
 
     public static boolean isCurrentlyRunning;
@@ -117,8 +112,6 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isBound;
 
     private ObservableArrayMap<String, ConnectionState> endpoints;
-
-    ObservableArrayList<UUID> receivers;
 
 
     @Override
@@ -211,8 +204,6 @@ public class ChatActivity extends AppCompatActivity {
                 mSendMessageBinder.markMessageAsRead(mUser.getEndpointId(), READ_MESSAGE);
             }
         }
-
-        receivers = mSendMessageBinder.getReceivers();
     }
 
     private void init() {
@@ -301,7 +292,7 @@ public class ChatActivity extends AppCompatActivity {
         mMessageViewModel.getUnreadMessagesWith(mUser.getId(), true).observe(this, new Observer<List<Message>>() {
             @Override
             public void onChanged(@Nullable List<Message> messages) {
-                mMessageListAdapter.addMessages(messages);
+
             }
         });
     }
@@ -321,6 +312,7 @@ public class ChatActivity extends AppCompatActivity {
         if (endpoints.containsKey(mUser.getEndpointId())) {
             mState = endpoints.get(mUser.getEndpointId());
 
+            //TODO change mUserInfo.setText();
             switch (mState) {
                 case CONNECTING:
                     mUserInfo.setText(CONNECTING);

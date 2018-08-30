@@ -289,10 +289,12 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        mMessageViewModel.getUnreadMessagesWith(mUser.getId(), true).observe(this, new Observer<List<Message>>() {
+        mMessageViewModel.getUnreadMessagesWith(mUser.getId(), false).observe(this, new Observer<List<Message>>() {
             @Override
             public void onChanged(@Nullable List<Message> messages) {
-
+                if (messages.size() == 0) {
+                    mMessageListAdapter.setReceiverMessageIsRead(mUser.getId());
+                }
             }
         });
     }

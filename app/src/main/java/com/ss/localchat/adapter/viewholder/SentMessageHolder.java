@@ -20,7 +20,7 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
 
         mMessageText = itemView.findViewById(R.id.sent_message_text_view);
         mMessageDate = itemView.findViewById(R.id.sent_message_date_text_view);
-        mReadMessageImage = itemView.findViewById(R.id.sent_message_unread_image_view);
+        //mReadMessageImage = itemView.findViewById(R.id.sent_message_unread_image_view);
     }
 
     public void bind(Message message, int resId) {

@@ -144,6 +144,14 @@ public class ChatService extends IntentService{
 
                     showMessageNotification(s, messageText);
 
+                    if (ChatActivity.isCurrentlyRunning && senderId.equals(ChatActivity.currentUserId)) {
+                        if (mEndpoints != null) {
+                            if (mEndpoints.containsKey(s) && mEndpoints.get(s).equals(ConnectionState.CONNECTED)) {
+                                readMessage(s, ChatActivity.READ_MESSAGE);
+                            }
+                        }
+                    }
+
 //                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     e.printStackTrace();

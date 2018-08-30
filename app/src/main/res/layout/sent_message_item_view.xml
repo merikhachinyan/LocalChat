@@ -38,13 +38,13 @@
             app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"
             tools:text="11:40" />
 
-        <ImageView
-            android:id="@+id/sent_message_unread_image_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/read_message"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"/>
+        <!--<ImageView-->
+            <!--android:id="@+id/sent_message_unread_image_view"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:src="@drawable/read_message"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"/>-->
 
     </android.support.constraint.ConstraintLayout>
 </FrameLayout>

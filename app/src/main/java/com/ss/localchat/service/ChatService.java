@@ -82,7 +82,6 @@ public class ChatService extends IntentService{
             mUserRepository.insert(user);
 
             Log.v("____", "Connected to " + connectionInfo.getEndpointName());
-
         }
 
         @Override
@@ -144,13 +143,7 @@ public class ChatService extends IntentService{
 
                     showMessageNotification(s, messageText);
 
-                    if (ChatActivity.isCurrentlyRunning && senderId.equals(ChatActivity.currentUserId)) {
-                        if (mEndpoints != null) {
-                            if (mEndpoints.containsKey(s) && mEndpoints.get(s).equals(ConnectionState.CONNECTED)) {
-                                readMessage(s, ChatActivity.READ_MESSAGE);
-                            }
-                        }
-                    }
+                    markAsRead(senderId, s);
 
 //                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
@@ -463,6 +456,16 @@ public class ChatService extends IntentService{
                 userViewModel.getUserByEndpointId(endpointId).removeObserver(this);
             }
         });
+    }
+
+    private void markAsRead(UUID senderId, String endpointId) {
+        if (ChatActivity.isCurrentlyRunning && senderId.equals(ChatActivity.currentUserId)) {
+            if (mEndpoints != null) {
+                if (mEndpoints.containsKey(endpointId) && mEndpoints.get(endpointId).equals(ConnectionState.CONNECTED)) {
+                    readMessage(endpointId, ChatActivity.READ_MESSAGE);
+                }
+            }
+        }
     }
 
     public class ServiceBinder extends Binder {

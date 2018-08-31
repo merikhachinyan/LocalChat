@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.ss.localchat">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -8,7 +9,10 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA"></uses-permission>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"></uses-permission>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
+
 
     <application
         android:allowBackup="true"
@@ -34,12 +38,14 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity android:name=".activity.SettingsActivity"
-            android:parentActivityName=".activity.MainActivity" />
+            android:parentActivityName=".activity.MainActivity"
+           />
 
         <activity android:name=".activity.IntroduceActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <activity android:name=".activity.LoginActivity" />
+        <activity android:name=".activity.LoginActivity"
+           android:theme="@style/AppTheme.NoActionBar"/>
 
         <service android:name=".service.AdvertiseService" />
         <service android:name=".service.DiscoverService" />

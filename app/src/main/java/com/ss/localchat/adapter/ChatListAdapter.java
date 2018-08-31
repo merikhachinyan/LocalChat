@@ -7,6 +7,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.ChatViewHolder;
@@ -20,11 +22,11 @@ import java.util.List;
 import java.util.UUID;
 
 
-public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
-
+public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> implements Filterable {
+    private List<User> mFilteredList = new ArrayList<>();
     private OnItemClickListener mListener;
 
-    private List<User> mUsers;
+    private List<User> mUsers = new ArrayList<>();
 
     private HashMap<UUID, Message> mLastMessages = new HashMap<>();
 
@@ -33,7 +35,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     private MessageViewModel mMessageViewModel;
 
     public ChatListAdapter(FragmentActivity fragmentActivity) {
-        mUsers = new ArrayList<>();
         mMessageViewModel = ViewModelProviders.of(fragmentActivity).get(MessageViewModel.class);
     }
 
@@ -46,7 +47,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        User user = mUsers.get(position);
+        User user = mFilteredList.get(position);
         Message lastMessage = mLastMessages.get(user.getId());
         Integer unreadMessagesCount = mUnreadMessagesCount.get(user.getId());
 
@@ -55,7 +56,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     @Override
     public int getItemCount() {
-        return mUsers == null ? 0 : mUsers.size();
+        return mFilteredList == null ? 0 : mFilteredList.size();
     }
 
     public void setUser(User user, Message message, int count) {
@@ -69,6 +70,10 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
             setLastMessageAndUnreadCount(user, message, count);
             notifyItemChanged(i);
         }
+
+        // TODO: 8/27/2018 change users set logic, should pass users list instead of user
+        mFilteredList.clear();
+        mFilteredList.addAll(mUsers);
     }
 
     private void setLastMessageAndUnreadCount(User user, Message message, int count) {
@@ -80,6 +85,46 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;
+    }
+
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence charSequence) {
+
+                String charString = charSequence.toString();
+
+                if (charString.isEmpty()) {
+
+                    mFilteredList = mUsers;
+                } else {
+
+                    ArrayList<User> filteredList = new ArrayList<>();
+
+                    for (User androidVersion : mUsers) {
+
+                        if (androidVersion.getName().toLowerCase().contains(charString.toLowerCase()) ) {
+
+                            filteredList.add(androidVersion);
+                        }
+                    }
+
+                    mFilteredList = filteredList;
+                }
+
+                FilterResults filterResults = new FilterResults();
+                filterResults.values = mFilteredList;
+                return filterResults;
+            }
+
+            @Override
+            protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                mFilteredList.clear();
+                mFilteredList.addAll((List<User>) filterResults.values);
+                notifyDataSetChanged();
+            }
+        };
     }
 
     public interface OnItemClickListener {

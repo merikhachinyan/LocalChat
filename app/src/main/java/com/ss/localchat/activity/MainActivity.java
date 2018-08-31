@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 
@@ -25,6 +26,7 @@ import android.widget.Toast;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
+import com.ss.localchat.db.entity.User;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isWifiDisabled;
     private boolean isBluetoothDisabled;
     private boolean isLocationDisabled;
-
+    private String userName;
+    private String userImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
 
         if (!Preferences.contain(getApplicationContext(), Preferences.USER_ID_KEY)) {
 
@@ -225,7 +227,9 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
+                Intent intent = new Intent(this, SettingsActivity.class);
+
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -243,4 +247,5 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mBluetoothStateBroadcastReceiver);
         unregisterReceiver(mLocationStateBroadcastReceiver);
     }
+
 }

@@ -33,8 +33,6 @@ public class SignUpActivity extends AppCompatActivity {
 
     private EditText firstName;
 
-    private EditText lastName;
-
     private Uri uri;
 
     @Override
@@ -57,25 +55,22 @@ public class SignUpActivity extends AppCompatActivity {
         });
 
         firstName = findViewById(R.id.editTextFirstName);
-        lastName = findViewById(R.id.editTextLastName);
 
         Button loginNoInternet = findViewById(R.id.loginNoInternet);
         loginNoInternet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (firstName.getText().toString().length() <= 0) {
-                    firstName.setError("Enter FirstName");
-                }
-                if (lastName.getText().toString().length() <= 0) {
-                    lastName.setError("Enter LastName");
+                    firstName.setError("Enter Name");
                 } else {
                     firstName.setError(null);
-                    lastName.setError(null);
+
 
                     User user = new User();
-                    user.setName(firstName.getText().toString() + " " + lastName.getText().toString());
-                    user.setPhotoUrl(uri);
-
+                    user.setName(firstName.getText().toString());
+                    if (uri != null) {
+                        user.setPhotoUrl(uri);
+                    }
                     new UserRepository(getApplication()).insert(user);
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
@@ -133,6 +128,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void startMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
+
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finishAffinity();

@@ -63,7 +63,12 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 ((ReceivedMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case SENT_MESSAGE_TYPE:
-                ((SentMessageHolder) holder).bind(mMessages.get(position));
+                if (mMessages.get(position).isReadReceiver()) {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_all_black_24dp);
+            } else {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_black_24dp);
+            }
+//                ((SentMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));
@@ -127,6 +132,30 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
 
         notifyItemRangeInserted(startPosition, messages.size());
+    }
+
+    public void setReceiverMessageIsRead(UUID userId) {
+        if (mMessages.size() == 0) {
+            return;
+        }
+
+
+        int startPosition = mMessages.size();
+
+        int i = mMessages.size() - 1;
+
+        for (; i >= 0; i--){
+            if (getItemViewType(i) == SENT_MESSAGE_TYPE) {
+                if (!mMessages.get(i).isReadReceiver() && mMessages.get(i).getReceiverId().equals(userId)) {
+                    mMessages.get(i).setReadReceiver(true);
+                    startPosition = i;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        notifyItemRangeChanged(startPosition, mMessages.size());
     }
 
     public void clear() {

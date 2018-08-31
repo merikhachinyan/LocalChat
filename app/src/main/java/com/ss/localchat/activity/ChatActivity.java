@@ -57,6 +57,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private static final String DISCONNECTED = "Disconnected";
 
+    public static final String READ_MESSAGE = "read";
+
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -87,6 +89,12 @@ public class ChatActivity extends AppCompatActivity {
 
     private EditText mMessageInputEditText;
 
+    private TextView mUserInfo;
+
+    private ImageView userImage;
+
+    private TextView userName;
+
     private MessageListAdapter mMessageListAdapter;
 
     private ChatService.ServiceBinder mSendMessageBinder;
@@ -100,13 +108,6 @@ public class ChatActivity extends AppCompatActivity {
     private String mMessageText;
 
     private boolean isBound;
-
-
-    private TextView userInfo;
-
-    private ImageView userImage;
-
-    private TextView userName;
 
 
     @Override
@@ -126,7 +127,7 @@ public class ChatActivity extends AppCompatActivity {
             View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
             userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
             userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
-            userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+            mUserInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
             actionBar.setCustomView(actionBarView);
 
         }
@@ -143,6 +144,8 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        cancelNotification();
 
         isCurrentlyRunning = true;
     }
@@ -174,6 +177,12 @@ public class ChatActivity extends AppCompatActivity {
 
         ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
         setUserInfo(endpoints);
+
+        if (endpoints != null) {
+            if (endpoints.containsKey(mUser.getEndpointId()) && endpoints.get(mUser.getEndpointId()).equals(ConnectionState.CONNECTED)) {
+                mSendMessageBinder.markMessageAsRead(mUser.getEndpointId(), READ_MESSAGE);
+            }
+        }
     }
 
     private void init() {
@@ -210,9 +219,6 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
-
-
-        NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
 
 
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
@@ -257,6 +263,17 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mMessageViewModel.getReceiverUnreadMessages(mUser.getId(), false).observe(this, new Observer<List<Message>>() {
+            @Override
+            public void onChanged(@Nullable List<Message> messages) {
+                if (messages != null) {
+                    if (messages.size() == 0) {
+                        mMessageListAdapter.setReceiverMessageIsRead(mUser.getId());
+                    }
+                }
+            }
+        });
     }
 
     private void sendMessage(String text) {
@@ -276,19 +293,24 @@ public class ChatActivity extends AppCompatActivity {
 
             switch (mState) {
                 case CONNECTING:
-                    userInfo.setText(CONNECTING);
+                    mUserInfo.setText(CONNECTING);
                     break;
                 case CONNECTED:
-                    userInfo.setText(CONNECTED);
+                    mUserInfo.setText(CONNECTED);
                     break;
                 case DISCONNECTED:
-                    userInfo.setText(DISCONNECTED);
+                    mUserInfo.setText(DISCONNECTED);
                     break;
             }
         } else {
             mState = ConnectionState.DISCONNECTED;
-            userInfo.setText(DISCONNECTED);
+            mUserInfo.setText(DISCONNECTED);
         }
+    }
+
+
+    private void cancelNotification() {
+        NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
     }
 
     @Override

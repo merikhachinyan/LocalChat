@@ -26,6 +26,11 @@ public interface MessageDao {
             "ORDER BY date ASC")
     LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read);
 
+    @Query("SELECT * FROM messages " +
+            "WHERE receiver_id = :user_id AND is_read_receiver = :is_read_receiver " +
+            "ORDER BY date ASC")
+    LiveData<List<Message>> getReceiverUnreadMessages(UUID user_id, boolean is_read_receiver);
+
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(Message... messages);
 

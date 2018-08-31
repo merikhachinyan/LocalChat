@@ -1,6 +1,7 @@
 package com.ss.localchat.service;
 
 import android.app.IntentService;
+import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
@@ -41,7 +42,7 @@ import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.ConnectionsBroadcastReceiver;
-import com.ss.localchat.viewmodel.UserViewModel;
+import com.ss.localchat.viewmodel.MessageViewModel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -68,13 +70,15 @@ public class ChatService extends IntentService {
 
     public static final String FILENAME_TYPE = "filename";
 
+    public static final String READ_TYPE = "read";
+
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
-            mConnectionsClient.acceptConnection(id, mPayloadCallback);
-
             mEndpoints.put(id, ConnectionState.CONNECTING);
+
+            mConnectionsClient.acceptConnection(id, mPayloadCallback);
 
             String name = connectionInfo.getEndpointName().split(":")[0];
             String uuidString = connectionInfo.getEndpointName().split(":")[1];
@@ -87,7 +91,6 @@ public class ChatService extends IntentService {
             mUserRepository.insert(user);
 
             Log.v("____", "Connected to " + connectionInfo.getEndpointName());
-
         }
 
         @Override
@@ -115,6 +118,7 @@ public class ChatService extends IntentService {
         public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
 
             if (payload.getType() == Payload.Type.BYTES) {
+
                 try {
                     String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
 
@@ -137,6 +141,9 @@ public class ChatService extends IntentService {
 
 
                         showMessageNotification(s, messageText);
+
+                        markAsRead(senderId, s);
+
                     } else if (FILENAME_TYPE.equals(type)) {
                         String senderId = jsonObject.getString("id");
                         String payloadId = jsonObject.getString("payload_id");
@@ -145,6 +152,10 @@ public class ChatService extends IntentService {
                         String fileName = "photo-".concat(senderId).concat(imageExtension);
 
                         filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
+                    } else if (READ_TYPE.equals(type)) {
+                        UUID senderId = UUID.fromString(jsonObject.getString("id"));
+
+                        markAsRead(senderId);
                     }
 
                 } catch (JSONException e) {
@@ -185,7 +196,9 @@ public class ChatService extends IntentService {
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
-            mEndpoints.put(id, ConnectionState.CONNECTING);
+            if (!mEndpoints.containsKey(id) || mEndpoints.get(id) != ConnectionState.CONNECTED) {
+                mEndpoints.put(id, ConnectionState.CONNECTING);
+            }
 
             String name = discoveredEndpointInfo.getEndpointName().split(":")[0];
             String uuidString = discoveredEndpointInfo.getEndpointName().split(":")[1];
@@ -261,6 +274,8 @@ public class ChatService extends IntentService {
 
 
     private static boolean isRunningService;
+
+    private static boolean isRunningDiscovery;
 
     private ConnectionsClient mConnectionsClient;
 
@@ -374,6 +389,25 @@ public class ChatService extends IntentService {
         });
     }
 
+    private void markAsRead(UUID uuid) {
+        final MessageViewModel model = new MessageViewModel(getApplication());
+
+                final LiveData<List<Message>> liveData = model.getReceiverUnreadMessages(uuid, false);
+                liveData.observeForever(new Observer<List<Message>>() {
+                    @Override
+                    public void onChanged(@Nullable List<Message> messages) {
+                        if (messages != null && messages.size() != 0) {
+                            for (Message message : messages) {
+                                message.setReadReceiver(true);
+                            }
+                            model.update(messages.toArray(new Message[messages.size()]));
+                        }
+
+                        liveData.removeObserver(this);
+                    }
+                });
+            }
+
     private void startAdvertising() {
         String myUserName = Preferences.getUserName(getApplicationContext());
         UUID myUserId = Preferences.getUserId(getApplicationContext());
@@ -390,6 +424,8 @@ public class ChatService extends IntentService {
                 new DiscoveryOptions.Builder()
                         .setStrategy(STRATEGY)
                         .build());
+
+        isRunningDiscovery = true;
     }
 
     private void sendMessage(String id, String messageText) {
@@ -400,6 +436,20 @@ public class ChatService extends IntentService {
             jsonObject.put("type", MESSAGE_TYPE);
             jsonObject.put("id", myUserId.toString());
             jsonObject.put("message", messageText);
+            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readMessage(String id, String readMessage) {
+        try {
+            UUID userId = Preferences.getUserId(getApplicationContext());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", userId.toString());
+            jsonObject.put("type", readMessage);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
@@ -460,7 +510,7 @@ public class ChatService extends IntentService {
         stopSelf();
 
         isRunningService = false;
-        Log.v("____", "Stop");
+        Log.v("___", "Stop");
 
         for (Map.Entry<String, ConnectionState> entry : mEndpoints.entrySet()) {
             mEndpoints.put(entry.getKey(), ConnectionState.DISCONNECTED);
@@ -482,6 +532,16 @@ public class ChatService extends IntentService {
         });
     }
 
+    private void markAsRead(UUID senderId, String endpointId) {
+        if (ChatActivity.isCurrentlyRunning && senderId.equals(ChatActivity.currentUserId)) {
+            if (mEndpoints != null) {
+                if (mEndpoints.containsKey(endpointId) && mEndpoints.get(endpointId).equals(ConnectionState.CONNECTED)) {
+                    readMessage(endpointId, ChatActivity.READ_MESSAGE);
+                }
+            }
+        }
+    }
+
     public class ServiceBinder extends Binder {
         public void startDiscovery() {
             discover();
@@ -489,18 +549,30 @@ public class ChatService extends IntentService {
 
         public void stopDiscovery() {
             mConnectionsClient.stopDiscovery();
+
+            isRunningDiscovery = false;
         }
 
         public void sendMessageTo(String id, String messageText) {
             sendMessage(id, messageText);
         }
 
+        public void markMessageAsRead(String id, String readMessage) {
+            readMessage(id, readMessage);
+        }
+
         public void stopService() {
             stopAdvertising();
+
+            stopDiscovery();
         }
 
         public boolean isRunningService() {
             return isRunningService;
+        }
+
+        public boolean isRunningDiscovery() {
+            return isRunningDiscovery;
         }
 
         public ObservableArrayMap<String, ConnectionState> getEndpoints() {

@@ -19,9 +19,9 @@ import com.ss.localchat.service.ChatService;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    public static final String START_ADVERTISING = "Start Advertising";
+    public static final String ENABLE_ADVERTISING = "Enable Advertising";
 
-    public static final String STOP_ADVERTISING = "Stop Advertising";
+    public static final String DISABLE_ADVERTISING = "Disable Advertising";
 
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -32,11 +32,11 @@ public class SettingsActivity extends AppCompatActivity {
             isBound = true;
 
             if (mAdvertiseBinder.isRunningService()) {
-                mAdvertiseTextView.setText(STOP_ADVERTISING);
+                mAdvertiseTextView.setText(DISABLE_ADVERTISING);
 
                 mAdvertisingSwitch.setChecked(true);
             } else {
-                mAdvertiseTextView.setText(START_ADVERTISING);
+                mAdvertiseTextView.setText(ENABLE_ADVERTISING);
 
                 mAdvertisingSwitch.setChecked(false);
             }
@@ -94,11 +94,12 @@ public class SettingsActivity extends AppCompatActivity {
                 if (isChecked) {
                     if (!mAdvertiseBinder.isRunningService()){
                         startService(intent);
-                        mAdvertiseTextView.setText(STOP_ADVERTISING);
+                        mAdvertiseTextView.setText(DISABLE_ADVERTISING);
+
                     }
                 } else {
                     mAdvertiseBinder.stopService();
-                    mAdvertiseTextView.setText(START_ADVERTISING);
+                    mAdvertiseTextView.setText(ENABLE_ADVERTISING);
                 }
             }
         });

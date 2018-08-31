@@ -63,12 +63,12 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 ((ReceivedMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case SENT_MESSAGE_TYPE:
-//                if (mMessages.get(position).isReadReceiver()) {
-//                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.read_message);
-//            } else {
-//                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.unread_message);
-//            }
-                ((SentMessageHolder) holder).bind(mMessages.get(position));
+                if (mMessages.get(position).isReadReceiver()) {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_all_black_24dp);
+            } else {
+                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_black_24dp);
+            }
+//                ((SentMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));
@@ -135,23 +135,28 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public void setReceiverMessageIsRead(UUID userId) {
-
-        int startPosition = mMessages.size();
-
-        if (startPosition == 0) {
+        if (mMessages.size() == 0) {
             return;
         }
 
+
+        int startPosition = mMessages.size();
+
         int i = mMessages.size() - 1;
-        while (!mMessages.get(i).isReadReceiver()) {
-            mMessages.get(i).setReadReceiver(true);
-            startPosition = i;
-            i--;
+
+        for (; i >= 0; i--){
+            if (getItemViewType(i) == SENT_MESSAGE_TYPE) {
+                if (!mMessages.get(i).isReadReceiver() && mMessages.get(i).getReceiverId().equals(userId)) {
+                    mMessages.get(i).setReadReceiver(true);
+                    startPosition = i;
+                } else {
+                    break;
+                }
+            }
         }
 
         notifyItemRangeChanged(startPosition, mMessages.size());
     }
-
 
     public void clear() {
         mMessages.clear();

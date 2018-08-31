@@ -67,8 +67,9 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
     }
 
     public void addUser(User user) {
-        mUsers.add(mUsers.size() - 1, user);
-        notifyItemInserted(mUsers.size() - 2);
+        int indexGap = mUsers.size() > 0 && mUsers.get(mUsers.size() - 1) == null ? 1 : 0;
+        mUsers.add(mUsers.size() - indexGap, user);
+        notifyItemInserted(mUsers.size() - indexGap - 1);
     }
 
     public void removeUserById(String id) {
@@ -87,9 +88,13 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
             mUsers.add(null);
             notifyItemInserted(mUsers.size() - 1);
         } else {
-            int i = mUsers.size() - 1;
-            mUsers.remove(i);
-            notifyItemRemoved(i);
+            if (mUsers.size() != 0) {
+                int i = mUsers.size() - 1;
+                if (mUsers.get(i) == null) {
+                    mUsers.remove(i);
+                    notifyItemRemoved(i);
+                }
+            }
         }
     }
 

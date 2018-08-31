@@ -6,9 +6,7 @@ import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.databinding.ObservableArrayList;
 import android.databinding.ObservableArrayMap;
-import android.databinding.ObservableList;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
@@ -40,7 +38,6 @@ import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.receiver.ConnectionsBroadcastReceiver;
 import com.ss.localchat.viewmodel.MessageViewModel;
-import com.ss.localchat.viewmodel.ReadMessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import org.json.JSONException;
@@ -67,9 +64,9 @@ public class ChatService extends IntentService{
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(@NonNull String id, @NonNull ConnectionInfo connectionInfo) {
-            mConnectionsClient.acceptConnection(id, mPayloadCallback);
-
             mEndpoints.put(id, ConnectionState.CONNECTING);
+
+            mConnectionsClient.acceptConnection(id, mPayloadCallback);
 
             String name = connectionInfo.getEndpointName().split(":")[0];
             String uuidString = connectionInfo.getEndpointName().split(":")[1];
@@ -114,7 +111,7 @@ public class ChatService extends IntentService{
 
                     JSONObject jsonObject = new JSONObject(payloadText);
                     UUID senderId = UUID.fromString(jsonObject.getString("id"));
-                    String messageText = jsonObject.getString("isRead");
+                    String messageText = jsonObject.getString("type");
 
                     if (messageText.equals(ChatActivity.READ_MESSAGE)) {
                         markAsRead(senderId);
@@ -145,7 +142,6 @@ public class ChatService extends IntentService{
 
                     markAsRead(senderId, s);
 
-//                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -169,7 +165,7 @@ public class ChatService extends IntentService{
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
-            if (mEndpoints.get(id) != ConnectionState.CONNECTED) {
+            if (!mEndpoints.containsKey(id) || mEndpoints.get(id) != ConnectionState.CONNECTED) {
                 mEndpoints.put(id, ConnectionState.CONNECTING);
             }
 
@@ -273,8 +269,6 @@ public class ChatService extends IntentService{
 
     private OnMapChangedListener mMapChangedListener;
 
-    private ReadMessageViewModel mReadMessageViewModel;
-
 
     public ChatService() {
         super("Service");
@@ -354,21 +348,21 @@ public class ChatService extends IntentService{
                 }
             }
         });
-
-        //mReadMessageViewModel = new ReadMessageViewModel();
     }
 
     private void markAsRead(UUID uuid) {
         final MessageViewModel model = new MessageViewModel(getApplication());
 
-                final LiveData<List<Message>> liveData = model.getUnreadMessagesWith(uuid, false);
+                final LiveData<List<Message>> liveData = model.getReceiverUnreadMessages(uuid, false);
                 liveData.observeForever(new Observer<List<Message>>() {
                     @Override
                     public void onChanged(@Nullable List<Message> messages) {
-                        for (Message message : messages) {
-                            message.setReadReceiver(true);
+                        if (messages != null && messages.size() != 0) {
+                            for (Message message : messages) {
+                                message.setReadReceiver(true);
+                            }
+                            model.update(messages.toArray(new Message[messages.size()]));
                         }
-                        model.update(messages.toArray(new Message[messages.size()]));
 
                         liveData.removeObserver(this);
                     }
@@ -415,7 +409,7 @@ public class ChatService extends IntentService{
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", userId.toString());
-            jsonObject.put("isRead", readMessage);
+            jsonObject.put("type", readMessage);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
@@ -449,9 +443,8 @@ public class ChatService extends IntentService{
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
-                    if (!ChatActivity.isCurrentlyRunning || (ChatActivity.isCurrentlyRunning && !ChatActivity.currentUserId.equals(user.getId()))) {
-                        NotificationHelper.showNotification(getApplicationContext(), user, messageText);
-                    }
+                    if (!ChatActivity.isCurrentlyRunning || (ChatActivity.isCurrentlyRunning && !ChatActivity.currentUserId.equals(user.getId())))
+                    NotificationHelper.showNotification(getApplicationContext(), user, messageText);
                 }
                 userViewModel.getUserByEndpointId(endpointId).removeObserver(this);
             }
@@ -489,6 +482,8 @@ public class ChatService extends IntentService{
 
         public void stopService() {
             stopAdvertising();
+
+            stopDiscovery();
         }
 
         public boolean isRunningService() {

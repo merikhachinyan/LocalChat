@@ -7,9 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.databinding.ObservableArrayList;
 import android.databinding.ObservableArrayMap;
-import android.databinding.ObservableList;
 import android.databinding.ObservableMap;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -29,7 +27,6 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.squareup.picasso.Picasso;
@@ -43,7 +40,6 @@ import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
 import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
-import com.ss.localchat.viewmodel.ReadMessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.List;
@@ -59,17 +55,16 @@ public class ChatActivity extends AppCompatActivity {
 
     private static final String DISCONNECTED = "Disconnected";
 
-    public static final String READ_MESSAGE = "00read00";
+    public static final String READ_MESSAGE = "read";
 
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mSendMessageBinder = (ChatService.ServiceBinder) service;
-
             mSendMessageBinder.setOnMapChangedListener(mListener);
-
             isBound = true;
+            initActionBar();
         }
 
         @Override
@@ -95,6 +90,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private TextView mUserInfo;
 
+    private ImageView userImage;
+
+    private TextView userName;
+
     private MessageListAdapter mMessageListAdapter;
 
     private ChatService.ServiceBinder mSendMessageBinder;
@@ -114,7 +113,6 @@ public class ChatActivity extends AppCompatActivity {
     private ObservableArrayMap<String, ConnectionState> endpoints;
 
 
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
@@ -127,16 +125,21 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
             actionBar.setDisplayShowCustomEnabled(true);
+
+            View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
+            userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
+            userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
+            mUserInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+            actionBar.setCustomView(actionBarView);
+
         }
 
         if (getIntent() != null) {
             mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
-
             currentUserId = mUser.getId();
         }
 
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-
         init();
     }
 
@@ -167,15 +170,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initActionBar() {
-        View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
-
-        ImageView userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
-
-        TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
-
-        mUserInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
-
-
         userName.setText(mUser.getName());
 
         if (mUser.getPhotoUrl() == null) {
@@ -190,13 +184,7 @@ public class ChatActivity extends AppCompatActivity {
                     .into(userImage);
         }
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setCustomView(actionBarView);
-        }
-
-        endpoints = mSendMessageBinder.getEndpoints();
-
+        ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
         setUserInfo(endpoints);
 
         if (endpoints != null) {
@@ -289,11 +277,13 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        mMessageViewModel.getUnreadMessagesWith(mUser.getId(), false).observe(this, new Observer<List<Message>>() {
+        mMessageViewModel.getReceiverUnreadMessages(mUser.getId(), false).observe(this, new Observer<List<Message>>() {
             @Override
             public void onChanged(@Nullable List<Message> messages) {
-                if (messages.size() == 0) {
-                    mMessageListAdapter.setReceiverMessageIsRead(mUser.getId());
+                if (messages != null) {
+                    if (messages.size() == 0) {
+                        mMessageListAdapter.setReceiverMessageIsRead(mUser.getId());
+                    }
                 }
             }
         });
@@ -314,7 +304,6 @@ public class ChatActivity extends AppCompatActivity {
         if (endpoints.containsKey(mUser.getEndpointId())) {
             mState = endpoints.get(mUser.getEndpointId());
 
-            //TODO change mUserInfo.setText();
             switch (mState) {
                 case CONNECTING:
                     mUserInfo.setText(CONNECTING);

@@ -25,7 +25,7 @@ public class User implements Serializable {
     private String name;
 
     @ColumnInfo(name = "photo_url")
-    private Uri photoUrl;
+    private String photoUrl;
 
     @ColumnInfo(name = "registration_date")
     private Date registrationDate;
@@ -60,11 +60,11 @@ public class User implements Serializable {
         this.name = name;
     }
 
-    public Uri getPhotoUrl() {
+    public String getPhotoUrl() {
         return photoUrl;
     }
 
-    public void setPhotoUrl(Uri photoUrl) {
+    public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
     }
 

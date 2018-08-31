@@ -39,6 +39,9 @@ public interface UserDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(User user);
 
+    @Query("UPDATE users SET photo_url = :photoUri WHERE endpoint_id = :endpointId")
+    void updatePhoto(String endpointId, String photoUri);
+
     @Query("DELETE FROM users WHERE _id = :id")
     void delete(UUID id);
 }

@@ -5,6 +5,7 @@ import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.databinding.ObservableArrayMap;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
@@ -12,6 +13,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.SimpleArrayMap;
@@ -136,10 +138,13 @@ public class ChatService extends IntentService {
 
                         showMessageNotification(s, messageText);
                     } else if (FILENAME_TYPE.equals(type)) {
-                        String messageText = jsonObject.getString("message");
-                        String payloadId = messageText.split(":")[0];
-                        String filename = messageText.split(":")[1];
-                        filePayloadFilenames.put(Long.parseLong(payloadId), filename);
+                        String senderId = jsonObject.getString("id");
+                        String payloadId = jsonObject.getString("payload_id");
+                        String imageExtension = jsonObject.getString("extension");
+
+                        String fileName = "photo-".concat(senderId).concat(imageExtension);
+
+                        filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
                     }
 
                 } catch (JSONException e) {
@@ -156,21 +161,14 @@ public class ChatService extends IntentService {
                 Long payloadId = payloadTransferUpdate.getPayloadId();
                 Payload payload = incomingPayloads.remove(payloadId);
                 if (payload != null && payload.getType() == Payload.Type.FILE) {
-                    String newFilename = filePayloadFilenames.remove(payloadId);
-                    // TODO Error: payloadFile is null here
-                    final File payloadFile = payload.asFile().asJavaFile();
-
-                    payloadFile.renameTo(new File(payloadFile.getParentFile(), newFilename));
-                    mUserRepository.getUserByEndpointId(s).observeForever(new Observer<User>() {
-                        @Override
-                        public void onChanged(@Nullable User user) {
-                            if (user != null) {
-                                user.setPhotoUrl(Uri.fromFile(payloadFile));
-                                mUserRepository.update(user);
-                            }
-                            mUserRepository.getUserByEndpointId(s).removeObserver(this);
-                        }
-                    });
+                    String fileName = filePayloadFilenames.remove(payloadId);
+                    File payloadFile = payload.asFile().asJavaFile();
+                    File newFile = new File(payloadFile.getParentFile(), fileName);
+                    boolean isRenamed = payloadFile.renameTo(newFile);
+                    Log.v("____", "Receive and renamed: " + isRenamed);
+                    Log.v("____", "Receive and renamed(old file): " + payloadFile.getAbsolutePath());
+                    Log.v("____", "Receive and renamed(new file): " + newFile.getAbsolutePath());
+                    mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
                 }
             }
         }
@@ -410,19 +408,19 @@ public class ChatService extends IntentService {
     }
 
     private void sendProfilePicture(final String id) {
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
         Uri myUserPhotoUri = Preferences.getUserPhoto(getApplicationContext());
         if (myUserPhotoUri != null) {
-            Log.v("____", "Sending picture");
+            Log.v("____", "Sending picture, uri: " + myUserPhotoUri);
             try {
-                // TODO Error: Throw exception on api26 here(java.lang.SecurityException: Permission Denial: opening provider com.google.android.apps.photos.contentprovider.impl.MediaContentProvider)
                 ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(myUserPhotoUri, "r");
-
                 Payload filePayload = Payload.fromFile(pfd);
 
-                String payloadFilenameMessage = filePayload.getId() + ":" + myUserPhotoUri.getLastPathSegment();
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("type", FILENAME_TYPE);
-                jsonObject.put("message", payloadFilenameMessage);
+                jsonObject.put("id", myUserId.toString());
+                jsonObject.put("payload_id", filePayload.getId());
+                jsonObject.put("extension", getFileExtension(myUserPhotoUri));
 
                 mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
                 mConnectionsClient.sendPayload(id, filePayload);
@@ -431,6 +429,22 @@ public class ChatService extends IntentService {
                 e.printStackTrace();
             }
         }
+    }
+
+    private String getFileExtension(Uri uri) {
+        String filePath = null;
+        String[] filePathColumn = {MediaStore.Images.Media.DISPLAY_NAME};
+
+        Cursor cursor = getContentResolver().query(uri, filePathColumn, null, null, null);
+        if (cursor == null)
+            return null;
+
+        if (cursor.moveToFirst()) {
+            String fileName = cursor.getString(cursor.getColumnIndex(filePathColumn[0]));
+            filePath = fileName.substring(fileName.lastIndexOf("."));
+        }
+        cursor.close();
+        return filePath;
     }
 
     public void startForegroundAdvertiseService() {

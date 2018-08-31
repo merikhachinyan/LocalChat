@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
                 Profile profile = Profile.getCurrentProfile();
                 User user = new User();
                 user.setName(profile.getName());
-                user.setPhotoUrl(profile.getProfilePictureUri(400, 400));
+                user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
 
                 new UserRepository(getApplication()).insert(user);
                 Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());

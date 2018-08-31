@@ -34,7 +34,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Chat user = mChats.get(position);
-        holder.bind(user.user, user.last_message, user.count);
+        holder.bind(user.user, user.message, user.count);
     }
 
     @Override

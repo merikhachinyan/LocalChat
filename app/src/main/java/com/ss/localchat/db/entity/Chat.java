@@ -8,7 +8,7 @@ public class Chat {
     public User user;
 
     @Embedded
-    public Message last_message;
+    public Message message;
 
     public int count;
 }

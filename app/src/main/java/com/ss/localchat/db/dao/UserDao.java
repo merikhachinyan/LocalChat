@@ -16,18 +16,6 @@ import java.util.UUID;
 @Dao
 public interface UserDao {
 
-//    @Query("SELECT users.*, last_message.*, count FROM users " +
-//            "LEFT JOIN " +
-//            "(SELECT * FROM messages " +
-//            "ORDER BY messages.date DESC LIMIT 1) last_message ON users._id in (last_message.sender_id, last_message.receiver_id) " +
-//            "LEFT JOIN " +
-//            "(SELECT messages.sender_id, messages.receiver_id, COUNT(*) AS count FROM messages " +
-//            "WHERE messages.is_read = 0) unread_count ON users._id in (unread_count.sender_id, unread_count.receiver_id) " +
-//            "WHERE users._id != :owner " +
-//            "ORDER BY last_message.date DESC")
-//    LiveData<List<Chat>> getUsersExceptOwner(UUID owner);
-
-
     @Query("SELECT users.*, messages.*, count FROM users, messages " +
             "LEFT JOIN " +
             "(SELECT messages.sender_id, messages.receiver_id, COUNT(*) AS count FROM messages " +

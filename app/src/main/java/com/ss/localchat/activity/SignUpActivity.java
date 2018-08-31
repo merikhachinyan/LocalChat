@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -16,12 +15,13 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.ss.localchat.R;
 import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
-import com.ss.localchat.util.CircularTransformation;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -44,9 +44,9 @@ public class SignUpActivity extends AppCompatActivity {
 
         imageView = findViewById(R.id.imageViewLogin);
 
-        Picasso.get()
+        Glide.with(this)
                 .load(R.drawable.no_user_image)
-                .transform(new CircularTransformation())
+                .apply(RequestOptions.circleCropTransform())
                 .into(imageView);
 
         imageView.setOnClickListener(new View.OnClickListener() {
@@ -74,11 +74,12 @@ public class SignUpActivity extends AppCompatActivity {
 
                     User user = new User();
                     user.setName(firstName.getText().toString() + " " + lastName.getText().toString());
-                    user.setPhotoUrl(uri);
+                    user.setPhotoUrl(uri == null ? null : uri.toString());
 
                     new UserRepository(getApplication()).insert(user);
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, user.getPhotoUrl());
 
                     startMainActivity();
                 }
@@ -97,8 +98,10 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     public void pickImage() {
-        Intent i = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(i, REQUEST_CODE_SELECT_PICTURE);
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_CODE_SELECT_PICTURE);
     }
 
     @Override
@@ -107,9 +110,10 @@ public class SignUpActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_SELECT_PICTURE) {
             uri = data.getData();
 
-            Picasso.get()
+            Glide.with(this)
                     .load(uri)
-                    .transform(new CircularTransformation())
+                    .apply(RequestOptions.circleCropTransform().diskCacheStrategy(DiskCacheStrategy.ALL))
+                    .error(Glide.with(this).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
                     .into(imageView);
         }
     }

@@ -35,17 +35,13 @@ public class DiscoveredUsersFragment extends Fragment {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mDiscoverBinder = (ChatService.ServiceBinder) service;
-
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
-//            mDiscoverBinder.startDiscovery();
-
             isBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mDiscoverBinder = null;
-
             isBound = false;
         }
     };

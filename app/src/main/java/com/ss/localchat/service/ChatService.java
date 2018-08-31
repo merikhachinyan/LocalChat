@@ -5,13 +5,18 @@ import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.databinding.ObservableArrayMap;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
 
 import com.google.android.gms.nearby.Nearby;
@@ -41,13 +46,15 @@ import com.ss.localchat.viewmodel.UserViewModel;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
 
-public class ChatService extends IntentService{
+public class ChatService extends IntentService {
 
     public static final String NOTIFICATION_TITLE = "Local Chat";
 
@@ -56,6 +63,10 @@ public class ChatService extends IntentService{
     public static final int FOREGROUND_NOTIFICATION_ID = 1;
 
     public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
+
+    public static final String MESSAGE_TYPE = "message";
+
+    public static final String FILENAME_TYPE = "filename";
 
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
@@ -83,6 +94,7 @@ public class ChatService extends IntentService{
         public void onConnectionResult(@NonNull String id, @NonNull ConnectionResolution connectionResolution) {
             if (connectionResolution.getStatus().isSuccess()) {
                 mEndpoints.put(id, ConnectionState.CONNECTED);
+                sendProfilePicture(id);
             }
         }
 
@@ -107,31 +119,58 @@ public class ChatService extends IntentService{
                     String payloadText = new String(payload.asBytes(), StandardCharsets.UTF_8);
 
                     JSONObject jsonObject = new JSONObject(payloadText);
-                    UUID senderId = UUID.fromString(jsonObject.getString("id"));
-                    String messageText = jsonObject.getString("message");
+                    String type = jsonObject.getString("type");
 
-                    UUID myUserId = Preferences.getUserId(getApplicationContext());
+                    if (MESSAGE_TYPE.equals(type)) {
+                        UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                        String messageText = jsonObject.getString("message");
 
-                    Message message = new Message();
-                    message.setText(messageText);
-                    message.setRead(false);
-                    message.setReceiverId(myUserId);
-                    message.setSenderId(senderId);
-                    message.setDate(new Date());
-                    mMessageRepository.insert(message);
+                        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+                        Message message = new Message();
+                        message.setText(messageText);
+                        message.setRead(false);
+                        message.setReceiverId(myUserId);
+                        message.setSenderId(senderId);
+                        message.setDate(new Date());
+                        mMessageRepository.insert(message);
 
 
-                    showMessageNotification(s, messageText);
+                        showMessageNotification(s, messageText);
+                    } else if (FILENAME_TYPE.equals(type)) {
+                        String senderId = jsonObject.getString("id");
+                        String payloadId = jsonObject.getString("payload_id");
+                        String imageExtension = jsonObject.getString("extension");
 
-//                    Toast.makeText(BaseService.this, messageText, Toast.LENGTH_SHORT).show();
+                        String fileName = "photo-".concat(senderId).concat(imageExtension);
+
+                        filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
+                    }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            } else if (payload.getType() == Payload.Type.FILE) {
+                incomingPayloads.put(payload.getId(), payload);
             }
         }
 
         @Override
-        public void onPayloadTransferUpdate(@NonNull String s, @NonNull PayloadTransferUpdate payloadTransferUpdate) {
+        public void onPayloadTransferUpdate(@NonNull final String s, @NonNull PayloadTransferUpdate payloadTransferUpdate) {
+            if (payloadTransferUpdate.getStatus() == PayloadTransferUpdate.Status.SUCCESS) {
+                Long payloadId = payloadTransferUpdate.getPayloadId();
+                Payload payload = incomingPayloads.remove(payloadId);
+                if (payload != null && payload.getType() == Payload.Type.FILE) {
+                    String fileName = filePayloadFilenames.remove(payloadId);
+                    File payloadFile = payload.asFile().asJavaFile();
+                    File newFile = new File(payloadFile.getParentFile(), fileName);
+                    boolean isRenamed = payloadFile.renameTo(newFile);
+                    Log.v("____", "Receive and renamed: " + isRenamed);
+                    Log.v("____", "Receive and renamed(old file): " + payloadFile.getAbsolutePath());
+                    Log.v("____", "Receive and renamed(new file): " + newFile.getAbsolutePath());
+                    mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
+                }
+            }
         }
     };
 
@@ -143,7 +182,6 @@ public class ChatService extends IntentService{
             if (discoveredEndpointInfo.getEndpointName().length() < 3)
                 return;
 
-            //Todo request user name from shared preferences& user photo is null
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
 
@@ -157,7 +195,6 @@ public class ChatService extends IntentService{
             user.setName(name);
             user.setEndpointId(id);
 
-//            mUserRepository.insert(user);
             mDiscoverUsersListener.OnUserFound(user);
         }
 
@@ -210,7 +247,7 @@ public class ChatService extends IntentService{
                 public void onLocationStateDisabled(boolean flag) {
                     if (flag) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if(isBluetoothDisabled) {
+                            if (isBluetoothDisabled) {
                                 mConnectionsClient.stopDiscovery();
                             }
                         } else {
@@ -239,13 +276,22 @@ public class ChatService extends IntentService{
 
     private IntentFilter mIntentFilter;
 
+
     private boolean isBluetoothDisabled;
+
     private boolean isWifiDisabled;
+
     private boolean isLocationDisabled;
+
 
     private ObservableArrayMap<String, ConnectionState> mEndpoints;
 
     private OnMapChangedListener mMapChangedListener;
+
+
+    private final SimpleArrayMap<Long, Payload> incomingPayloads = new SimpleArrayMap<>();
+
+    private final SimpleArrayMap<Long, String> filePayloadFilenames = new SimpleArrayMap<>();
 
 
     public ChatService() {
@@ -351,6 +397,7 @@ public class ChatService extends IntentService{
             UUID myUserId = Preferences.getUserId(getApplicationContext());
 
             JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", MESSAGE_TYPE);
             jsonObject.put("id", myUserId.toString());
             jsonObject.put("message", messageText);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
@@ -360,19 +407,60 @@ public class ChatService extends IntentService{
         }
     }
 
+    private void sendProfilePicture(final String id) {
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
+        Uri myUserPhotoUri = Preferences.getUserPhoto(getApplicationContext());
+        if (myUserPhotoUri != null) {
+            Log.v("____", "Sending picture, uri: " + myUserPhotoUri);
+            try {
+                ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(myUserPhotoUri, "r");
+                Payload filePayload = Payload.fromFile(pfd);
+
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("type", FILENAME_TYPE);
+                jsonObject.put("id", myUserId.toString());
+                jsonObject.put("payload_id", filePayload.getId());
+                jsonObject.put("extension", getFileExtension(myUserPhotoUri));
+
+                mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+                mConnectionsClient.sendPayload(id, filePayload);
+
+            } catch (FileNotFoundException | JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String getFileExtension(Uri uri) {
+        String filePath = null;
+        String[] filePathColumn = {MediaStore.Images.Media.DISPLAY_NAME};
+
+        Cursor cursor = getContentResolver().query(uri, filePathColumn, null, null, null);
+        if (cursor == null)
+            return null;
+
+        if (cursor.moveToFirst()) {
+            String fileName = cursor.getString(cursor.getColumnIndex(filePathColumn[0]));
+            filePath = fileName.substring(fileName.lastIndexOf("."));
+        }
+        cursor.close();
+        return filePath;
+    }
+
     public void startForegroundAdvertiseService() {
         startForeground(FOREGROUND_NOTIFICATION_ID, NotificationHelper.createAdvertiseNotification(this, NOTIFICATION_TITLE, NOTIFICATION_CONTENT));
     }
 
     private void stopAdvertising() {
         mConnectionsClient.stopAdvertising();
+        mConnectionsClient.stopDiscovery();
         mConnectionsClient.stopAllEndpoints();
 
         stopForeground(true);
         stopSelf();
 
         isRunningService = false;
-        Log.v("___", "Stop");
+        Log.v("____", "Stop");
 
         for (Map.Entry<String, ConnectionState> entry : mEndpoints.entrySet()) {
             mEndpoints.put(entry.getKey(), ConnectionState.DISCONNECTED);
@@ -380,9 +468,8 @@ public class ChatService extends IntentService{
     }
 
     private void showMessageNotification(final String endpointId, final String messageText) {
-        final UserViewModel userViewModel = new UserViewModel(getApplication());
 
-        userViewModel.getUserByEndpointId(endpointId).observeForever(new Observer<User>() {
+        mUserRepository.getUserByEndpointId(endpointId).observeForever(new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
@@ -390,7 +477,7 @@ public class ChatService extends IntentService{
                         NotificationHelper.showNotification(getApplicationContext(), user, messageText);
                     }
                 }
-                userViewModel.getUserByEndpointId(endpointId).removeObserver(this);
+                mUserRepository.getUserByEndpointId(endpointId).removeObserver(this);
             }
         });
     }

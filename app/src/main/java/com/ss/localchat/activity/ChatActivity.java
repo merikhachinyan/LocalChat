@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.databinding.ObservableArrayMap;
 import android.databinding.ObservableMap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -27,10 +28,11 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
@@ -39,7 +41,6 @@ import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
-import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
@@ -61,16 +62,14 @@ public class ChatActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mSendMessageBinder = (ChatService.ServiceBinder) service;
-
             mSendMessageBinder.setOnMapChangedListener(mListener);
-
             isBound = true;
+            initActionBar();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mSendMessageBinder = null;
-
             isBound = false;
         }
     };
@@ -94,8 +93,6 @@ public class ChatActivity extends AppCompatActivity {
 
     private MessageViewModel mMessageViewModel;
 
-    private UserViewModel mUserViewModel;
-
     private User mUser;
 
     private ConnectionState mState;
@@ -103,6 +100,13 @@ public class ChatActivity extends AppCompatActivity {
     private String mMessageText;
 
     private boolean isBound;
+
+
+    private TextView userInfo;
+
+    private ImageView userImage;
+
+    private TextView userName;
 
 
     @Override
@@ -118,17 +122,22 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
             actionBar.setDisplayShowCustomEnabled(true);
+
+            View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
+            userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
+            userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
+            userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
+            actionBar.setCustomView(actionBarView);
+
         }
 
         if (getIntent() != null) {
             mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
-
             currentUserId = mUser.getId();
         }
 
-        init();
-
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        init();
     }
 
     @Override
@@ -154,44 +163,20 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private TextView userInfo;
-
     private void initActionBar() {
-        View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
-
-        ImageView userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
-
-        TextView userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
-
-        userInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
-
-
         userName.setText(mUser.getName());
 
-        if (mUser.getPhotoUrl() == null) {
-            Picasso.get()
-                    .load(R.drawable.no_user_image)
-                    .transform(new CircularTransformation())
-                    .into(userImage);
-        } else {
-            Picasso.get()
-                    .load(mUser.getPhotoUrl())
-                    .transform(new CircularTransformation())
-                    .into(userImage);
-        }
-
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setCustomView(actionBarView);
-        }
+        Glide.with(this)
+                .load(mUser.getPhotoUrl())
+                .apply(RequestOptions.circleCropTransform().diskCacheStrategy(DiskCacheStrategy.ALL))
+                .error(Glide.with(this).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
+                .into(userImage);
 
         ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
-
         setUserInfo(endpoints);
     }
 
     private void init() {
-
         mMessageInputEditText = findViewById(R.id.message_input_edit_text_chat_activity);
         mMessageInputEditText.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_FLAG_MULTI_LINE |
@@ -215,15 +200,14 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
 
-        mUserViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
-        mUserViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
+        UserViewModel userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
+        userViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
-                if (user == null) {
-                    return;
+                if (user != null) {
+                    mUser = user;
+                    initActionBar();
                 }
-                mUser = user;
-                initActionBar();
             }
         });
 
@@ -255,7 +239,6 @@ public class ChatActivity extends AppCompatActivity {
                 });
             }
         });
-
 
         findViewById(R.id.send_button_chat_activity).setOnClickListener(new View.OnClickListener() {
             @Override

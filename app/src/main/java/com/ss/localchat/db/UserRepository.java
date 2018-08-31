@@ -40,6 +40,10 @@ public class UserRepository {
         new UpdateAsyncTask(userDao).execute(user);
     }
 
+    public void updatePhoto(String endpointId, String photoUri) {
+        new UpdatePhotoAsyncTask(userDao).execute(endpointId, photoUri);
+    }
+
     public void delete(UUID id) {
         new DeleteAsyncTask(userDao).execute(id);
     }
@@ -70,6 +74,21 @@ public class UserRepository {
         @Override
         protected Void doInBackground(User... users) {
             asyncTaskDao.update(users[0]);
+            return null;
+        }
+    }
+
+    private static class UpdatePhotoAsyncTask extends AsyncTask<String, Void, Void> {
+
+        private UserDao asyncTaskDao;
+
+        UpdatePhotoAsyncTask(UserDao dao) {
+            asyncTaskDao = dao;
+        }
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            asyncTaskDao.updatePhoto(strings[0], strings[1]);
             return null;
         }
     }

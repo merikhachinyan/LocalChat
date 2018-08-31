@@ -27,10 +27,10 @@ public interface UserDao {
             "ORDER BY last_message.date DESC")
     LiveData<List<Chat>> getUsersExceptOwner(UUID owner);
 
-    @Query("SELECT * FROM users WHERE _id = :id")
+    @Query("SELECT * FROM users WHERE _id = :id LIMIT 1")
     LiveData<User> getUserById(UUID id);
 
-    @Query("SELECT * FROM users WHERE endpoint_id = :endpointId")
+    @Query("SELECT * FROM users WHERE endpoint_id = :endpointId LIMIT 1")
     LiveData<User> getUserByEndpointId(String endpointId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -38,6 +38,9 @@ public interface UserDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(User user);
+
+    @Query("UPDATE users SET photo_url = :photoUri WHERE endpoint_id = :endpointId")
+    void updatePhoto(String endpointId, String photoUri);
 
     @Query("DELETE FROM users WHERE _id = :id")
     void delete(UUID id);

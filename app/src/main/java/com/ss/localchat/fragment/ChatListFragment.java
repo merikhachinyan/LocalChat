@@ -8,18 +8,20 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.ChatListAdapter;
-import com.ss.localchat.db.entity.Message;
+import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.DividerItemDecoration;
@@ -36,6 +38,7 @@ public class ChatListFragment extends Fragment {
     public static final String FRAGMENT_TITLE = "Chats";
 
     private ChatListAdapter mChatListAdapter;
+    private MessageViewModel mMessageViewModel;
 
     public ChatListFragment() {
     }
@@ -56,21 +59,18 @@ public class ChatListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_chat_list, container, false);
-
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
-
         init(view);
-
-
+        setHasOptionsMenu(true);
     }
 
     public void init(View v) {
-        mChatListAdapter = new ChatListAdapter(getActivity());
+        mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
+        mChatListAdapter = new ChatListAdapter();
         mChatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
@@ -78,37 +78,26 @@ public class ChatListFragment extends Fragment {
                 intent.putExtra(ChatActivity.USER_EXTRA, user);
                 startActivity(intent);
             }
-        });
 
-        UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
-        final MessageViewModel messageViewModel = ViewModelProviders.of(getActivity()).get(MessageViewModel.class);
-
-        UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
-        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<User>>() {
             @Override
-            public void onChanged(@Nullable List<User> users) {
-                if (users == null || users.size() == 0)
-                    return;
-
-                for (final User user : users) {
-                    messageViewModel.getMessagesWith(user.getId()).observe(getActivity(), new Observer<List<Message>>() {
-                        @Override
-                        public void onChanged(@Nullable List<Message> messages) {
-                            if (messages == null || messages.size() == 0)
-                                return;
-
-                            int unreadMessagesCount = 0;
-                            int i = messages.size() - 1;
-                            while (i >= 0 && !messages.get(i).isRead()) {
-                                unreadMessagesCount++;
-                                i--;
-                            }
-                            mChatListAdapter.setUser(user, messages.get(messages.size() - 1), unreadMessagesCount);
-                        }
-                    });
-                }
+            public void onLongClick(User user, View view) {
+                showPopup(user, view);
             }
         });
+
+        UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
+
+        UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
+        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
+            @Override
+            public void onChanged(@Nullable List<Chat> chats) {
+                if (chats == null)
+                    return;
+
+                mChatListAdapter.setUsers(chats);
+            }
+        });
+
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 88));
 
@@ -117,21 +106,33 @@ public class ChatListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.addItemDecoration(dividerItemDecoration);
         recyclerView.setAdapter(mChatListAdapter);
+    }
 
+    private void showPopup(final User user, View view) {
+        PopupMenu popupMenu = new PopupMenu(getActivity(), view);
+        getActivity().getMenuInflater().inflate(R.menu.popup_menu_chat_list_fragment, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_delete_chat:
+                        mMessageViewModel.clearHistory(user.getId());
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
+        popupMenu.show();
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
-
-        menuInflater.inflate(R.menu.menu_main, menu);
+        menu.clear();
+        menuInflater.inflate(R.menu.menu_main_search, menu);
 
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
 
-//        SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
-//        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
-//
-//
-//        searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
 
         search(searchView);
 
@@ -150,8 +151,10 @@ public class ChatListFragment extends Fragment {
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (mChatListAdapter != null) {
-                    mChatListAdapter.getFilter().filter(newText);
+                    mChatListAdapter.getFilter(newText);
+
                 }
+
                 return true;
             }
         });

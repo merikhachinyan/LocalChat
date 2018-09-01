@@ -35,7 +35,6 @@ public class LoginActivity extends AppCompatActivity {
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 startActivity(new Intent(getApplicationContext(), SignUpActivity.class));
             }
         });
@@ -46,7 +45,6 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onSuccess(LoginResult loginResult) {
-
                 Profile profile = Profile.getCurrentProfile();
                 user = new User();
                 if (profile == null) {
@@ -54,7 +52,7 @@ public class LoginActivity extends AppCompatActivity {
                         @Override
                         protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
                             user.setName(currentProfile.getName());
-                            user.setPhotoUrl(currentProfile.getProfilePictureUri(400, 400));
+                            user.setPhotoUrl(currentProfile.getProfilePictureUri(400, 400).toString());
 
                             mProfileTracker.stopTracking();
                             new UserRepository(getApplication()).insert(user);
@@ -72,7 +70,7 @@ public class LoginActivity extends AppCompatActivity {
                 {
 
                     user.setName(profile.getName());
-                    user.setPhotoUrl(profile.getProfilePictureUri(400, 400));
+                    user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
 
                     new UserRepository(getApplication()).insert(user);
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
@@ -99,7 +97,6 @@ public class LoginActivity extends AppCompatActivity {
     private void startMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
         startActivity(intent);
         finish();
     }

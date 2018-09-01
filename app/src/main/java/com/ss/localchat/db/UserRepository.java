@@ -5,6 +5,7 @@ import android.arch.lifecycle.LiveData;
 import android.os.AsyncTask;
 
 import com.ss.localchat.db.dao.UserDao;
+import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.User;
 
 import java.util.List;
@@ -19,12 +20,16 @@ public class UserRepository {
         userDao = AppDatabase.getInstance(application).userDao();
     }
 
-    public LiveData<List<User>> getUsersExceptOwner(UUID owner) {
+    public LiveData<List<Chat>> getUsersExceptOwner(UUID owner) {
         return userDao.getUsersExceptOwner(owner);
     }
 
     public LiveData<User> getUserById(UUID id) {
         return userDao.getUserById(id);
+    }
+
+    public LiveData<User> getUserByEndpointId(String endpointId) {
+        return userDao.getUserByEndpointId(endpointId);
     }
 
     public void insert(User user) {
@@ -33,6 +38,10 @@ public class UserRepository {
 
     public void update(User user) {
         new UpdateAsyncTask(userDao).execute(user);
+    }
+
+    public void updatePhoto(String endpointId, String photoUri) {
+        new UpdatePhotoAsyncTask(userDao).execute(endpointId, photoUri);
     }
 
     public void delete(UUID id) {
@@ -65,6 +74,21 @@ public class UserRepository {
         @Override
         protected Void doInBackground(User... users) {
             asyncTaskDao.update(users[0]);
+            return null;
+        }
+    }
+
+    private static class UpdatePhotoAsyncTask extends AsyncTask<String, Void, Void> {
+
+        private UserDao asyncTaskDao;
+
+        UpdatePhotoAsyncTask(UserDao dao) {
+            asyncTaskDao = dao;
+        }
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            asyncTaskDao.updatePhoto(strings[0], strings[1]);
             return null;
         }
     }

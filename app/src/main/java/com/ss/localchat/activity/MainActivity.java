@@ -2,14 +2,9 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.net.wifi.WifiManager;
-import android.os.Build;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,21 +21,18 @@ import android.widget.Toast;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
-import com.ss.localchat.db.entity.User;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
 import com.ss.localchat.preferences.Preferences;
-import com.ss.localchat.receiver.BluetoothStateBroadcastReceiver;
-import com.ss.localchat.receiver.LocationStateBroadcastReceiver;
-import com.ss.localchat.receiver.WifiStateBroadcastReceiver;
-import com.ss.localchat.service.AdvertiseService;
-import com.ss.localchat.service.DiscoverService;
+import com.ss.localchat.service.ChatService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final int REQUEST_CODE = 1;
 
     private final static String[] REQUIRED_PERMISSIONS =
             new String[]{
@@ -48,69 +40,18 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.BLUETOOTH_ADMIN,
                     Manifest.permission.ACCESS_WIFI_STATE,
                     Manifest.permission.CHANGE_WIFI_STATE,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
 
-    protected WifiStateBroadcastReceiver.OnWifiStateChangedListener mWifiStateChangedListener =
-            new WifiStateBroadcastReceiver.OnWifiStateChangedListener() {
-                @Override
-                public void onWifiDisabled() {
-                    if (isBluetoothDisabled) {
-                        stopService(new Intent(MainActivity.this, AdvertiseService.class));
-                        stopService(new Intent(MainActivity.this, DiscoverService.class));
-                    } else {
-                        isWifiDisabled = true;
-                    }
-                }
-            };
-
-    private BluetoothStateBroadcastReceiver.OnBluetoothStateChangedListener mBluetoothStateChangedListener =
-            new BluetoothStateBroadcastReceiver.OnBluetoothStateChangedListener() {
-                @Override
-                public void onBluetoothDisabled() {
-                    //Todo For location check which api
-                    if (isWifiDisabled || isLocationDisabled) {
-                        stopService(new Intent(MainActivity.this, AdvertiseService.class));
-                        stopService(new Intent(MainActivity.this, DiscoverService.class));
-                    } else {
-                        isBluetoothDisabled = true;
-                    }
-                }
-            };
-
-    private LocationStateBroadcastReceiver.OnLocationStateChangedListener mLocationStateChangedListener =
-            new LocationStateBroadcastReceiver.OnLocationStateChangedListener() {
-                @Override
-                public void onLocationStateDisabled() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        if (isBluetoothDisabled) {
-                            stopService(new Intent(MainActivity.this, AdvertiseService.class));
-                        } else {
-                            isLocationDisabled = true;
-                        }
-                    }
-                }
-            };
-
-
     private List<Fragment> mFragmentList = new ArrayList<>();
 
-    private WifiStateBroadcastReceiver mWifiStateBroadcastReceiver;
-    private BluetoothStateBroadcastReceiver mBluetoothStateBroadcastReceiver;
-    private LocationStateBroadcastReceiver mLocationStateBroadcastReceiver;
+    private static boolean isAdvertising;
 
-    private IntentFilter mWifiIntentFilter;
-    private IntentFilter mBluetoothIntentFilter;
-    private IntentFilter mLocationIntentFilter;
-
-    private boolean isWifiDisabled;
-    private boolean isBluetoothDisabled;
-    private boolean isLocationDisabled;
-    private String userName;
-    private String userImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
 
         if (!Preferences.contain(getApplicationContext(), Preferences.USER_ID_KEY)) {
 
@@ -147,14 +89,10 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
 
-//        registerReceivers();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-//        unregisterReceivers();
+        if (!isAdvertising) {
+            startService(new Intent(this, ChatService.class));
+            isAdvertising = true;
+        }
     }
 
     private boolean hasPermissions(Context context, String... permissions) {
@@ -197,22 +135,6 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
         tableLayout.setupWithViewPager(viewPager);
 
-        mWifiStateBroadcastReceiver = new WifiStateBroadcastReceiver();
-        mBluetoothStateBroadcastReceiver = new BluetoothStateBroadcastReceiver();
-        mLocationStateBroadcastReceiver = new LocationStateBroadcastReceiver();
-
-        mWifiIntentFilter = new IntentFilter();
-        mWifiIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-
-        mBluetoothIntentFilter = new IntentFilter();
-        mBluetoothIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-
-        mLocationIntentFilter = new IntentFilter();
-        mLocationIntentFilter.addAction(LocationStateBroadcastReceiver.LOCATION_ACTION);
-
-        mWifiStateBroadcastReceiver.setOnWifiStateChangedListener(mWifiStateChangedListener);
-        mBluetoothStateBroadcastReceiver.setOnBluetoothStateChangedListener(mBluetoothStateChangedListener);
-        mLocationStateBroadcastReceiver.setOnLocationStateChangedListener(mLocationStateChangedListener);
     }
 
     @Override
@@ -227,25 +149,19 @@ public class MainActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-
-                startActivity(intent);
+                startActivityForResult(new Intent(this, SettingsActivity.class), REQUEST_CODE);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void registerReceivers() {
-        registerReceiver(mWifiStateBroadcastReceiver, mWifiIntentFilter);
-        registerReceiver(mBluetoothStateBroadcastReceiver, mBluetoothIntentFilter);
-        registerReceiver(mLocationStateBroadcastReceiver, mLocationIntentFilter);
-    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-    private void unregisterReceivers() {
-        unregisterReceiver(mWifiStateBroadcastReceiver);
-        unregisterReceiver(mBluetoothStateBroadcastReceiver);
-        unregisterReceiver(mLocationStateBroadcastReceiver);
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            isAdvertising = true;
+        }
     }
-
 }

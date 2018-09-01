@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1da98ef6ea7dc67994792677bac3a66d",
+    "identityHash": "eae606bdbf5a04bd035cc598f6b479d7",
     "entities": [
       {
         "tableName": "users",
@@ -50,11 +50,11 @@
       },
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sender_id` TEXT, `receiver_id` TEXT, `text` TEXT, `photo` TEXT, `date` INTEGER, `is_read` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sender_id` TEXT, `receiver_id` TEXT, `text` TEXT, `photo` TEXT, `date` INTEGER, `is_read` INTEGER NOT NULL, `is_read_receiver` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
-            "columnName": "_id",
+            "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -93,11 +93,17 @@
             "columnName": "is_read",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isReadReceiver",
+            "columnName": "is_read_receiver",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
           "columnNames": [
-            "_id"
+            "id"
           ],
           "autoGenerate": true
         },
@@ -107,7 +113,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"1da98ef6ea7dc67994792677bac3a66d\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"eae606bdbf5a04bd035cc598f6b479d7\")"
     ]
   }
 }

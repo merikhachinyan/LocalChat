@@ -8,12 +8,18 @@ import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.DiscoveredUserHolder;
+import com.ss.localchat.adapter.viewholder.LoadingIndicatorViewHolder;
 import com.ss.localchat.db.entity.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredUserHolder> {
+public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int DISCOVERED_USER_TYPE = 1;
+
+    private static final int LOADING_INDICATOR_TYPE = 2;
+
 
     private OnItemClickListener mListener;
 
@@ -25,15 +31,26 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
 
     @NonNull
     @Override
-    public DiscoveredUserHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.discovered_user_item_view, parent, false);
-        return new DiscoveredUserHolder(view, mListener);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view;
+        switch (viewType) {
+            case DISCOVERED_USER_TYPE:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.discovered_user_item_view, parent, false);
+                return new DiscoveredUserHolder(view, mListener);
+            case LOADING_INDICATOR_TYPE:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.loading_indicator_item_view, parent, false);
+                return new LoadingIndicatorViewHolder(view);
+            default:
+                throw new IllegalArgumentException("No such input type in RecyclerView");
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull DiscoveredUserHolder holder, int position) {
-        User user = mUsers.get(position);
-        holder.bind(user);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder.getItemViewType() == DISCOVERED_USER_TYPE) {
+            User user = mUsers.get(position);
+            ((DiscoveredUserHolder) holder).bind(user);
+        }
     }
 
     @Override
@@ -41,9 +58,18 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
         return mUsers.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        if (position == mUsers.size() - 1 && mUsers.get(position) == null)
+            return LOADING_INDICATOR_TYPE;
+        else
+            return DISCOVERED_USER_TYPE;
+    }
+
     public void addUser(User user) {
-        mUsers.add(user);
-        notifyItemInserted(mUsers.size() - 1);
+        int indexGap = mUsers.size() > 0 && mUsers.get(mUsers.size() - 1) == null ? 1 : 0;
+        mUsers.add(mUsers.size() - indexGap, user);
+        notifyItemInserted(mUsers.size() - indexGap - 1);
     }
 
     public void removeUserById(String id) {
@@ -53,6 +79,21 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<DiscoveredU
                 mUsers.remove(user);
                 notifyItemRemoved(index);
                 break;
+            }
+        }
+    }
+
+    public void showLoadingIndicator(boolean flag) {
+        if (flag) {
+            mUsers.add(null);
+            notifyItemInserted(mUsers.size() - 1);
+        } else {
+            if (mUsers.size() != 0) {
+                int i = mUsers.size() - 1;
+                if (mUsers.get(i) == null) {
+                    mUsers.remove(i);
+                    notifyItemRemoved(i);
+                }
             }
         }
     }

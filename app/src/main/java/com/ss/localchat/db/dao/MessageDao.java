@@ -17,24 +17,19 @@ import java.util.UUID;
 public interface MessageDao {
 
     @Query("SELECT * FROM messages " +
-            "ORDER BY date ASC")
-    LiveData<List<Message>> getAllMessages();
-
-    @Query("SELECT * FROM messages " +
-            "WHERE sender_id = :user_id OR receiver_id = :user_id " +
+            "WHERE :user_id in (sender_id, receiver_id) " +
             "ORDER BY date ASC")
     LiveData<List<Message>> getMessagesWith(UUID user_id);
 
     @Query("SELECT * FROM messages " +
-            "WHERE sender_id = :user_id OR receiver_id = :user_id " +
-            "ORDER BY date DESC " +
-            "LIMIT 1")
-    LiveData<Message> getLastMessage(UUID user_id);
-
-    @Query("SELECT * FROM messages " +
-            "WHERE (sender_id = :user_id OR receiver_id = :user_id) AND is_read = :is_read " +
+            "WHERE :user_id in (sender_id, receiver_id) AND is_read = :is_read " +
             "ORDER BY date ASC")
     LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read);
+
+    @Query("SELECT * FROM messages " +
+            "WHERE receiver_id = :user_id AND is_read_receiver = :is_read_receiver " +
+            "ORDER BY date ASC")
+    LiveData<List<Message>> getReceiverUnreadMessages(UUID user_id, boolean is_read_receiver);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(Message... messages);
@@ -45,6 +40,7 @@ public interface MessageDao {
     @Delete
     void delete(Message message);
 
-    @Query("DELETE FROM messages WHERE sender_id = :user_id OR receiver_id = :user_id")
+    @Query("DELETE FROM messages " +
+            "WHERE :user_id in (sender_id, receiver_id)")
     void clearHistory(UUID user_id);
 }

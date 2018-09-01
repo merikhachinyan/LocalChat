@@ -19,20 +19,16 @@ public class MessageRepository {
         messageDao = AppDatabase.getInstance(application).messageDao();
     }
 
-    public LiveData<List<Message>> getAllMessages() {
-        return messageDao.getAllMessages();
-    }
-
     public LiveData<List<Message>> getMessagesWith(UUID user_id) {
         return messageDao.getMessagesWith(user_id);
     }
 
-    public LiveData<Message> getLastMessage(UUID user_id) {
-        return messageDao.getLastMessage(user_id);
-    }
-
     public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read) {
         return messageDao.getReadOrUnreadMessagesWith(user_id, is_read);
+    }
+
+    public LiveData<List<Message>> getReceiverUnreadMessages(UUID user_id, boolean is_read_receiver) {
+        return messageDao.getReceiverUnreadMessages(user_id, is_read_receiver);
     }
 
     public void update(Message... messages) {

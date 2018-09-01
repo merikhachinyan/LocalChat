@@ -27,7 +27,7 @@
             android:textColor="@android:color/black"
             android:textSize="16sp"
             android:ellipsize="start"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:text="Outbox Message" />
 
         <TextView
@@ -35,9 +35,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/sent_message_unread_image_view"
             app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"
             tools:text="11:40" />
+
+        <ImageView
+            android:id="@+id/sent_message_unread_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_done_all_black_24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"/>
 
     </android.support.constraint.ConstraintLayout>
 </FrameLayout>

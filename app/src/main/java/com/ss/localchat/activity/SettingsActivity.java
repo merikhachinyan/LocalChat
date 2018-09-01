@@ -2,19 +2,19 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.opengl.Visibility;
-import android.preference.Preference;
+import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -24,14 +24,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-
 import android.support.v7.widget.CardView;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextMenu;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
@@ -44,27 +40,30 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.facebook.AccessToken;
 import com.facebook.login.LoginManager;
-import com.squareup.picasso.Picasso;
 import com.ss.localchat.R;
 import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
-import com.ss.localchat.service.AdvertiseService;
-import com.ss.localchat.util.CircularTransformation;
+import com.ss.localchat.service.ChatService;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 import java.util.UUID;
 
 import static com.ss.localchat.preferences.Preferences.INTRODUCE_APP_KEY;
 import static com.ss.localchat.preferences.Preferences.USER_ID_KEY;
 import static com.ss.localchat.preferences.Preferences.USER_NAME_KEY;
-import static com.ss.localchat.preferences.Preferences.getUserId;
 
 public class SettingsActivity extends AppCompatActivity {
+
+    public static final String ENABLE_ADVERTISING = "Enable Advertising";
+
+    public static final String DISABLE_ADVERTISING = "Disable Advertising";
+
     private UserRepository userRepository;
     private ImageView imageView;
     private UserViewModel mUserViewModel;
@@ -88,12 +87,49 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView mAdvertiseTextView;
     private User mUser;
 
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mAdvertiseBinder = (ChatService.ServiceBinder) service;
+
+            isBound = true;
+
+            if (mAdvertiseBinder.isRunningService()) {
+                mAdvertiseTextView.setText(DISABLE_ADVERTISING);
+
+                mAdvertisingSwitch.setChecked(true);
+            } else {
+                mAdvertiseTextView.setText(ENABLE_ADVERTISING);
+
+                mAdvertisingSwitch.setChecked(false);
+            }
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mAdvertiseBinder = null;
+
+            isBound = false;
+        }
+    };
+
+
+    private Switch mAdvertisingSwitch;
+
+    private ChatService.ServiceBinder mAdvertiseBinder;
+
+    private boolean isBound;
+    private boolean isEditable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         setContentView(R.layout.activity_settings);
+
+        bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+
+
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -116,6 +152,86 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            unbindService(mServiceConnection);
+
+            Log.v("___", "unbind settings");
+        }
+    }
+
+    private void init() {
+        userRepository = new UserRepository(getApplication());
+
+
+        final Intent intent = new Intent(this, ChatService.class);
+
+        mAdvertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
+
+        mAdvertiseTextView = findViewById(R.id.advertising_text);
+
+        mAdvertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    if (!mAdvertiseBinder.isRunningService()) {
+                        startService(intent);
+                        mAdvertiseTextView.setText(DISABLE_ADVERTISING);
+
+                    }
+                } else {
+                    mAdvertiseBinder.stopService();
+                    mAdvertiseTextView.setText(ENABLE_ADVERTISING);
+                }
+            }
+        });
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mUser.getPhotoUrl() != null) {
+                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                    String mime = "*/*";
+                    MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+                    if (mimeTypeMap.hasExtension(
+                            mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString())))
+                        mime = mimeTypeMap.getMimeTypeFromExtension(
+                                mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString()));
+                    intent.setDataAndType(Uri.parse(mUser.getPhotoUrl()), mime);
+                    startActivity(intent);
+                } else
+                    addImage();
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        sendResult();
+    }
+
+    private void sendResult() {
+        Intent intent = new Intent();
+        setResult(RESULT_OK, intent);
+        finish();
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
 
@@ -130,15 +246,17 @@ public class SettingsActivity extends AppCompatActivity {
                     if (mUser != null) {
                         textViewMyProfileName.setText(mUser.getName());
                         if (mUser.getPhotoUrl() != null) {
-                            Picasso.get()
+                            Glide.with(getApplicationContext())
                                     .load(mUser.getPhotoUrl())
-                                    .transform(new CircularTransformation())
+                                    .apply(RequestOptions.circleCropTransform())
                                     .into(imageView);
+
                         } else {
-                            Picasso.get()
+                            Glide.with(getApplicationContext())
                                     .load(R.drawable.no_user_image)
-                                    .transform(new CircularTransformation())
+                                    .apply(RequestOptions.circleCropTransform())
                                     .into(imageView);
+
                         }
                         if (mUser.getName() == null) {
                             textViewMyProfileName.setText("User Name");
@@ -164,74 +282,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
     }
-
-
-    private void init() {
-        userRepository = new UserRepository(getApplication());
-
-        final Intent intent = new Intent(this, AdvertiseService.class);
-
-        Switch advertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
-
-        mAdvertiseTextView = findViewById(R.id.advertising_text);
-
-
-        advertisingSwitch.setChecked(isRunningAdvertiseService(AdvertiseService.class));
-
-        advertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    startService(intent);
-                    mAdvertiseTextView.setText(STOP_ADVERTISING);
-                } else {
-                    stopService(intent);
-                    mAdvertiseTextView.setText(START_ADVERTISING);
-                }
-            }
-        });
-
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mUser.getPhotoUrl() != null) {
-                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                    String mime = "*/*";
-                    MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-                    if (mimeTypeMap.hasExtension(
-                            mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString())))
-                        mime = mimeTypeMap.getMimeTypeFromExtension(
-                                mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString()));
-                    intent.setDataAndType(mUser.getPhotoUrl(), mime);
-                    startActivity(intent);
-                } else
-                    addImage();
-            }
-        });
-
-    }
-
-    private boolean isEditable;
-
-
-    @Override
-    public void invalidateOptionsMenu() {
-        super.invalidateOptionsMenu();
-
-    }
-
-    private boolean isRunningAdvertiseService(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                mAdvertiseTextView.setText(STOP_ADVERTISING);
-                return true;
-            }
-        }
-        mAdvertiseTextView.setText(START_ADVERTISING);
-        return false;
-    }
-
 
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
@@ -316,20 +366,21 @@ public class SettingsActivity extends AppCompatActivity {
                 Bundle bundle = data.getExtras();
                 Bitmap bitmap = (Bitmap) bundle.get("data");
                 uri = getImageUri(getApplicationContext(), bitmap);
-                Picasso.get()
+                Glide.with(this)
                         .load(uri)
-                        .transform(new CircularTransformation())
+                        .apply(RequestOptions.circleCropTransform())
                         .into(imageView);
-                mUser.setPhotoUrl(uri);
+
+                mUser.setPhotoUrl(uri.toString());
 
             } else if (requestCode == SELECT_FILE) {
 
                 uri = data.getData();
-                Picasso.get()
+                Glide.with(this)
                         .load(uri)
-                        .transform(new CircularTransformation())
+                        .apply(RequestOptions.circleCropTransform())
                         .into(imageView);
-                mUser.setPhotoUrl(uri);
+                mUser.setPhotoUrl(uri.toString());
             }
             userRepository.update(mUser);
 

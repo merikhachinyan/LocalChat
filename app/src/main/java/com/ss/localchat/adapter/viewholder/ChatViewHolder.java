@@ -6,12 +6,13 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.ChatListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
-import com.ss.localchat.util.CircularTransformation;
 import com.ss.localchat.util.DateFormatUtil;
 
 
@@ -63,18 +64,11 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
             unreadMessagesCountTextView.setVisibility(View.INVISIBLE);
         }
 
-
-        if (user.getPhotoUrl() == null) {
-            Picasso.get()
-                    .load(R.drawable.no_user_image)
-                    .transform(new CircularTransformation())
-                    .into(profileImageView);
-        } else {
-            Picasso.get()
-                    .load(user.getPhotoUrl())
-                    .transform(new CircularTransformation())
-                    .into(profileImageView);
-        }
+        Glide.with(itemView)
+                .load(user.getPhotoUrl())
+                .apply(RequestOptions.circleCropTransform().diskCacheStrategy(DiskCacheStrategy.ALL))
+                .error(Glide.with(itemView).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
+                .into(profileImageView);
 
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,6 +76,16 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
                 if (mListener != null) {
                     mListener.onClick(user);
                 }
+            }
+        });
+
+        itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (mListener != null) {
+                    mListener.onLongClick(user, v);
+                }
+                return true;
             }
         });
     }

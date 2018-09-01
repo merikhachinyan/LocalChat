@@ -13,7 +13,6 @@ import java.util.UUID;
 public class Message {
 
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "_id")
     @NonNull
     private Long id;
 
@@ -31,6 +30,9 @@ public class Message {
 
     @ColumnInfo(name = "is_read")
     private boolean isRead;
+
+    @ColumnInfo(name = "is_read_receiver")
+    private boolean isReadReceiver;
 
     public Message() {
         date = new Date();
@@ -94,6 +96,13 @@ public class Message {
         isRead = read;
     }
 
+    public boolean isReadReceiver() {
+        return isReadReceiver;
+    }
+
+    public void setReadReceiver(boolean readReceiver) {
+        isReadReceiver = readReceiver;
+    }
 
     @Override
     public int hashCode() {

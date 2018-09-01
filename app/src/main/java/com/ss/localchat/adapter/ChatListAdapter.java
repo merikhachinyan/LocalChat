@@ -58,13 +58,15 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
         mListener = listener;
     }
 
-    private static List<Chat> filter(List<Chat> models, String query) {
+    private ArrayList<Chat> filter(List<Chat> models, String query) {
+
         final String lowerCaseQuery = query.toLowerCase();
 
-        final List<Chat> filteredModelList = new ArrayList<>();
+        final ArrayList<Chat> filteredModelList = new ArrayList<>();
         for (Chat model : models) {
-            final String text = model.user.getName().toLowerCase();
-            if (text.contains(lowerCaseQuery)) {
+            final String name = model.user.getName().toLowerCase();
+            final String message = model.message.getText().toLowerCase();
+            if (name.contains(lowerCaseQuery) | message.contains(lowerCaseQuery)) {
                 filteredModelList.add(model);
             }
         }
@@ -72,11 +74,10 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     }
 
     public void getFilter(String str) {
-        mFilteredList.clear();
-        if (mChats.size() > 0) {
-            mFilteredList.addAll(filter(mChats, str));
-            notifyDataSetChanged();
-        }
+
+        mFilteredList = filter(mChats, str);
+        notifyDataSetChanged();
+
     }
 
     public interface OnItemClickListener {

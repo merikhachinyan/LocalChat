@@ -130,17 +130,11 @@ public class ChatListFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         menu.clear();
         menuInflater.inflate(R.menu.menu_main_search, menu);
-
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-
-
         search(searchView);
-
     }
 
     private void search(SearchView searchView) {
-
-
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -152,9 +146,7 @@ public class ChatListFragment extends Fragment {
             public boolean onQueryTextChange(String newText) {
                 if (mChatListAdapter != null) {
                     mChatListAdapter.getFilter(newText);
-
                 }
-
                 return true;
             }
         });

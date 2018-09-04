@@ -65,9 +65,13 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String DISABLE_ADVERTISING = "Disable Advertising";
 
     private UserRepository userRepository;
+
     private ImageView imageView;
+
     private UserViewModel mUserViewModel;
+
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
+
     private final static String[] REQUIRED_PERMISSIONS =
             new String[]{
                     Manifest.permission.CAMERA,
@@ -78,13 +82,15 @@ public class SettingsActivity extends AppCompatActivity {
             };
 
     private static final int SELECT_FILE = 1;
-    private static final int REQUEST_CAMERA = 1;
-    public static final String START_ADVERTISING = "Start Advertising";
 
-    public static final String STOP_ADVERTISING = "Stop Advertising";
+    private static final int REQUEST_CAMERA = 2;
+
     private Uri uri;
+
     private TextView textViewMyProfileName;
+
     private TextView mAdvertiseTextView;
+
     private User mUser;
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -130,6 +136,22 @@ public class SettingsActivity extends AppCompatActivity {
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
 
+        init();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isBound) {
+            unbindService(mServiceConnection);
+
+            Log.v("___", "unbind settings");
+        }
+    }
+
+    private void init() {
+        userRepository = new UserRepository(getApplication());
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -148,23 +170,6 @@ public class SettingsActivity extends AppCompatActivity {
                 createAndDisplayDialog();
             }
         });
-        init();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if (isBound) {
-            unbindService(mServiceConnection);
-
-            Log.v("___", "unbind settings");
-        }
-    }
-
-    private void init() {
-        userRepository = new UserRepository(getApplication());
-
 
         final Intent intent = new Intent(this, ChatService.class);
 
@@ -265,12 +270,19 @@ public class SettingsActivity extends AppCompatActivity {
                         cardView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                if (AccessToken.getCurrentAccessToken() == null) {
-                                    goIntroduceActivity();
-                                } else {
-                                    LoginManager.getInstance().logOut();
-                                    goIntroduceActivity();
-                                }
+                                AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
+                                alert.setMessage("Are you sure?")
+                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener()                 {
+
+                                            public void onClick(DialogInterface dialog, int which) {
+
+                                                logout();
+                                            }
+                                        }).setNegativeButton("Cancel", null);
+
+                                AlertDialog alert1 = alert.create();
+                                alert1.show();
+
 
                             }
                         });
@@ -282,7 +294,14 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
     }
-
+private void logout(){
+    if (AccessToken.getCurrentAccessToken() == null) {
+        goIntroduceActivity();
+    } else {
+        LoginManager.getInstance().logOut();
+        goIntroduceActivity();
+    }
+}
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -343,7 +362,6 @@ public class SettingsActivity extends AppCompatActivity {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent, "Select File"), SELECT_FILE);
-                    //  startActivityForResult(intent, SELECT_FILE);
 
                 } else if (items[i].equals("Cancel")) {
                     dialogInterface.dismiss();

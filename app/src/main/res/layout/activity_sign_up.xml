@@ -50,4 +50,13 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/no_user_image" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/loginCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        app:layout_constraintEnd_toEndOf="@+id/imageViewLogin"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewLogin"
+        app:srcCompat="@android:drawable/ic_menu_camera" />
+
 </android.support.constraint.ConstraintLayout>

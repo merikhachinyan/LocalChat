@@ -28,18 +28,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.ChatActivity"
             android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-
-        <activity android:name=".activity.SettingsActivity"
+        <activity
+            android:name=".activity.SettingsActivity"
             android:parentActivityName=".activity.MainActivity" />
-
-        <activity android:name=".activity.IntroduceActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
-
+        <activity
+            android:name=".activity.IntroduceActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".activity.LoginActivity" />
 
         <service android:name=".service.ChatService" />
@@ -64,8 +62,7 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.SignUpActivity"></activity>
-
+        <activity android:name=".activity.SignUpActivity" />
     </application>
 
 </manifest>

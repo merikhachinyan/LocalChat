@@ -16,15 +16,4 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/discovered_user_item_view" />
 
-    <Button
-        android:id="@+id/start_discover_users_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/colorAccent"
-        android:text="@string/start"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
 </android.support.constraint.ConstraintLayout>

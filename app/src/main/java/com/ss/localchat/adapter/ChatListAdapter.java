@@ -1,5 +1,6 @@
 package com.ss.localchat.adapter;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -20,8 +21,11 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     private List<Chat> mChats;
 
+    private Context mContext;
 
-    public ChatListAdapter() {
+
+    public ChatListAdapter(Context context) {
+        mContext = context;
     }
 
     @NonNull
@@ -34,7 +38,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Chat user = mChats.get(position);
-        holder.bind(user.user, user.message, user.count);
+        holder.bind(user.user, user.message, user.count, mContext);
     }
 
     @Override

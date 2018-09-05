@@ -32,6 +32,8 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private Context mContext;
 
+    private OnImageClickListener mListener;
+
     public MessageListAdapter(Context context) {
         mContext = context;
         mMessages = new ArrayList<>();
@@ -44,10 +46,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch (viewType) {
             case RECEIVED_MESSAGE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.received_message_item_view, parent, false);
-                return new ReceivedMessageHolder(view);
+                return new ReceivedMessageHolder(view, mListener);
             case SENT_MESSAGE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.sent_message_item_view, parent, false);
-                return new SentMessageHolder(view);
+                return new SentMessageHolder(view, mListener);
             case DATE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.date_item_view, parent, false);
                 return new DateViewHolder(view);
@@ -60,15 +62,14 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch (holder.getItemViewType()) {
             case RECEIVED_MESSAGE_TYPE:
-                ((ReceivedMessageHolder) holder).bind(mMessages.get(position));
+                ((ReceivedMessageHolder) holder).bind(mContext, mMessages.get(position));
                 break;
             case SENT_MESSAGE_TYPE:
                 if (mMessages.get(position).isReadReceiver()) {
-                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_all_black_24dp);
+                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), R.drawable.ic_done_all_black_24dp);
             } else {
-                ((SentMessageHolder) holder).bind(mMessages.get(position), R.drawable.ic_done_black_24dp);
+                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), R.drawable.ic_done_black_24dp);
             }
-//                ((SentMessageHolder) holder).bind(mMessages.get(position));
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));
@@ -161,5 +162,13 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void clear() {
         mMessages.clear();
         notifyDataSetChanged();
+    }
+
+    public void setOnImageClickListener(OnImageClickListener listener) {
+        mListener = listener;
+    }
+
+    public interface OnImageClickListener {
+        void OnImageClick(Message message);
     }
 }

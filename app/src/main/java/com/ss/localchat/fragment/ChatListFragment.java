@@ -40,6 +40,7 @@ public class ChatListFragment extends Fragment {
     public ChatListFragment() {
     }
 
+
     public static ChatListFragment newInstance() {
         ChatListFragment fragment = new ChatListFragment();
         Bundle args = new Bundle();
@@ -66,7 +67,7 @@ public class ChatListFragment extends Fragment {
     public void init(View v) {
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
-        final ChatListAdapter chatListAdapter = new ChatListAdapter();
+        final ChatListAdapter chatListAdapter = new ChatListAdapter(getContext());
         chatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {

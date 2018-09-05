@@ -8,12 +8,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.databinding.ObservableArrayMap;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -38,6 +38,7 @@ import com.ss.localchat.db.MessageRepository;
 import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.helper.BitmapHelper;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
@@ -62,15 +63,20 @@ public class ChatService extends IntentService {
 
     public static final String NOTIFICATION_CONTENT = "Advertising...";
 
-    public static final int FOREGROUND_NOTIFICATION_ID = 1;
-
-    public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
-
     public static final String MESSAGE_TYPE = "message";
 
     public static final String FILENAME_TYPE = "filename";
 
     public static final String READ_TYPE = "read";
+
+    public static final String PHOTO_MESSAGE_TYPE = "photo";
+
+    public static final String PHOTO_TEXT_MESSAGE_TYPE = "photo.text";
+
+
+    public static final int FOREGROUND_NOTIFICATION_ID = 1;
+
+    public static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
 
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
@@ -109,7 +115,6 @@ public class ChatService extends IntentService {
 
             String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
             mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
-
         }
     };
 
@@ -140,7 +145,7 @@ public class ChatService extends IntentService {
                         mMessageRepository.insert(message);
 
 
-                        showMessageNotification(s, messageText);
+                        showMessageNotification(s, message);
 
                         markAsRead(senderId, s);
 
@@ -152,10 +157,45 @@ public class ChatService extends IntentService {
                         String fileName = "photo-".concat(senderId).concat(imageExtension);
 
                         filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
+
                     } else if (READ_TYPE.equals(type)) {
                         UUID senderId = UUID.fromString(jsonObject.getString("id"));
 
                         markAsRead(senderId);
+
+                    } else if (PHOTO_TEXT_MESSAGE_TYPE.equals(type)) {
+                        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+                        UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                        String payloadId = jsonObject.getString("payload_id");
+                        String imageExtension = jsonObject.getString("extension");
+                        String messageText = jsonObject.getString("message_text");
+
+                        mMessage = new Message();
+                        mMessage.setText(messageText);
+                        mMessage.setRead(false);
+                        mMessage.setReceiverId(myUserId);
+                        mMessage.setSenderId(senderId);
+
+                        String fileName = "picture-".concat(payloadId).concat(imageExtension);
+
+                        filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
+
+                    } else if (PHOTO_MESSAGE_TYPE.equals(type)) {
+                        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+                        UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                        String payloadId = jsonObject.getString("payload_id");
+                        String imageExtension = jsonObject.getString("extension");
+
+                        mMessage = new Message();
+                        mMessage.setRead(false);
+                        mMessage.setReceiverId(myUserId);
+                        mMessage.setSenderId(senderId);
+
+                        String fileName = "picture-".concat(payloadId).concat(imageExtension);
+
+                        filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
                     }
 
                 } catch (JSONException e) {
@@ -179,7 +219,19 @@ public class ChatService extends IntentService {
                     Log.v("____", "Receive and renamed: " + isRenamed);
                     Log.v("____", "Receive and renamed(old file): " + payloadFile.getAbsolutePath());
                     Log.v("____", "Receive and renamed(new file): " + newFile.getAbsolutePath());
-                    mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
+
+                    if (fileName.contains("photo")) {
+                        mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
+
+                    } else if (fileName.contains("picture")) {
+                        mMessage.setPhoto(Uri.fromFile(newFile).toString());
+                        mMessage.setDate(new Date());
+                        mMessageRepository.insert(mMessage);
+
+                        showMessageNotification(s, mMessage);
+
+                        markAsRead(mMessage.getSenderId(), s);
+                    }
                 }
             }
         }
@@ -307,6 +359,8 @@ public class ChatService extends IntentService {
     private final SimpleArrayMap<Long, Payload> incomingPayloads = new SimpleArrayMap<>();
 
     private final SimpleArrayMap<Long, String> filePayloadFilenames = new SimpleArrayMap<>();
+
+    private Message mMessage;
 
 
     public ChatService() {
@@ -460,17 +514,22 @@ public class ChatService extends IntentService {
     private void sendProfilePicture(final String id) {
         UUID myUserId = Preferences.getUserId(getApplicationContext());
         Uri myUserPhotoUri = Preferences.getUserPhoto(getApplicationContext());
+
         if (myUserPhotoUri != null) {
             Log.v("____", "Sending picture, uri: " + myUserPhotoUri);
             try {
-                ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(myUserPhotoUri, "r");
-                Payload filePayload = Payload.fromFile(pfd);
+                File file = new File(myUserPhotoUri.toString());
+
+                String photoUri = myUserPhotoUri.toString();
+                String imageExtension = photoUri.substring(photoUri.lastIndexOf("."));
+
+                Payload filePayload = Payload.fromFile(file);
 
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("type", FILENAME_TYPE);
                 jsonObject.put("id", myUserId.toString());
                 jsonObject.put("payload_id", filePayload.getId());
-                jsonObject.put("extension", getFileExtension(myUserPhotoUri));
+                jsonObject.put("extension", imageExtension);
 
                 mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
                 mConnectionsClient.sendPayload(id, filePayload);
@@ -481,7 +540,54 @@ public class ChatService extends IntentService {
         }
     }
 
-    private String getFileExtension(Uri uri) {
+    private void sendPicture(String id, Uri uri) {
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+        try {
+            Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, uri), 640);
+
+            String fileExtension = getFileExtension(uri);
+            Payload filePayload = Payload.fromFile(BitmapHelper.bitmapToFile(this, bitmap, fileExtension));
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", PHOTO_MESSAGE_TYPE);
+            jsonObject.put("id", myUserId.toString());
+            jsonObject.put("payload_id", filePayload.getId());
+            jsonObject.put("extension", fileExtension);
+
+            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+            mConnectionsClient.sendPayload(id, filePayload);
+
+        } catch (FileNotFoundException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPictureWithTextMessage(String id, Uri uri, String messageText) {
+        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+        try {
+            Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, uri), 640);
+
+            String fileExtension = getFileExtension(uri);
+            Payload filePayload = Payload.fromFile(BitmapHelper.bitmapToFile(this, bitmap, fileExtension));
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", PHOTO_TEXT_MESSAGE_TYPE);
+            jsonObject.put("id", myUserId.toString());
+            jsonObject.put("payload_id", filePayload.getId());
+            jsonObject.put("message_text", messageText);
+            jsonObject.put("extension", fileExtension);
+
+            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+            mConnectionsClient.sendPayload(id, filePayload);
+
+        } catch (FileNotFoundException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getFileExtension(Uri uri) {
         String filePath = null;
         String[] filePathColumn = {MediaStore.Images.Media.DISPLAY_NAME};
 
@@ -517,14 +623,14 @@ public class ChatService extends IntentService {
         }
     }
 
-    private void showMessageNotification(final String endpointId, final String messageText) {
+    private void showMessageNotification(final String endpointId, final Message message) {
 
         mUserRepository.getUserByEndpointId(endpointId).observeForever(new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
                     if (!ChatActivity.isCurrentlyRunning || (ChatActivity.isCurrentlyRunning && !ChatActivity.currentUserId.equals(user.getId()))) {
-                        NotificationHelper.showNotification(getApplicationContext(), user, messageText);
+                        NotificationHelper.showNotification(getApplicationContext(), user, message);
                     }
                 }
                 mUserRepository.getUserByEndpointId(endpointId).removeObserver(this);
@@ -555,6 +661,14 @@ public class ChatService extends IntentService {
 
         public void sendMessageTo(String id, String messageText) {
             sendMessage(id, messageText);
+        }
+
+        public void sendPhotoWithTextMessage(String id, Uri uri, String messageText) {
+            sendPictureWithTextMessage(id, uri, messageText);
+        }
+
+        public void sendPhotoMessage(String id, Uri uri) {
+            sendPicture(id, uri);
         }
 
         public void markMessageAsRead(String id, String readMessage) {

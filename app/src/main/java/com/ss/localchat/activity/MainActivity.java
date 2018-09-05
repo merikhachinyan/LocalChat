@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -47,10 +49,25 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
+    private DiscoveredUsersFragment.OnStartDiscoveryListener mDiscoveryListener = new DiscoveredUsersFragment.OnStartDiscoveryListener() {
+        @Override
+        public void OnStartDiscovery(boolean flag) {
+            if (flag) {
+                mFab.setImageResource(R.drawable.ic_stop_black_24dp);
+            } else {
+                mFab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+            }
+        }
+    };
+
 
     private List<Fragment> mFragmentList = new ArrayList<>();
 
     private static boolean isAdvertising;
+
+    private OnButtonClickListener mListener;
+
+    private FloatingActionButton mFab;
 
 
     @Override
@@ -128,13 +145,24 @@ public class MainActivity extends AppCompatActivity {
         ViewPagerFragmentAdapter adapter =
                 new ViewPagerFragmentAdapter(getSupportFragmentManager(), mFragmentList);
 
-        ViewPager viewPager = findViewById(R.id.view_pager_content_main);
+        final ViewPager viewPager = findViewById(R.id.view_pager_content_main);
         viewPager.setAdapter(adapter);
         viewPager.setOffscreenPageLimit(3);
 
         TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
         tableLayout.setupWithViewPager(viewPager);
 
+        mFab = findViewById(R.id.floating_action_button);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (viewPager.getCurrentItem() == 1) {
+                    mListener.onDiscoveryButtonClick(mFab);
+                }
+            }
+        });
+
+        ((DiscoveredUsersFragment)mFragmentList.get(1)).setOnStartDisocveryListener(mDiscoveryListener);
     }
 
     @Override
@@ -163,5 +191,13 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
             isAdvertising = true;
         }
+    }
+
+    public void setOnButtonClickListener(OnButtonClickListener listener) {
+        mListener = listener;
+    }
+
+    public interface OnButtonClickListener {
+        void onDiscoveryButtonClick(FloatingActionButton fab);
     }
 }

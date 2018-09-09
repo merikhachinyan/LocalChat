@@ -128,7 +128,6 @@ public class DiscoveredUsersFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
-
     }
 
     @Override

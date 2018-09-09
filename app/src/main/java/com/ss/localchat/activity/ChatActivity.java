@@ -28,12 +28,14 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.rockerhieu.emojicon.EmojiconEditText;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
@@ -43,6 +45,7 @@ import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.view.EmojiKeyboardLayout;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
@@ -50,6 +53,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class ChatActivity extends AppCompatActivity {
+    public static final String FRAGMENT_TAG_EMOJI = "emoji";
+
+    public static final String FRAGMENT_TAG_KEYBOARD = "custom_keyboard";
 
     public static final String USER_EXTRA = "chat.user";
 
@@ -100,7 +106,7 @@ public class ChatActivity extends AppCompatActivity {
 
     public static UUID currentUserId;
 
-    private EditText mMessageInputEditText;
+    private EmojiconEditText mMessageInputEditText;
 
     private TextView mUserInfo;
 
@@ -241,7 +247,6 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         final RecyclerView recyclerView = findViewById(R.id.recycler_view_chat_activity);
-
         mMessageListAdapter = new MessageListAdapter(this);
         mMessageListAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -255,6 +260,8 @@ public class ChatActivity extends AppCompatActivity {
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
+        EmojiKeyboardLayout keyboardLayout = findViewById(R.id.keyboardLayout);
+        keyboardLayout.setup(this, recyclerView);
 
         UserViewModel userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
         userViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {

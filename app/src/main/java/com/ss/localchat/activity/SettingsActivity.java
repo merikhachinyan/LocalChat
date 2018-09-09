@@ -316,7 +316,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         startActivity(intent);
 
-
         finish();
     }
 
@@ -330,8 +329,9 @@ public class SettingsActivity extends AppCompatActivity {
         isEditable = true;
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+        } else {
+            SelectImage();
         }
-        SelectImage();
     }
 
 

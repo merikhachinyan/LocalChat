@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.rockerhieu.emojicon.EmojiconTextView;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
@@ -18,7 +19,7 @@ import com.ss.localchat.util.DateFormatUtil;
 
 public class SentMessageHolder extends RecyclerView.ViewHolder {
 
-    private TextView mMessageText;
+    private EmojiconTextView mMessageText;
     private TextView mMessageDate;
     private ImageView mReadMessageImage;
     private ImageView mSendPhotoImageView;

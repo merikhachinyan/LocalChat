@@ -44,7 +44,10 @@
             app:layout_constraintTop_toBottomOf="@id/sent_message_image_view"
             app:layout_constraintStart_toStartOf="parent"
             tools:text="Outbox Message"
-            emojicon:emojiconSize="26sp"/>
+            emojicon:emojiconSize="26sp"
+            android:gravity="center_vertical"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"/>
 
         <TextView
             android:id="@+id/sent_message_date_text_view"

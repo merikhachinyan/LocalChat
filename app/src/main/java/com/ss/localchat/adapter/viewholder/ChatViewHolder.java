@@ -1,5 +1,8 @@
 package com.ss.localchat.adapter.viewholder;
 
+import android.content.Context;
+import android.graphics.Color;
+import android.content.Context;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -17,6 +20,10 @@ import com.ss.localchat.util.DateFormatUtil;
 
 
 public class ChatViewHolder extends RecyclerView.ViewHolder {
+
+    private static final String PHOTO = "Photo";
+
+    private ChatListAdapter.OnItemClickListener mListener;
 
     private ImageView profileImageView;
 
@@ -40,14 +47,20 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
         unreadMessagesCountTextView = itemView.findViewById(R.id.unread_messages_count_text_view);
     }
 
-    public void bind(final User user, Message lastMessage, int unreadMessagesCount, final ChatListAdapter.OnItemClickListener listener) {
+    public void bind(final User user, Message lastMessage, int unreadMessagesCount, final ChatListAdapter.OnItemClickListener listener, Context context) {
         nameTextView.setText(user.getName());
 
         if (lastMessage != null) {
             lastMessageTextView.setVisibility(View.VISIBLE);
             dateTextView.setVisibility(View.VISIBLE);
 
-            lastMessageTextView.setText(lastMessage.getText());
+            if (lastMessage.getText() != null) {
+                lastMessageTextView.setText(lastMessage.getText());
+                lastMessageTextView.setTextColor(Color.GRAY);
+            } else {
+                lastMessageTextView.setText(PHOTO);
+                lastMessageTextView.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+            }
             dateTextView.setText(DateFormatUtil.formatChatDate(lastMessage.getDate()));
         } else {
             lastMessageTextView.setVisibility(View.GONE);

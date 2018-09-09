@@ -1,13 +1,17 @@
 package com.ss.localchat.fragment;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,6 +23,7 @@ import android.widget.Button;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.service.ChatService;
@@ -27,21 +32,27 @@ public class DiscoveredUsersFragment extends Fragment {
 
     public static final String FRAGMENT_TITLE = "Discover";
 
-    private boolean temp_is_discovery_started = false;
+    public static final String DIALOG_TEXT = "Enable Advertising ?";
 
+    public static final String ENABLE = "Enable";
+
+    public static final String CANCEL = "Cancel";
 
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mDiscoverBinder = (ChatService.ServiceBinder) service;
+
             mDiscoverBinder.setOnDiscoverUsersListener(mOnDiscoverUsersListener);
+
             isBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mDiscoverBinder = null;
+
             isBound = false;
         }
     };
@@ -59,13 +70,35 @@ public class DiscoveredUsersFragment extends Fragment {
                 }
             };
 
-    private Button mStartDiscoverButton;
+
+    private MainActivity.OnButtonClickListener mListener = new MainActivity.OnButtonClickListener() {
+        @Override
+        public void onDiscoveryButtonClick(FloatingActionButton fab) {
+            if (mDiscoverBinder.isRunningService()) {
+                if (!mDiscoverBinder.isRunningDiscovery()) {
+                    startDiscovery();
+                    fab.setImageResource(R.drawable.ic_stop_black_24dp);
+                } else {
+                    stopDiscovery();
+                    fab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+                }
+
+                mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+
+            } else {
+                createDialog().show();
+            }
+        }
+    };
 
     private DiscoveredUsersListAdapter mDiscoveredUsersListAdapter;
 
     private ChatService.ServiceBinder mDiscoverBinder;
 
+    private OnStartDiscoveryListener mDiscoveryListener;
+
     private boolean isBound;
+
 
     public DiscoveredUsersFragment() {
 
@@ -98,6 +131,17 @@ public class DiscoveredUsersFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        if (isBound) {
+            mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+
+            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+        }
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -125,23 +169,54 @@ public class DiscoveredUsersFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mDiscoveredUsersListAdapter);
 
-        mStartDiscoverButton = view.findViewById(R.id.start_discover_users_button);
-        mStartDiscoverButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO implement is discover server is started or not
-                mDiscoveredUsersListAdapter.showLoadingIndicator(!temp_is_discovery_started);
-//                mStartDiscoverButton.setVisibility(View.GONE);
-                temp_is_discovery_started = !temp_is_discovery_started;
-                if (temp_is_discovery_started)
-                    mStartDiscoverButton.setText("Stop");
-                else
-                    mStartDiscoverButton.setText("Start");
+        ((MainActivity) getActivity()).setOnButtonClickListener(mListener);
+    }
 
-                if (isBound) {
-                    mDiscoverBinder.startDiscovery();
-                }
-            }
-        });
+    private void startDiscovery() {
+        if (isBound) {
+            mDiscoverBinder.startDiscovery();
+        }
+    }
+
+    private void stopDiscovery() {
+        if (isBound) {
+            mDiscoverBinder.stopDiscovery();
+        }
+    }
+
+    private Dialog createDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+        builder.setMessage(DIALOG_TEXT)
+                .setPositiveButton(ENABLE, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        getActivity().startService(new Intent(getActivity(), ChatService.class));
+
+                        startDiscovery();
+
+                        if (isBound) {
+                            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+
+                            mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+                        }
+                    }
+                })
+                .setNegativeButton(CANCEL, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        return builder.create();
+    }
+
+    public void setOnStartDisocveryListener(OnStartDiscoveryListener listener) {
+        mDiscoveryListener = listener;
+    }
+
+    public interface OnStartDiscoveryListener {
+        void OnStartDiscovery(boolean flag);
     }
 }

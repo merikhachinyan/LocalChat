@@ -19,15 +19,6 @@ public interface UserDao {
     @Query("SELECT * FROM users WHERE _id != :owner")
     LiveData<List<User>> getUsersExceptOwner(UUID owner);
 
-//    @Query("SELECT users.*, messages.*, count FROM users, messages " +
-//            "LEFT JOIN " +
-//            "(SELECT messages.sender_id, messages.receiver_id, messages.is_group, COUNT(*) AS count FROM messages " +
-//            "WHERE messages.is_read = 0 AND messages.is_group = 0) unread_count ON users._id in (unread_count.sender_id, unread_count.receiver_id) " +
-//            "WHERE users._id in (messages.sender_id, messages.receiver_id) AND users._id != :owner AND messages.is_group = 0 " +
-//            "GROUP BY users._id " +
-//            "HAVING MAX(messages.date) " +
-//            "ORDER BY messages.date DESC")
-
     @Query("SELECT users.*, messages.*, count FROM users, messages, " +
             "(SELECT users._id, sum(case messages.is_read when 0 then 1 else 0 end) as count FROM users, messages " +
             "WHERE users._id in (messages.sender_id, messages.receiver_id) AND messages.is_group = 0 " +

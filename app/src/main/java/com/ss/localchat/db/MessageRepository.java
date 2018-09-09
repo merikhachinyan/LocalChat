@@ -27,6 +27,10 @@ public class MessageRepository {
         return messageDao.getReadOrUnreadMessagesWith(id, isRead, isGroup);
     }
 
+    public LiveData<List<Message>> getReceiverUnreadMessages(UUID user_id, boolean is_read_receiver) {
+        return messageDao.getReceiverUnreadMessages(user_id, is_read_receiver);
+    }
+
     public void update(Message... messages) {
         new UpdateAsyncTask(messageDao).execute(messages);
     }

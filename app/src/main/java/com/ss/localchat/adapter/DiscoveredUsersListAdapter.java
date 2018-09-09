@@ -60,11 +60,10 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
 
     @Override
     public int getItemViewType(int position) {
-        if (position == mUsers.size() - 1 && mUsers.get(position) == null) {
+        if (position == mUsers.size() - 1 && mUsers.get(position) == null)
             return LOADING_INDICATOR_TYPE;
-        } else {
+        else
             return DISCOVERED_USER_TYPE;
-        }
     }
 
     public void addUser(User user) {
@@ -86,13 +85,17 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
 
     public void showLoadingIndicator(boolean flag) {
         if (flag) {
-            mUsers.add(null);
-            notifyItemInserted(mUsers.size() - 1);
+            if (mUsers.size() == 0 || mUsers.get(mUsers.size() - 1) != null) {
+                mUsers.add(null);
+                notifyItemInserted(mUsers.size() - 1);
+            }
         } else {
-            int i = mUsers.size() - 1;
-            if (mUsers.get(i) == null) {
-                mUsers.remove(i);
-                notifyItemRemoved(i);
+            if (mUsers.size() != 0) {
+                int i = mUsers.size() - 1;
+                if (mUsers.get(i) == null) {
+                    mUsers.remove(i);
+                    notifyItemRemoved(i);
+                }
             }
         }
     }

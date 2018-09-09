@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -16,6 +17,7 @@ import com.ss.localchat.activity.GroupChatActivity;
 import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.activity.SettingsActivity;
 import com.ss.localchat.db.entity.Group;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 
 public class NotificationHelper {
@@ -65,7 +67,7 @@ public class NotificationHelper {
         return builder.build();
     }
 
-    private static Notification createNotification(Context context, Intent intent, String name, String messageText) {
+    private static Notification createNotification(Context context, Intent intent, String name, Message message) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntentWithParentStack(intent);
@@ -74,22 +76,43 @@ public class NotificationHelper {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle(name)
-                .setContentText(messageText)
                 .setContentIntent(pendingIntent)
                 .setColor(context.getResources().getColor(R.color.colorAccent))
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                 .setWhen(System.currentTimeMillis())
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(messageText));
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        if (message.getText() != null && message.getPhoto() != null) {
+            builder
+                    .setContentText(message.getText())
+                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
+                    .setStyle(new NotificationCompat.BigTextStyle()
+                            .bigText(message.getText()))
+                    .setStyle(new NotificationCompat.BigPictureStyle()
+                            .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
+
+        } else if (message.getPhoto() == null) {
+            builder
+                    .setContentText(message.getText())
+                    .setStyle(new NotificationCompat.BigTextStyle()
+                            .bigText(message.getText()));
+
+        } else {
+            builder
+                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
+                    .setStyle(new NotificationCompat.BigPictureStyle()
+                            .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
+        }
 
         return builder.build();
     }
 
+    public static void showNotification(Context context, User user, Message message) {
+        getManager(context).notify(user.getId().toString(), MESSAGE_NOTIFICATION_ID, createNotification(context, user, message));
 
-    public static void showNotification(Context context, User user, String messageText) {
+    public static void showNotification(Context context, User user, Message message) {
         Intent intent = new Intent(context, ChatActivity.class);
         intent.putExtra(ChatActivity.USER_EXTRA, user);
 
@@ -98,7 +121,7 @@ public class NotificationHelper {
                 createNotification(context, intent, user.getName(), messageText));
     }
 
-    public static void showNotification(Context context, Group group, String messageText) {
+    public static void showNotification(Context context, Group group, Message message) {
         Intent intent = new Intent(context, GroupChatActivity.class);
         intent.putExtra(GroupChatActivity.GROUP_EXTRA, group);
 

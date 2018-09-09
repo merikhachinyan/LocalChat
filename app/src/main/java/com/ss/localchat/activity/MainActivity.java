@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -50,12 +52,27 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
+    private DiscoveredUsersFragment.OnStartDiscoveryListener mDiscoveryListener = new DiscoveredUsersFragment.OnStartDiscoveryListener() {
+        @Override
+        public void OnStartDiscovery(boolean flag) {
+            if (flag) {
+                mFab.setImageResource(R.drawable.ic_stop_black_24dp);
+            } else {
+                mFab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+            }
+        }
+    };
+
 
     private List<Fragment> mFragmentList = new ArrayList<>();
 
     private static boolean isAdvertising;
 
     private ViewPager mViewPager;
+
+    private OnButtonClickListener mListener;
+
+    private FloatingActionButton mFab;
 
 
     @Override
@@ -140,6 +157,40 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
         tableLayout.setupWithViewPager(mViewPager);
+
+        mFab = findViewById(R.id.floating_action_button);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mViewPager.getCurrentItem() == 1) {
+                    mListener.onDiscoveryButtonClick(mFab);
+                }
+            }
+        });
+
+        mFab.hide();
+
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == 0) {
+                    mFab.hide();
+                } else if (position == 1) {
+                    mFab.show();
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        ((DiscoveredUsersFragment)mFragmentList.get(1)).setOnStartDisocveryListener(mDiscoveryListener);
     }
 
     @Override
@@ -179,5 +230,13 @@ public class MainActivity extends AppCompatActivity {
                 isAdvertising = true;
                 break;
         }
+    }
+
+    public void setOnButtonClickListener(OnButtonClickListener listener) {
+        mListener = listener;
+    }
+
+    public interface OnButtonClickListener {
+        void onDiscoveryButtonClick(FloatingActionButton fab);
     }
 }

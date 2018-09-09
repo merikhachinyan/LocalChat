@@ -38,6 +38,9 @@ public class Message {
     private String senderName;
 
 
+    @ColumnInfo(name = "is_read_receiver")
+    private boolean isReadReceiver;
+
     public Message() {
         date = new Date();
     }
@@ -114,6 +117,13 @@ public class Message {
 
     public void setSenderName(String senderName) {
         this.senderName = senderName;
+    }
+    public boolean isReadReceiver() {
+        return isReadReceiver;
+    }
+
+    public void setReadReceiver(boolean readReceiver) {
+        isReadReceiver = readReceiver;
     }
 
     @Override

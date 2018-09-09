@@ -4,10 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:emojicon="http://schemas.android.com/apk/res-auto"
     android:paddingStart="80dp"
     android:paddingEnd="0dp">
 
     <android.support.constraint.ConstraintLayout
+        android:id="@+id/constraint_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
@@ -20,24 +22,49 @@
         android:paddingStart="8dp"
         android:paddingTop="4dp">
 
-        <TextView
+        <ImageView
+            android:id="@+id/sent_message_image_view"
+            android:layout_width="240dp"
+            android:layout_height="240dp"
+            android:scaleType="fitXY"
+            android:adjustViewBounds="true"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <com.rockerhieu.emojicon.EmojiconTextView
             android:id="@+id/sent_message_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/black"
             android:textSize="16sp"
             android:ellipsize="start"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Outbox Message" />
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/sent_message_image_view"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="Outbox Message"
+            emojicon:emojiconSize="26sp"
+            android:gravity="center_vertical"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"/>
 
         <TextView
             android:id="@+id/sent_message_date_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/sent_message_unread_image_view"
             app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"
             tools:text="11:40" />
+
+        <ImageView
+            android:id="@+id/sent_message_unread_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_done_all_black_24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"/>
 
     </android.support.constraint.ConstraintLayout>
 </FrameLayout>

@@ -11,6 +11,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.Profile;
+import com.facebook.ProfileTracker;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.ss.localchat.R;
@@ -19,7 +20,7 @@ import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 
 public class LoginActivity extends AppCompatActivity {
-
+    private User user;
     private CallbackManager mCallbackManager;
 
     @Override
@@ -40,20 +41,44 @@ public class LoginActivity extends AppCompatActivity {
 
         LoginButton loginButton = findViewById(R.id.login_button);
         loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+            private ProfileTracker mProfileTracker;
+
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Profile profile = Profile.getCurrentProfile();
-                User user = new User();
-                user.setName(profile.getName());
-                user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
+                user = new User();
+                if (profile == null) {
+                    mProfileTracker = new ProfileTracker() {
+                        @Override
+                        protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+                            user.setName(currentProfile.getName());
+                            user.setPhotoUrl(currentProfile.getProfilePictureUri(400, 400).toString());
 
-                new UserRepository(getApplication()).insert(user);
-                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
-                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
-                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY,
-                        user.getPhotoUrl() == null ? null : user.getPhotoUrl().toString());
+                            mProfileTracker.stopTracking();
+                            new UserRepository(getApplication()).insert(user);
+                            Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
+                            Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
 
-                startMainActivity();
+                            startMainActivity();
+                        }
+
+
+                    };
+
+                } else
+
+                {
+
+                    user.setName(profile.getName());
+                    user.setPhotoUrl(profile.getProfilePictureUri(400, 400).toString());
+
+                    new UserRepository(getApplication()).insert(user);
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
+
+                    startMainActivity();
+                }
+
             }
 
             @Override

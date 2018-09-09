@@ -188,8 +188,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onStop();
 
         isCurrentlyRunning = false;
-
-        mView = findViewById(R.id.divider_view_chat_activity);
     }
 
     @Override
@@ -325,6 +323,8 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mView = findViewById(R.id.divider_view_chat_activity);
 
         findViewById(R.id.attach_photo_chat_activity).setOnClickListener(new View.OnClickListener() {
             @Override

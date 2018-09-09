@@ -28,6 +28,7 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
     public SentMessageHolder(View itemView, MessageListAdapter.OnImageClickListener listener) {
         super(itemView);
 
+        //TODO move listener to bind
         mListener = listener;
 
         mMessageText = itemView.findViewById(R.id.sent_message_text_view);

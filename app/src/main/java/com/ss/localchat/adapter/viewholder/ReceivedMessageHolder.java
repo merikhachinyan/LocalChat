@@ -26,6 +26,7 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
     public ReceivedMessageHolder(View itemView, MessageListAdapter.OnImageClickListener listener) {
         super(itemView);
 
+        //TODO move listener to bind
         mListener = listener;
 
         mMessageText = itemView.findViewById(R.id.received_message_text_view);
@@ -46,7 +47,7 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
         if (message.getPhoto() != null) {
             mReceivedPhotoImageView.setVisibility(View.VISIBLE);
 
-            Glide.with(context)
+            Glide.with(itemView)
                     .load(Uri.parse(message.getPhoto()))
                     .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.ALL))
                     .into(mReceivedPhotoImageView);

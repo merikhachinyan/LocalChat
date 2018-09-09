@@ -49,14 +49,14 @@ public class ShowPhotoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         init(view);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
     }

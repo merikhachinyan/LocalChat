@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
@@ -138,6 +137,7 @@ public class DiscoveredUsersFragment extends Fragment {
         if (isBound) {
             mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
 
+            //TODO check if mDiscoveryLister null
             mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
         }
     }

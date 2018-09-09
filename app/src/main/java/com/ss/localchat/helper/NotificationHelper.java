@@ -85,10 +85,14 @@ public class NotificationHelper {
                 .setWhen(System.currentTimeMillis())
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
+        if (user.getPhotoUrl() != null) {
+            builder
+                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())));
+        }
+
         if (message.getText() != null && message.getPhoto() != null) {
             builder
                     .setContentText(message.getText())
-                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()))
                     .setStyle(new NotificationCompat.BigPictureStyle()
@@ -100,11 +104,6 @@ public class NotificationHelper {
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()));
 
-        } else {
-            builder
-                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
-                    .setStyle(new NotificationCompat.BigPictureStyle()
-                            .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
         }
 
         return builder.build();

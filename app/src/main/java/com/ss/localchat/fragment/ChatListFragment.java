@@ -100,7 +100,7 @@ public class ChatListFragment extends Fragment {
         });
 
 
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 88));
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 80));
 
         RecyclerView recyclerView = v.findViewById(R.id.recycler_view_chat_list_fragment);
         recyclerView.setHasFixedSize(true);

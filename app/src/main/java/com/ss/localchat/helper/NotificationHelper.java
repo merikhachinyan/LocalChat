@@ -67,7 +67,7 @@ public class NotificationHelper {
         return builder.build();
     }
 
-    private static Notification createNotification(Context context, Intent intent, String name, Message message) {
+    private static Notification createNotification(Context context, Intent intent, String name, Message message, User user) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntentWithParentStack(intent);
@@ -84,33 +84,29 @@ public class NotificationHelper {
                 .setWhen(System.currentTimeMillis())
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
+        if (user != null && user.getPhotoUrl() != null) {
+            builder.setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())));
+        }
+
         if (message.getText() != null && message.getPhoto() != null) {
-            builder
-                    .setContentText(message.getText())
-                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
+            builder.setContentText(message.getText())
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()))
                     .setStyle(new NotificationCompat.BigPictureStyle()
                             .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
 
         } else if (message.getPhoto() == null) {
-            builder
-                    .setContentText(message.getText())
+            builder.setContentText(message.getText())
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()));
 
         } else {
-            builder
-                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())))
-                    .setStyle(new NotificationCompat.BigPictureStyle()
-                            .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
+            builder.setStyle(new NotificationCompat.BigPictureStyle()
+                    .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
         }
 
         return builder.build();
     }
-
-    public static void showNotification(Context context, User user, Message message) {
-        getManager(context).notify(user.getId().toString(), MESSAGE_NOTIFICATION_ID, createNotification(context, user, message));
 
     public static void showNotification(Context context, User user, Message message) {
         Intent intent = new Intent(context, ChatActivity.class);
@@ -118,7 +114,7 @@ public class NotificationHelper {
 
         getManager(context).notify(user.getId().toString(),
                 MESSAGE_NOTIFICATION_ID,
-                createNotification(context, intent, user.getName(), messageText));
+                createNotification(context, intent, user.getName(), message, user));
     }
 
     public static void showNotification(Context context, Group group, Message message) {
@@ -127,6 +123,6 @@ public class NotificationHelper {
 
         getManager(context).notify(group.getId().toString(),
                 MESSAGE_NOTIFICATION_ID,
-                createNotification(context, intent, group.getName(), messageText));
+                createNotification(context, intent, group.getName(), message, null));
     }
 }

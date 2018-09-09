@@ -314,9 +314,8 @@ public class ChatActivity extends AppCompatActivity {
                             if (mPhotoUri == null) {
                                 mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
                                 sendMessage(mMessageText, null);
-                            }
-                            else {
-                                if (mMessageText.isEmpty()){
+                            } else {
+                                if (mMessageText.isEmpty()) {
                                     mSendMessageBinder.sendPhotoMessage(mUser.getEndpointId(), mPhotoUri);
                                     sendMessage(null, mPhotoUri.toString());
                                 } else {
@@ -355,7 +354,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage(String text, String photoUrl) {
-    private void sendMessage(String text) {
         if (isBound) {
             mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), text);
         }
@@ -438,10 +436,11 @@ public class ChatActivity extends AppCompatActivity {
     private void setLayoutParams(int height) {
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) mView.getLayoutParams();
 
-        float pixels =  height * getResources().getDisplayMetrics().density;
-        params.height = (int)pixels;
+        float pixels = height * getResources().getDisplayMetrics().density;
+        params.height = (int) pixels;
         mView.setLayoutParams(params);
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat_activity, menu);

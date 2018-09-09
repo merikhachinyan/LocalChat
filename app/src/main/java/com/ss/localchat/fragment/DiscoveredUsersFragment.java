@@ -136,8 +136,9 @@ public class DiscoveredUsersFragment extends Fragment {
 
         if (isBound) {
             mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
-
-            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+            if (mDiscoveryListener != null) {
+                mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+            }
         }
     }
 
@@ -212,7 +213,7 @@ public class DiscoveredUsersFragment extends Fragment {
         return builder.create();
     }
 
-    public void setOnStartDisocveryListener(OnStartDiscoveryListener listener) {
+    public void setOnStartDiscoveryListener(OnStartDiscoveryListener listener) {
         mDiscoveryListener = listener;
     }
 

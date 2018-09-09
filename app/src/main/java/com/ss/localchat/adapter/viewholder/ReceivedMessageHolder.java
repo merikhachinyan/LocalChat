@@ -27,22 +27,17 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
 
     private ImageView mReceivedPhotoImageView;
 
-    private MessageListAdapter.OnImageClickListener mListener;
-
-
     public ReceivedMessageHolder(View itemView) {
         super(itemView);
 
         mSenderName = itemView.findViewById(R.id.received_message_sender_name_text_view);
-        mListener = listener;
 
         mMessageText = itemView.findViewById(R.id.received_message_text_view);
         mMessageDate = itemView.findViewById(R.id.received_message_date_text_view);
         mReceivedPhotoImageView = itemView.findViewById(R.id.received_message_image_view);
     }
 
-    public void bind(Context context, final Message message) {
-    public void bind(Message message) {
+    public void bind(Context context, final Message message, final MessageListAdapter.OnImageClickListener listener) {
         if (message.isGroup()) {
             mSenderName.setText(message.getSenderName());
             mSenderName.setVisibility(View.VISIBLE);
@@ -79,8 +74,8 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
         mReceivedPhotoImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.OnImageClick(message);
+                if (listener != null) {
+                    listener.OnImageClick(message);
                 }
             }
         });

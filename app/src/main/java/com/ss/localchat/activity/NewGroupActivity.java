@@ -87,7 +87,7 @@ public class NewGroupActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recycler_view_new_group_activity);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(mNewGroupUsersListAdapter);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, Util.dpToPx(this, 88)));
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, Util.dpToPx(this, 80)));
     }
 
     private void showSetGroupNameDialog(final Set<User> checkedUsers) {

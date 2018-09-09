@@ -151,10 +151,10 @@ public class ChatService extends IntentService {
 
                         if (isGroup) {
                             message.setGroup(true);
-                            showGroupMessageNotification(senderId, messageText);
+                            showGroupMessageNotification(senderId, message);
                         } else {
                             message.setGroup(false);
-                            showMessageNotification(senderId, messageText);
+                            showMessageNotification(senderId, message);
                         }
 
                         mMessageRepository.insert(message);
@@ -261,7 +261,7 @@ public class ChatService extends IntentService {
                         mMessage.setDate(new Date());
                         mMessageRepository.insert(mMessage);
 
-                        showMessageNotification(s, mMessage);
+                        showMessageNotification(mMessage.getSenderId(), mMessage);
 
                         markAsRead(mMessage.getSenderId(), s);
                     }
@@ -736,14 +736,14 @@ public class ChatService extends IntentService {
         });
     }
 
-    private void showGroupMessageNotification(final UUID id, final String messageText) {
+    private void showGroupMessageNotification(final UUID id, final Message message) {
 
         mGroupRepository.getGroupById(id).observeForever(new Observer<Group>() {
             @Override
             public void onChanged(@Nullable Group group) {
                 if (group != null) {
                     if (!GroupChatActivity.isCurrentlyRunning || (GroupChatActivity.isCurrentlyRunning && !GroupChatActivity.currentGroupId.equals(group.getId()))) {
-                        NotificationHelper.showNotification(getApplicationContext(), group, messageText);
+                        NotificationHelper.showNotification(getApplicationContext(), group, message);
                     }
                 }
                 mGroupRepository.getGroupById(id).removeObserver(this);

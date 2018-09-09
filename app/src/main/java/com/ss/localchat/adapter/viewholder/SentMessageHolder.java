@@ -24,12 +24,8 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
     private ImageView mReadMessageImage;
     private ImageView mSendPhotoImageView;
 
-    private MessageListAdapter.OnImageClickListener mListener;
-
-    public SentMessageHolder(View itemView, MessageListAdapter.OnImageClickListener listener) {
+    public SentMessageHolder(View itemView) {
         super(itemView);
-
-        mListener = listener;
 
         mMessageText = itemView.findViewById(R.id.sent_message_text_view);
         mMessageDate = itemView.findViewById(R.id.sent_message_date_text_view);
@@ -37,9 +33,8 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
         mSendPhotoImageView = itemView.findViewById(R.id.sent_message_image_view);
     }
 
-    public void bind(Context context, final Message message, int resId) {
+    public void bind(Context context, final Message message, final MessageListAdapter.OnImageClickListener listener) {
         mMessageDate.setText(DateFormatUtil.formatMessageDate(message.getDate()));
-        mReadMessageImage.setImageResource(resId);
 
         if (message.getText() != null) {
             mMessageText.setVisibility(View.VISIBLE);
@@ -63,10 +58,16 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
         mSendPhotoImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.OnImageClick(message);
+                if (listener != null) {
+                    listener.OnImageClick(message);
                 }
             }
         });
+
+        if (message.isReadReceiver()) {
+            mReadMessageImage.setImageResource(R.drawable.ic_message_is_read_24dp);
+        } else {
+            mReadMessageImage.setImageResource(R.drawable.ic_message_is_unread_24dp);
+        }
     }
 }

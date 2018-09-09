@@ -91,7 +91,7 @@ public class GroupListFragment extends Fragment {
 
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view_group_list_fragment);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(), Util.dpToPx(getActivity(), 88)));
+        recyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(), Util.dpToPx(getActivity(), 80)));
         recyclerView.setAdapter(groupListAdapter);
     }
 

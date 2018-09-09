@@ -177,9 +177,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
-                if (position == 0) {
+                if (position != 2) {
                     mFab.hide();
-                } else if (position == 1) {
+                } else {
                     mFab.show();
                 }
             }
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ((DiscoveredUsersFragment)mFragmentList.get(1)).setOnStartDisocveryListener(mDiscoveryListener);
+        ((DiscoveredUsersFragment)mFragmentList.get(1)).setOnStartDiscoveryListener(mDiscoveryListener);
     }
 
     @Override

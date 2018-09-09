@@ -24,6 +24,7 @@ import com.ss.localchat.adapter.ViewPagerFragmentAdapter;
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
 
+import com.ss.localchat.fragment.GroupListFragment;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
 
@@ -32,7 +33,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int REQUEST_CODE = 1;
+    public static final int CHAT_REQUEST_CODE = 1;
+
+    public static final int NEW_GROUP_REQUEST_CODE = 2;
 
     private final static String[] REQUIRED_PERMISSIONS =
             new String[]{
@@ -51,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Fragment> mFragmentList = new ArrayList<>();
 
     private static boolean isAdvertising;
+
+    private ViewPager mViewPager;
 
 
     @Override
@@ -123,18 +128,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         mFragmentList.add(ChatListFragment.newInstance());
+        mFragmentList.add(GroupListFragment.newInstance());
         mFragmentList.add(DiscoveredUsersFragment.newInstance());
 
         ViewPagerFragmentAdapter adapter =
                 new ViewPagerFragmentAdapter(getSupportFragmentManager(), mFragmentList);
 
-        ViewPager viewPager = findViewById(R.id.view_pager_content_main);
-        viewPager.setAdapter(adapter);
-        viewPager.setOffscreenPageLimit(3);
+        mViewPager = findViewById(R.id.view_pager_content_main);
+        mViewPager.setAdapter(adapter);
+        mViewPager.setOffscreenPageLimit(3);
 
         TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
-        tableLayout.setupWithViewPager(viewPager);
-
+        tableLayout.setupWithViewPager(mViewPager);
     }
 
     @Override
@@ -148,8 +153,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch (id) {
+            case R.id.action_new_group:
+                startActivityForResult(new Intent(this, NewGroupActivity.class), NEW_GROUP_REQUEST_CODE);
+                return true;
             case R.id.action_settings:
-                startActivityForResult(new Intent(this, SettingsActivity.class), REQUEST_CODE);
+                startActivityForResult(new Intent(this, SettingsActivity.class), CHAT_REQUEST_CODE);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -160,8 +168,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            isAdvertising = true;
+        if (resultCode != RESULT_OK)
+            return;
+
+        switch (requestCode) {
+            case NEW_GROUP_REQUEST_CODE:
+                mViewPager.setCurrentItem(1, true);
+                break;
+            case CHAT_REQUEST_CODE:
+                isAdvertising = true;
+                break;
         }
     }
 }

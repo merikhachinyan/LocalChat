@@ -7,7 +7,7 @@
     tools:context=".fragment.DiscoveredUsersFragment">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view_discovered_users"
+        android:id="@+id/recycler_view_discovered_users_fragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

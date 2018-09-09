@@ -12,8 +12,10 @@ import android.support.v4.app.TaskStackBuilder;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.activity.GroupChatActivity;
 import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.activity.SettingsActivity;
+import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.User;
 
 public class NotificationHelper {
@@ -63,10 +65,7 @@ public class NotificationHelper {
         return builder.build();
     }
 
-    public static Notification createNotification(Context context, User user, String messageText) {
-        Intent intent = new Intent(context, ChatActivity.class);
-        intent.putExtra(ChatActivity.USER_EXTRA, user);
-
+    private static Notification createNotification(Context context, Intent intent, String name, String messageText) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntentWithParentStack(intent);
@@ -74,7 +73,7 @@ public class NotificationHelper {
         PendingIntent pendingIntent = stackBuilder.getPendingIntent(15, PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setContentTitle(user.getName())
+                .setContentTitle(name)
                 .setContentText(messageText)
                 .setContentIntent(pendingIntent)
                 .setColor(context.getResources().getColor(R.color.colorAccent))
@@ -91,6 +90,20 @@ public class NotificationHelper {
 
 
     public static void showNotification(Context context, User user, String messageText) {
-        getManager(context).notify(user.getId().toString(), MESSAGE_NOTIFICATION_ID, createNotification(context, user, messageText));
+        Intent intent = new Intent(context, ChatActivity.class);
+        intent.putExtra(ChatActivity.USER_EXTRA, user);
+
+        getManager(context).notify(user.getId().toString(),
+                MESSAGE_NOTIFICATION_ID,
+                createNotification(context, intent, user.getName(), messageText));
+    }
+
+    public static void showNotification(Context context, Group group, String messageText) {
+        Intent intent = new Intent(context, GroupChatActivity.class);
+        intent.putExtra(GroupChatActivity.GROUP_EXTRA, group);
+
+        getManager(context).notify(group.getId().toString(),
+                MESSAGE_NOTIFICATION_ID,
+                createNotification(context, intent, group.getName(), messageText));
     }
 }

@@ -33,8 +33,11 @@ import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.activity.GroupChatActivity;
+import com.ss.localchat.db.GroupRepository;
 import com.ss.localchat.db.MessageRepository;
 import com.ss.localchat.db.UserRepository;
+import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.helper.NotificationHelper;
@@ -50,6 +53,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -67,6 +71,10 @@ public class ChatService extends IntentService {
     public static final String MESSAGE_TYPE = "message";
 
     public static final String FILENAME_TYPE = "filename";
+
+    public static final String GROUP_TYPE = "group";
+
+    public static final String GROUP_LEAVE_TYPE = "group.leave";
 
 
     protected ConnectionLifecycleCallback mConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
@@ -101,12 +109,7 @@ public class ChatService extends IntentService {
         @Override
         public void onDisconnected(@NonNull String id) {
             mEndpoints.put(id, ConnectionState.DISCONNECTED);
-
             Log.v("____", "Disconnected from " + id);
-
-            String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
-            mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
-
         }
     };
 
@@ -124,6 +127,8 @@ public class ChatService extends IntentService {
                     if (MESSAGE_TYPE.equals(type)) {
                         UUID senderId = UUID.fromString(jsonObject.getString("id"));
                         String messageText = jsonObject.getString("message");
+                        boolean isGroup = jsonObject.getBoolean("group");
+                        String sender = jsonObject.getString("sender");
 
                         UUID myUserId = Preferences.getUserId(getApplicationContext());
 
@@ -132,11 +137,17 @@ public class ChatService extends IntentService {
                         message.setRead(false);
                         message.setReceiverId(myUserId);
                         message.setSenderId(senderId);
-                        message.setDate(new Date());
+                        message.setSenderName(sender);
+
+                        if (isGroup) {
+                            message.setGroup(true);
+                            showGroupMessageNotification(senderId, messageText);
+                        } else {
+                            message.setGroup(false);
+                            showMessageNotification(senderId, messageText);
+                        }
+
                         mMessageRepository.insert(message);
-
-
-                        showMessageNotification(s, messageText);
                     } else if (FILENAME_TYPE.equals(type)) {
                         String senderId = jsonObject.getString("id");
                         String payloadId = jsonObject.getString("payload_id");
@@ -145,6 +156,30 @@ public class ChatService extends IntentService {
                         String fileName = "photo-".concat(senderId).concat(imageExtension);
 
                         filePayloadFilenames.put(Long.parseLong(payloadId), fileName);
+                    } else if (GROUP_TYPE.equals(type)) {
+                        String groupId = jsonObject.getString("id");
+                        String groupName = jsonObject.getString("name");
+                        String groupMembers = jsonObject.getString("members");
+
+                        Group group = new Group();
+                        group.setId(UUID.fromString(groupId));
+                        group.setName(groupName);
+                        group.setMembers(groupMembers);
+
+                        mGroupRepository.insert(group);
+                    } else if (GROUP_LEAVE_TYPE.equals(type)) {
+                        UUID senderId = UUID.fromString(jsonObject.getString("id"));
+                        String sender = jsonObject.getString("sender");
+
+                        UUID myUserId = Preferences.getUserId(getApplicationContext());
+
+                        Message message = new Message();
+                        message.setRead(false);
+                        message.setReceiverId(myUserId);
+                        message.setSenderId(senderId);
+                        message.setSenderName(sender);
+                        message.setGroup(true);
+                        mMessageRepository.insert(message);
                     }
 
                 } catch (JSONException e) {
@@ -166,8 +201,6 @@ public class ChatService extends IntentService {
                     File newFile = new File(payloadFile.getParentFile(), fileName);
                     boolean isRenamed = payloadFile.renameTo(newFile);
                     Log.v("____", "Receive and renamed: " + isRenamed);
-                    Log.v("____", "Receive and renamed(old file): " + payloadFile.getAbsolutePath());
-                    Log.v("____", "Receive and renamed(new file): " + newFile.getAbsolutePath());
                     mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
                 }
             }
@@ -268,6 +301,8 @@ public class ChatService extends IntentService {
 
     private UserRepository mUserRepository;
 
+    private GroupRepository mGroupRepository;
+
     private ServiceBinder mServiceBinder;
 
     private OnDiscoverUsersListener mDiscoverUsersListener;
@@ -350,6 +385,7 @@ public class ChatService extends IntentService {
 
         mMessageRepository = new MessageRepository(getApplication());
         mUserRepository = new UserRepository(getApplication());
+        mGroupRepository = new GroupRepository(getApplication());
 
         NotificationHelper.createNotificationChannel(this);
 
@@ -392,20 +428,82 @@ public class ChatService extends IntentService {
                         .build());
     }
 
+    private void connect(String id) {
+        String myUserOwner = Preferences.getUserName(getApplicationContext()) + ":" + Preferences.getUserId(getApplicationContext());
+        mConnectionsClient.requestConnection(myUserOwner, id, mConnectionLifecycleCallback);
+        Log.v("____", "Connected to " + id);
+    }
+
+    private void disconnect(String id) {
+        mConnectionsClient.disconnectFromEndpoint(id);
+        mEndpoints.put(id, ConnectionState.DISCONNECTED);
+        Log.v("____", "Disconnected from " + id);
+    }
+
     private void sendMessage(String id, String messageText) {
         try {
             UUID myUserId = Preferences.getUserId(getApplicationContext());
+            String myUserName = Preferences.getUserName(getApplicationContext());
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("type", MESSAGE_TYPE);
             jsonObject.put("id", myUserId.toString());
             jsonObject.put("message", messageText);
+            jsonObject.put("group", false);
+            jsonObject.put("sender", myUserName);
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
+
+    private void sendGroupMessage(List<String> endpointList, String messageText, Group group) {
+        try {
+            String myUserName = Preferences.getUserName(getApplicationContext());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", MESSAGE_TYPE);
+            jsonObject.put("id", group.getId().toString());
+            jsonObject.put("message", messageText);
+            jsonObject.put("group", true);
+            jsonObject.put("sender", myUserName);
+            mConnectionsClient.sendPayload(endpointList, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendGroup(List<String> endpointList, Group group) {
+        try {
+            JSONObject jsonGroup = new JSONObject();
+            jsonGroup.put("type", GROUP_TYPE);
+            jsonGroup.put("id", group.getId().toString());
+            jsonGroup.put("name", group.getName());
+            jsonGroup.put("members", group.getMembers());
+            mConnectionsClient.sendPayload(endpointList, Payload.fromBytes(jsonGroup.toString().getBytes(StandardCharsets.UTF_8)));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendGroupLeaveMessage(List<String> endpointList, Group group) {
+        try {
+            String myUserName = Preferences.getUserName(getApplicationContext());
+            String sender = myUserName + " leaves the group";
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", MESSAGE_TYPE);
+            jsonObject.put("id", group.getId().toString());
+            jsonObject.put("sender", myUserName);
+            mConnectionsClient.sendPayload(endpointList, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void sendProfilePicture(final String id) {
         UUID myUserId = Preferences.getUserId(getApplicationContext());
@@ -467,9 +565,9 @@ public class ChatService extends IntentService {
         }
     }
 
-    private void showMessageNotification(final String endpointId, final String messageText) {
+    private void showMessageNotification(final UUID id, final String messageText) {
 
-        mUserRepository.getUserByEndpointId(endpointId).observeForever(new Observer<User>() {
+        mUserRepository.getUserById(id).observeForever(new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
@@ -477,7 +575,22 @@ public class ChatService extends IntentService {
                         NotificationHelper.showNotification(getApplicationContext(), user, messageText);
                     }
                 }
-                mUserRepository.getUserByEndpointId(endpointId).removeObserver(this);
+                mUserRepository.getUserById(id).removeObserver(this);
+            }
+        });
+    }
+
+    private void showGroupMessageNotification(final UUID id, final String messageText) {
+
+        mGroupRepository.getGroupById(id).observeForever(new Observer<Group>() {
+            @Override
+            public void onChanged(@Nullable Group group) {
+                if (group != null) {
+                    if (!GroupChatActivity.isCurrentlyRunning || (GroupChatActivity.isCurrentlyRunning && !GroupChatActivity.currentGroupId.equals(group.getId()))) {
+                        NotificationHelper.showNotification(getApplicationContext(), group, messageText);
+                    }
+                }
+                mGroupRepository.getGroupById(id).removeObserver(this);
             }
         });
     }
@@ -491,8 +604,28 @@ public class ChatService extends IntentService {
             mConnectionsClient.stopDiscovery();
         }
 
+        public void connectTo(String id) {
+            connect(id);
+        }
+
+        public void disconnectFrom(String id) {
+            disconnect(id);
+        }
+
         public void sendMessageTo(String id, String messageText) {
             sendMessage(id, messageText);
+        }
+
+        public void sendGroupMessageTo(List<String> endpointList, String messageText, Group group) {
+            sendGroupMessage(endpointList, messageText, group);
+        }
+
+        public void sendGroupTo(List<String> endpointList, Group group) {
+            sendGroup(endpointList, group);
+        }
+
+        public void sendGroupLeaveMessageTo(List<String> endpointList, Group group) {
+            sendGroupLeaveMessage(endpointList, group);
         }
 
         public void stopService() {

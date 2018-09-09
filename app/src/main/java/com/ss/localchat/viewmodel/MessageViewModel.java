@@ -21,12 +21,12 @@ public class MessageViewModel extends AndroidViewModel {
         messageRepository = new MessageRepository(application);
     }
 
-    public LiveData<List<Message>> getMessagesWith(UUID user_id) {
-        return messageRepository.getMessagesWith(user_id);
+    public LiveData<List<Message>> getMessagesWith(UUID id) {
+        return messageRepository.getMessagesWith(id);
     }
 
-    public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read) {
-        return messageRepository.getReadOrUnreadMessagesWith(user_id, is_read);
+    public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID id, boolean isRead, boolean isGroup) {
+        return messageRepository.getReadOrUnreadMessagesWith(id, isRead, isGroup);
     }
 
     public void update(Message... messages) {
@@ -41,7 +41,7 @@ public class MessageViewModel extends AndroidViewModel {
         messageRepository.delete(message);
     }
 
-    public void clearHistory(UUID user_id) {
-        messageRepository.clearHistory(user_id);
+    public void clearHistory(UUID id) {
+        messageRepository.clearHistory(id);
     }
 }

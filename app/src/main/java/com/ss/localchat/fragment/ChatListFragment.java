@@ -84,7 +84,7 @@ public class ChatListFragment extends Fragment {
         UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
 
         UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
-        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
+        userViewModel.getChatsExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
             @Override
             public void onChanged(@Nullable List<Chat> chats) {
                 if (chats == null)

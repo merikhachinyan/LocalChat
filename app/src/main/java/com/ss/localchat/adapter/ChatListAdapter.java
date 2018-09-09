@@ -28,13 +28,13 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_view, parent, false);
-        return new ChatViewHolder(view, mListener);
+        return new ChatViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Chat user = mChats.get(position);
-        holder.bind(user.user, user.message, user.count);
+        holder.bind(user.user, user.message, user.count, mListener);
     }
 
     @Override

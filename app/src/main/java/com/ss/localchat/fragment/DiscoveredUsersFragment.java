@@ -121,7 +121,7 @@ public class DiscoveredUsersFragment extends Fragment {
             }
         });
 
-        final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users);
+        final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users_fragment);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mDiscoveredUsersListAdapter);
 

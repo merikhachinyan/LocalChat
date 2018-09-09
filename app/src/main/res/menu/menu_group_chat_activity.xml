@@ -3,12 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_connect_disconnect_in_chat"
-        android:title="Connect"
+        android:id="@+id/action_leave_in_group"
+        android:title="Leave group"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_clear_history_in_chat"
+        android:id="@+id/action_clear_history_in_group"
         android:title="Clear history"
         app:showAsAction="never" />
 

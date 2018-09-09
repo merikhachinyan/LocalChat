@@ -34,24 +34,27 @@
             android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <activity android:name=".activity.SettingsActivity"
+        <activity
+            android:name=".activity.GroupChatActivity"
+            android:parentActivityName=".activity.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activity.SettingsActivity"
+            android:label="Settings"
             android:parentActivityName=".activity.MainActivity" />
 
-        <activity android:name=".activity.IntroduceActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".activity.IntroduceActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity android:name=".activity.LoginActivity" />
-
-        <service android:name=".service.ChatService" />
-
-        <meta-data
-            android:name="com.facebook.sdk.ApplicationId"
-            android:value="@string/facebook_app_id" />
 
         <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name" />
+
         <activity
             android:name="com.facebook.CustomTabActivity"
             android:exported="true">
@@ -64,7 +67,19 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.SignUpActivity"></activity>
+
+        <activity android:name=".activity.SignUpActivity" />
+
+        <activity
+            android:name=".activity.NewGroupActivity"
+            android:label="New Group"
+            android:parentActivityName=".activity.MainActivity" />
+
+        <service android:name=".service.ChatService" />
+
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
 
     </application>
 

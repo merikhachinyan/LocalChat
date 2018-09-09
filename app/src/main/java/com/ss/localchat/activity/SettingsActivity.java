@@ -25,6 +25,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.text.Editable;
+import android.text.Selection;
+import android.text.Spannable;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -272,7 +275,7 @@ public class SettingsActivity extends AppCompatActivity {
                             public void onClick(View v) {
                                 AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
                                 alert.setMessage("Are you sure?")
-                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener()                 {
+                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener() {
 
                                             public void onClick(DialogInterface dialog, int which) {
 
@@ -294,14 +297,16 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
     }
-private void logout(){
-    if (AccessToken.getCurrentAccessToken() == null) {
-        goIntroduceActivity();
-    } else {
-        LoginManager.getInstance().logOut();
-        goIntroduceActivity();
+
+    private void logout() {
+        if (AccessToken.getCurrentAccessToken() == null) {
+            goIntroduceActivity();
+        } else {
+            LoginManager.getInstance().logOut();
+            goIntroduceActivity();
+        }
     }
-}
+
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -326,8 +331,9 @@ private void logout(){
         isEditable = true;
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+        } else {
+            SelectImage();
         }
-        SelectImage();
     }
 
 
@@ -445,19 +451,19 @@ private void logout(){
 
         builder.setView(layout);
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            dialog.cancel();
-        });
+        builder.setNegativeButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
 
-        builder.setPositiveButton("Done", (dialog, which) -> {
-            String name = etInput.getText().toString();
-            textViewMyProfileName.setText(name);
-            mUser.setName(name);
+                String name = etInput.getText().toString();
+                textViewMyProfileName.setText(name);
+                mUser.setName(name);
 
-            userRepository.update(mUser);
-
-        });
+                userRepository.update(mUser);
+            }
+        }).setNegativeButton("Cancel", null);
 
         builder.create().show();
     }
+
 }

@@ -14,10 +14,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 
 import com.ss.localchat.R;
@@ -99,16 +103,24 @@ public class DiscoveredUsersFragment extends Fragment {
         getActivity().bindService(new Intent(getActivity(), ChatService.class),
                 mServiceConnection, Context.BIND_AUTO_CREATE);
     }
-
+   private InputMethodManager imm;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
     }
 
     @Override
@@ -213,5 +225,12 @@ public class DiscoveredUsersFragment extends Fragment {
                 });
 
         return builder.create();
+    }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        menu.clear();
+        menuInflater.inflate(R.menu.menu_main_search, menu);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.requestFocus();
     }
 }

@@ -125,8 +125,8 @@ public class SignUpActivity extends AppCompatActivity {
 
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-        }
-        SelectImage();
+        }else{
+        SelectImage();}
     }
 
 
@@ -224,6 +224,7 @@ public class SignUpActivity extends AppCompatActivity {
                 return;
             }
         }
+
         SelectImage();
     }
 

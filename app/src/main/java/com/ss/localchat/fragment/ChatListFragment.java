@@ -22,6 +22,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.ChatListAdapter;
 import com.ss.localchat.db.entity.Chat;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.DividerItemDecoration;
@@ -147,8 +148,11 @@ public class ChatListFragment extends Fragment {
                 if (mChatListAdapter != null) {
                     mChatListAdapter.getFilter(newText);
                 }
+
                 return true;
             }
         });
     }
+
+
 }

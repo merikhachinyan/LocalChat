@@ -184,15 +184,16 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
+                    if(mAdvertiseBinder!=null){
                     if (!mAdvertiseBinder.isRunningService()) {
                         startService(intent);
                         mAdvertiseTextView.setText(DISABLE_ADVERTISING);
 
                     }
-                } else {
+                 else {
                     mAdvertiseBinder.stopService();
                     mAdvertiseTextView.setText(ENABLE_ADVERTISING);
-                }
+                }}}
             }
         });
 

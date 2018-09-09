@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "eae606bdbf5a04bd035cc598f6b479d7",
+    "identityHash": "49ed9329141f7eddb694edf6c8753b47",
     "entities": [
       {
         "tableName": "users",
@@ -50,7 +50,7 @@
       },
       {
         "tableName": "messages",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sender_id` TEXT, `receiver_id` TEXT, `text` TEXT, `photo` TEXT, `date` INTEGER, `is_read` INTEGER NOT NULL, `is_read_receiver` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sender_id` TEXT, `receiver_id` TEXT, `text` TEXT, `photo` TEXT, `date` INTEGER, `is_read` INTEGER NOT NULL, `is_group` INTEGER NOT NULL, `sender_name` TEXT, `is_read_receiver` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -95,6 +95,18 @@
             "notNull": true
           },
           {
+            "fieldPath": "isGroup",
+            "columnName": "is_group",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "senderName",
+            "columnName": "sender_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "isReadReceiver",
             "columnName": "is_read_receiver",
             "affinity": "INTEGER",
@@ -109,11 +121,43 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "groups",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` TEXT NOT NULL, `name` TEXT, `members` TEXT, PRIMARY KEY(`_id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "members",
+            "columnName": "members",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"eae606bdbf5a04bd035cc598f6b479d7\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"49ed9329141f7eddb694edf6c8753b47\")"
     ]
   }
 }

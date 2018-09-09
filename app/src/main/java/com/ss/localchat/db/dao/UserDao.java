@@ -16,22 +16,30 @@ import java.util.UUID;
 @Dao
 public interface UserDao {
 
-    @Query("SELECT users.*, messages.*, count FROM users, messages " +
-            "LEFT JOIN " +
-            "(SELECT messages.sender_id, messages.receiver_id, COUNT(*) AS count FROM messages " +
-            "WHERE messages.is_read = 0) unread_count ON users._id in (unread_count.sender_id, unread_count.receiver_id) " +
-            "WHERE users._id in (messages.sender_id, messages.receiver_id) AND users._id != :owner " +
+    @Query("SELECT * FROM users WHERE _id != :owner")
+    LiveData<List<User>> getUsersExceptOwner(UUID owner);
+
+    @Query("SELECT users.*, messages.*, count FROM users, messages, " +
+            "(SELECT users._id, sum(case messages.is_read when 0 then 1 else 0 end) as count FROM users, messages " +
+            "WHERE users._id in (messages.sender_id, messages.receiver_id) AND messages.is_group = 0 " +
+            "GROUP BY users._id) as unread_count " +
+            "WHERE users._id in (messages.sender_id, messages.receiver_id) AND users._id != :owner AND " +
+            "messages.is_group = 0 AND users._id = unread_count._id " +
             "GROUP BY users._id " +
             "HAVING MAX(messages.date) " +
             "ORDER BY messages.date DESC")
-    LiveData<List<Chat>> getUsersExceptOwner(UUID owner);
+    LiveData<List<Chat>> getChatsExceptOwner(UUID owner);
 
 
     @Query("SELECT * FROM users WHERE _id = :id LIMIT 1")
     LiveData<User> getUserById(UUID id);
 
-    @Query("SELECT * FROM users WHERE endpoint_id = :endpointId LIMIT 1")
-    LiveData<User> getUserByEndpointId(String endpointId);
+    @Query("SELECT * FROM users WHERE _id in (:uuids)")
+    LiveData<List<User>> getUsersListById(UUID... uuids);
+
+
+    @Query("SELECT endpoint_id FROM users WHERE _id in (:uuids)")
+    LiveData<List<String>> getEndpointId(UUID... uuids);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(User user);

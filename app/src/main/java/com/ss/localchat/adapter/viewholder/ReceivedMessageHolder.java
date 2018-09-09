@@ -19,23 +19,38 @@ import com.ss.localchat.util.DateFormatUtil;
 
 public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
 
+    private TextView mSenderName;
+
     private EmojiconTextView mMessageText;
+
     private TextView mMessageDate;
+
     private ImageView mReceivedPhotoImageView;
 
-    private MessageListAdapter.OnImageClickListener mListener;
-
-    public ReceivedMessageHolder(View itemView, MessageListAdapter.OnImageClickListener listener) {
+    public ReceivedMessageHolder(View itemView) {
         super(itemView);
 
-        mListener = listener;
+        mSenderName = itemView.findViewById(R.id.received_message_sender_name_text_view);
 
         mMessageText = itemView.findViewById(R.id.received_message_text_view);
         mMessageDate = itemView.findViewById(R.id.received_message_date_text_view);
         mReceivedPhotoImageView = itemView.findViewById(R.id.received_message_image_view);
     }
 
-    public void bind(Context context, final Message message) {
+    public void bind(Context context, final Message message, final MessageListAdapter.OnImageClickListener listener) {
+        if (message.isGroup()) {
+            mSenderName.setText(message.getSenderName());
+            mSenderName.setVisibility(View.VISIBLE);
+        } else {
+            mSenderName.setVisibility(View.GONE);
+        }
+
+        if (message.getText() != null) {
+            mMessageText.setVisibility(View.VISIBLE);
+            mMessageText.setText(message.getText());
+        } else {
+            mMessageText.setText(View.GONE);
+        }
         mMessageDate.setText(DateFormatUtil.formatMessageDate(message.getDate()));
 
         if (message.getText() != null) {
@@ -59,8 +74,8 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
         mReceivedPhotoImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.OnImageClick(message);
+                if (listener != null) {
+                    listener.OnImageClick(message);
                 }
             }
         });

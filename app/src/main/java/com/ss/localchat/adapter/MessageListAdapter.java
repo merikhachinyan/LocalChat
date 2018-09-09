@@ -46,10 +46,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch (viewType) {
             case RECEIVED_MESSAGE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.received_message_item_view, parent, false);
-                return new ReceivedMessageHolder(view, mListener);
+                return new ReceivedMessageHolder(view);
             case SENT_MESSAGE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.sent_message_item_view, parent, false);
-                return new SentMessageHolder(view, mListener);
+                return new SentMessageHolder(view);
             case DATE_TYPE:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.date_item_view, parent, false);
                 return new DateViewHolder(view);
@@ -62,14 +62,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch (holder.getItemViewType()) {
             case RECEIVED_MESSAGE_TYPE:
-                ((ReceivedMessageHolder) holder).bind(mContext, mMessages.get(position));
+                ((ReceivedMessageHolder) holder).bind(mContext, mMessages.get(position), mListener);
                 break;
             case SENT_MESSAGE_TYPE:
-                if (mMessages.get(position).isReadReceiver()) {
-                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), R.drawable.ic_done_all_black_24dp);
-            } else {
-                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), R.drawable.ic_done_black_24dp);
-            }
+                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), mListener);
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));
@@ -145,7 +141,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         int i = mMessages.size() - 1;
 
-        for (; i >= 0; i--){
+        for (; i >= 0; i--) {
             if (getItemViewType(i) == SENT_MESSAGE_TYPE) {
                 if (!mMessages.get(i).isReadReceiver() && mMessages.get(i).getReceiverId().equals(userId)) {
                     mMessages.get(i).setReadReceiver(true);

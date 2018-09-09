@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingEnd="80dp"
-    android:paddingStart="0dp">
+    android:paddingStart="0dp"
+    android:paddingEnd="80dp">
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="wrap_content"
@@ -19,6 +19,15 @@
         android:paddingEnd="8dp"
         android:paddingStart="8dp"
         android:paddingTop="4dp">
+
+        <TextView
+            android:id="@+id/received_message_sender_name_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            tools:text="Sender Name" />
 
         <ImageView
             android:id="@+id/received_message_image_view"

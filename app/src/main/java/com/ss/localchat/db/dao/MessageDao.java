@@ -17,14 +17,14 @@ import java.util.UUID;
 public interface MessageDao {
 
     @Query("SELECT * FROM messages " +
-            "WHERE :user_id in (sender_id, receiver_id) " +
+            "WHERE :id in (sender_id, receiver_id) " +
             "ORDER BY date ASC")
-    LiveData<List<Message>> getMessagesWith(UUID user_id);
+    LiveData<List<Message>> getMessagesWith(UUID id);
 
     @Query("SELECT * FROM messages " +
-            "WHERE :user_id in (sender_id, receiver_id) AND is_read = :is_read " +
+            "WHERE :id in (sender_id, receiver_id) AND is_read = :isRead AND  is_group = :isGroup " +
             "ORDER BY date ASC")
-    LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read);
+    LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID id, boolean isRead, boolean isGroup);
 
     @Query("SELECT * FROM messages " +
             "WHERE receiver_id = :user_id AND is_read_receiver = :is_read_receiver " +
@@ -41,6 +41,6 @@ public interface MessageDao {
     void delete(Message message);
 
     @Query("DELETE FROM messages " +
-            "WHERE :user_id in (sender_id, receiver_id)")
-    void clearHistory(UUID user_id);
+            "WHERE :id in (sender_id, receiver_id)")
+    void clearHistory(UUID id);
 }

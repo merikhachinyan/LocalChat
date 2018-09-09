@@ -302,11 +302,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().remove(USER_ID_KEY).apply();
-        sharedPreferences.edit().remove(USER_NAME_KEY).apply();
-        sharedPreferences.edit().remove(INTRODUCE_APP_KEY).apply();
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Preferences.removeUser(getApplicationContext());
 
         userRepository.delete(mUser.getId());
 

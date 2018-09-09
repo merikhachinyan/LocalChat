@@ -31,6 +31,13 @@ public class Message {
     @ColumnInfo(name = "is_read")
     private boolean isRead;
 
+    @ColumnInfo(name = "is_group")
+    private boolean isGroup;
+
+    @ColumnInfo(name = "sender_name")
+    private String senderName;
+
+
     @ColumnInfo(name = "is_read_receiver")
     private boolean isReadReceiver;
 
@@ -96,6 +103,21 @@ public class Message {
         isRead = read;
     }
 
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean group) {
+        isGroup = group;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+    }
     public boolean isReadReceiver() {
         return isReadReceiver;
     }

@@ -2,6 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.SettingsActivity">
@@ -16,9 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-
         <ImageView
-
             android:id="@+id/myprofile_imageView"
             android:layout_width="159dp"
             android:layout_height="137dp"
@@ -41,7 +40,6 @@
             android:layout_marginStart="16dp"
 
             android:layout_marginTop="16dp"
-            android:text="TextView"
             android:textAlignment="center"
             android:textColor="@color/cardview_light_background"
             android:textSize="18sp"
@@ -49,8 +47,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/myprofile_imageView" />
-
+            app:layout_constraintTop_toBottomOf="@+id/myprofile_imageView"
+            tools:text="TextView" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButtonCamera"
@@ -73,8 +71,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/myprofile_name"
             app:layout_constraintTop_toBottomOf="@+id/myprofile_imageView" />
-    </android.support.constraint.ConstraintLayout>
 
+    </android.support.constraint.ConstraintLayout>
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
@@ -92,7 +90,6 @@
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true"
             app:layout_constraintBottom_toTopOf="@+id/cardViewLogOut"
-
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">

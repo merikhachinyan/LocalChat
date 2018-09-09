@@ -30,7 +30,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.ChatActivity"
             android:parentActivityName=".activity.MainActivity"
@@ -39,7 +38,6 @@
         <activity
             android:name=".activity.SettingsActivity"
             android:parentActivityName=".activity.MainActivity" />
-
         <activity
             android:name=".activity.IntroduceActivity"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -72,7 +70,8 @@
         </activity>
         <activity
             android:name=".activity.SignUpActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
 
     </application>
 

@@ -71,7 +71,7 @@ public class ChatListFragment extends Fragment {
     public void init(View v) {
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
-        mChatListAdapter = new ChatListAdapter();
+        mChatListAdapter = new ChatListAdapter(getContext());
         mChatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {

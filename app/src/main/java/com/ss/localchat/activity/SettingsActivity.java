@@ -2,6 +2,7 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
@@ -25,15 +26,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
-import android.text.Editable;
-import android.text.Selection;
-import android.text.Spannable;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -50,6 +47,7 @@ import com.facebook.login.LoginManager;
 import com.ss.localchat.R;
 import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
 import com.ss.localchat.viewmodel.UserViewModel;
@@ -66,6 +64,8 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String ENABLE_ADVERTISING = "Enable Advertising";
 
     public static final String DISABLE_ADVERTISING = "Disable Advertising";
+
+    public static final String FRAGMENT_TAG = "show.photo";
 
     private UserRepository userRepository;
 
@@ -88,7 +88,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static final int REQUEST_CAMERA = 2;
 
-    private Uri uri;
+    private Uri mUri;
 
     private TextView textViewMyProfileName;
 
@@ -200,15 +200,7 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mUser.getPhotoUrl() != null) {
-                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                    String mime = "*/*";
-                    MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-                    if (mimeTypeMap.hasExtension(
-                            mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString())))
-                        mime = mimeTypeMap.getMimeTypeFromExtension(
-                                mimeTypeMap.getFileExtensionFromUrl(mUser.getPhotoUrl().toString()));
-                    intent.setDataAndType(Uri.parse(mUser.getPhotoUrl()), mime);
-                    startActivity(intent);
+                    showPhoto(mUser.getPhotoUrl());
                 } else
                     addImage();
             }
@@ -275,7 +267,7 @@ public class SettingsActivity extends AppCompatActivity {
                             public void onClick(View v) {
                                 AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
                                 alert.setMessage("Are you sure?")
-                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener() {
+                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener()                 {
 
                                             public void onClick(DialogInterface dialog, int which) {
 
@@ -298,7 +290,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     }
 
-    private void logout() {
+    private void logout(){
         if (AccessToken.getCurrentAccessToken() == null) {
             goIntroduceActivity();
         } else {
@@ -311,11 +303,17 @@ public class SettingsActivity extends AppCompatActivity {
         Intent intent = new Intent(this, IntroduceActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().remove(USER_ID_KEY).commit();
-        sharedPreferences.edit().remove(USER_NAME_KEY).commit();
-        sharedPreferences.edit().remove(INTRODUCE_APP_KEY).commit();
+        sharedPreferences.edit().remove(USER_ID_KEY).apply();
+        sharedPreferences.edit().remove(USER_NAME_KEY).apply();
+        sharedPreferences.edit().remove(INTRODUCE_APP_KEY).apply();
 
         userRepository.delete(mUser.getId());
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancelAll();
+
+        mAdvertiseBinder.stopService();
+
         startActivity(intent);
 
         finish();
@@ -378,6 +376,15 @@ public class SettingsActivity extends AppCompatActivity {
 
     }
 
+    private void showPhoto(String photoUri) {
+        ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container_layout, fragment, FRAGMENT_TAG)
+                .addToBackStack(FRAGMENT_TAG)
+                .commit();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -389,22 +396,22 @@ public class SettingsActivity extends AppCompatActivity {
 
                 Bundle bundle = data.getExtras();
                 Bitmap bitmap = (Bitmap) bundle.get("data");
-                uri = getImageUri(getApplicationContext(), bitmap);
+                mUri = getImageUri(getApplicationContext(), bitmap);
                 Glide.with(this)
-                        .load(uri)
+                        .load(mUri)
                         .apply(RequestOptions.circleCropTransform())
                         .into(imageView);
 
-                mUser.setPhotoUrl(uri.toString());
+                mUser.setPhotoUrl(mUri.toString());
 
             } else if (requestCode == SELECT_FILE) {
 
-                uri = data.getData();
+                mUri = data.getData();
                 Glide.with(this)
-                        .load(uri)
+                        .load(mUri)
                         .apply(RequestOptions.circleCropTransform())
                         .into(imageView);
-                mUser.setPhotoUrl(uri.toString());
+                mUser.setPhotoUrl(mUri.toString());
             }
             userRepository.update(mUser);
 
@@ -434,7 +441,6 @@ public class SettingsActivity extends AppCompatActivity {
         SelectImage();
     }
 
-
     private void createAndDisplayDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LinearLayout layout = new LinearLayout(this);
@@ -451,7 +457,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         builder.setView(layout);
 
-        builder.setNegativeButton("Done", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -460,10 +466,8 @@ public class SettingsActivity extends AppCompatActivity {
                 mUser.setName(name);
 
                 userRepository.update(mUser);
-            }
-        }).setNegativeButton("Cancel", null);
+            }}).setNegativeButton("Cancel", null);
 
         builder.create().show();
     }
-
 }

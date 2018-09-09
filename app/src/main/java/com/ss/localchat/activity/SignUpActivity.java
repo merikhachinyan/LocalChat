@@ -1,11 +1,13 @@
 package com.ss.localchat.activity;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,36 +18,27 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.ss.localchat.R;
 import com.ss.localchat.db.UserRepository;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.helper.BitmapHelper;
 import com.ss.localchat.preferences.Preferences;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.UUID;
 
 import java.io.ByteArrayOutputStream;
 
 public class SignUpActivity extends AppCompatActivity {
-
-    private ImageView imageView;
-
-    private EditText firstName;
-
-    private Uri uri;
-
-    private UserRepository userRepository;
-
-    private User mUser;
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private final static String[] REQUIRED_PERMISSIONS =
@@ -61,15 +54,26 @@ public class SignUpActivity extends AppCompatActivity {
 
     private static final int REQUEST_CAMERA = 2;
 
+
+    private ImageView mImageView;
+
+    private EditText mFirstName;
+
+    private Uri mUri;
+
+
+    private UserRepository mUserRepository;
+
+    private User mUser;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
-        init();
-    }
 
-    public void init() {
-        userRepository = new UserRepository(getApplication());
+        mUserRepository = new UserRepository(getApplication());
+
         mUser = new User();
         FloatingActionButton floatingActionButton = findViewById(R.id.loginCamera);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -79,40 +83,42 @@ public class SignUpActivity extends AppCompatActivity {
 
             }
         });
-        imageView = findViewById(R.id.imageViewLogin);
+
+        mImageView = findViewById(R.id.imageViewLogin);
 
         Glide.with(this)
                 .load(R.drawable.no_user_image)
                 .apply(RequestOptions.circleCropTransform())
-                .into(imageView);
+                .into(mImageView);
 
-        imageView.setOnClickListener(new View.OnClickListener() {
+        mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 addImage();
             }
         });
 
-        firstName = findViewById(R.id.editTextFirstName);
+        mFirstName = findViewById(R.id.editTextFirstName);
 
         Button loginNoInternet = findViewById(R.id.loginNoInternet);
         loginNoInternet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (firstName.getText().toString().length() <= 0) {
-                    firstName.setError("Enter Name");
+                if (mFirstName.getText().toString().length() <= 0) {
+                    mFirstName.setError("Enter FirstName");
                 } else {
-                    firstName.setError(null);
+                    mFirstName.setError(null);
 
+                    User user = new User();
+                    user.setName(mFirstName.getText().toString());
+                    user.setPhotoUrl(mUri == null ? null : mUri.toString());
 
-                    mUser.setName(firstName.getText().toString());
-                    mUser.setPhotoUrl(uri == null ? null : uri.toString());
+                    mUserRepository.insert(user);
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
 
-
-                    userRepository.insert(mUser);
-                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, mUser.getId().toString());
-                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, mUser.getName());
-                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, mUser.getPhotoUrl());
+                    String path = saveToInternalStorage(Uri.parse(user.getPhotoUrl()), user.getId());
+                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, path);
 
                     startMainActivity();
                 }
@@ -122,7 +128,6 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     public void addImage() {
-
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }else{
@@ -138,6 +143,36 @@ public class SignUpActivity extends AppCompatActivity {
             }
         }
         return true;
+    }
+
+    private String saveToInternalStorage(Uri mUri, UUID uuid){
+        Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, mUri), 480);
+
+        String extension = getFileExtension(mUri);
+
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        File file = new File(directory, uuid + extension);
+
+        FileOutputStream fos;
+        try {
+            fos = new FileOutputStream(file);
+
+            if (extension.equals(".jpg")) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            } else if (extension.equals(".png")){
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            }
+
+            fos.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String path = directory.getAbsolutePath() + "/" + file.getName();
+
+        return path;
     }
 
     private void SelectImage() {
@@ -158,7 +193,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                 } else if (items[i].equals("Gallery")) {
 
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
                     startActivityForResult(intent.createChooser(intent, "Select File"), SELECT_FILE);
 
@@ -168,7 +203,13 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
         builder.show();
+    }
 
+    public void pickImage() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        //startActivityForResult(intent, REQUEST_CODE_SELECT_PICTURE);
     }
 
     @Override
@@ -182,25 +223,24 @@ public class SignUpActivity extends AppCompatActivity {
 
                 Bundle bundle = data.getExtras();
                 Bitmap bitmap = (Bitmap) bundle.get("data");
-                uri = getImageUri(getApplicationContext(), bitmap);
+                mUri = getImageUri(getApplicationContext(), bitmap);
                 Glide.with(this)
-                        .load(uri)
+                        .load(mUri)
                         .apply(RequestOptions.circleCropTransform())
-                        .into(imageView);
+                        .into(mImageView);
 
-                mUser.setPhotoUrl(uri.toString());
+                mUser.setPhotoUrl(mUri.toString());
 
             } else if (requestCode == SELECT_FILE) {
 
-                uri = data.getData();
+                mUri = data.getData();
                 Glide.with(this)
-                        .load(uri)
+                        .load(mUri)
                         .apply(RequestOptions.circleCropTransform())
-                        .into(imageView);
-                mUser.setPhotoUrl(uri.toString());
+                        .into(mImageView);
+                mUser.setPhotoUrl(mUri.toString());
             }
-            userRepository.update(mUser);
-
+            mUserRepository.update(mUser);
         }
     }
 
@@ -235,5 +275,21 @@ public class SignUpActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finishAffinity();
+    }
+
+    public String getFileExtension(Uri mUri) {
+        String filePath = null;
+        String[] filePathColumn = {MediaStore.Images.Media.DISPLAY_NAME};
+
+        Cursor cursor = getContentResolver().query(mUri, filePathColumn, null, null, null);
+        if (cursor == null)
+            return null;
+
+        if (cursor.moveToFirst()) {
+            String fileName = cursor.getString(cursor.getColumnIndex(filePathColumn[0]));
+            filePath = fileName.substring(fileName.lastIndexOf("."));
+        }
+        cursor.close();
+        return filePath;
     }
 }

@@ -85,8 +85,10 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
 
     public void showLoadingIndicator(boolean flag) {
         if (flag) {
-            mUsers.add(null);
-            notifyItemInserted(mUsers.size() - 1);
+            if (mUsers.size() == 0 || mUsers.get(mUsers.size() - 1) != null) {
+                mUsers.add(null);
+                notifyItemInserted(mUsers.size() - 1);
+            }
         } else {
             if (mUsers.size() != 0) {
                 int i = mUsers.size() - 1;

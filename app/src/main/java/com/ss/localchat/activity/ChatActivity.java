@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -39,6 +40,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
@@ -65,6 +67,10 @@ public class ChatActivity extends AppCompatActivity {
 
     public static final String READ_MESSAGE = "read";
 
+    public static final String FRAGMENT_TAG = "show.photo";
+
+    public static final int REQUEST_CODE_CHOOSE_PICTURE = 2;
+
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -89,6 +95,13 @@ public class ChatActivity extends AppCompatActivity {
         }
     };
 
+    private MessageListAdapter.OnImageClickListener mImageClickListener = new MessageListAdapter.OnImageClickListener() {
+        @Override
+        public void OnImageClick(Message message) {
+            showPhoto(message.getPhoto());
+        }
+    };
+
     public static boolean isCurrentlyRunning;
 
     public static UUID currentUserId;
@@ -97,9 +110,13 @@ public class ChatActivity extends AppCompatActivity {
 
     private TextView mUserInfo;
 
-    private ImageView userImage;
+    private ImageView mUserImage;
 
-    private TextView userName;
+    private TextView mUserName;
+
+    private ImageView mChosenPhotoImage;
+
+    private ImageView mRemovePhotoImage;
 
     private MessageListAdapter mMessageListAdapter;
 
@@ -114,6 +131,12 @@ public class ChatActivity extends AppCompatActivity {
     private String mMessageText;
 
     private boolean isBound;
+
+    private ObservableArrayMap<String, ConnectionState> mEndpoints;
+
+    private Uri mPhotoUri;
+
+    private View mView;
 
 
     @Override
@@ -131,12 +154,22 @@ public class ChatActivity extends AppCompatActivity {
             actionBar.setDisplayShowCustomEnabled(true);
 
             View actionBarView = LayoutInflater.from(this).inflate(R.layout.chat_activity_action_bar_custom_view, null);
-            userImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
-            userName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
+            mUserImage = actionBarView.findViewById(R.id.user_circle_image_view_on_toolbar);
+            mUserName = actionBarView.findViewById(R.id.user_name_text_view_on_toolbar);
             mUserInfo = actionBarView.findViewById(R.id.user_info_text_view_on_toolbar);
             actionBar.setCustomView(actionBarView);
 
         }
+
+        mUserImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String photoUri = mUser.getPhotoUrl();
+                if (photoUri != null) {
+                    showPhoto(mUser.getPhotoUrl());
+                }
+            }
+        });
 
         if (getIntent() != null) {
             mUser = (User) getIntent().getSerializableExtra(USER_EXTRA);
@@ -161,6 +194,8 @@ public class ChatActivity extends AppCompatActivity {
         super.onStop();
 
         isCurrentlyRunning = false;
+
+        mView = findViewById(R.id.divider_view_chat_activity);
     }
 
     @Override
@@ -173,19 +208,19 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initActionBar() {
-        userName.setText(mUser.getName());
+        mUserName.setText(mUser.getName());
 
         Glide.with(this)
                 .load(mUser.getPhotoUrl())
                 .apply(RequestOptions.circleCropTransform().diskCacheStrategy(DiskCacheStrategy.ALL))
                 .error(Glide.with(this).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
-                .into(userImage);
+                .into(mUserImage);
 
-        ObservableArrayMap<String, ConnectionState> endpoints = mSendMessageBinder.getEndpoints();
-        setUserInfo(endpoints);
+        mEndpoints = mSendMessageBinder.getEndpoints();
+        setUserInfo(mEndpoints);
 
-        if (endpoints != null) {
-            if (endpoints.containsKey(mUser.getEndpointId()) && endpoints.get(mUser.getEndpointId()).equals(ConnectionState.CONNECTED)) {
+        if (mEndpoints != null) {
+            if (mEndpoints.containsKey(mUser.getEndpointId()) && mEndpoints.get(mUser.getEndpointId()).equals(ConnectionState.CONNECTED)) {
                 mSendMessageBinder.markMessageAsRead(mUser.getEndpointId(), READ_MESSAGE);
             }
         }
@@ -199,6 +234,17 @@ public class ChatActivity extends AppCompatActivity {
         mMessageInputEditText.requestFocus();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
+        mChosenPhotoImage = findViewById(R.id.attach_photo_image_view);
+        mRemovePhotoImage = findViewById(R.id.remove_attached_photo_image_view);
+        mRemovePhotoImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPhotoUri = null;
+                mChosenPhotoImage.setVisibility(View.GONE);
+                mRemovePhotoImage.setVisibility(View.GONE);
+                setLayoutParams(1);
+            }
+        });
 
         final RecyclerView recyclerView = findViewById(R.id.recycler_view_chat_activity);
         mMessageListAdapter = new MessageListAdapter(this);
@@ -208,6 +254,7 @@ public class ChatActivity extends AppCompatActivity {
                 recyclerView.smoothScrollToPosition(mMessageListAdapter.getItemCount());
             }
         });
+        mMessageListAdapter.setOnImageClickListener(mImageClickListener);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
@@ -260,14 +307,36 @@ public class ChatActivity extends AppCompatActivity {
                 if (mState == ConnectionState.DISCONNECTED) {
                     Snackbar.make(v, DISCONNECTED + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
                 } else {
-                    if (!mMessageText.isEmpty()) {
+                    if (!mMessageText.isEmpty() || mPhotoUri != null) {
                         if (isBound) {
-                            mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
+                            if (mPhotoUri == null) {
+                                mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
+                                sendMessage(mMessageText, null);
+                            }
+                            else {
+                                if (mMessageText.isEmpty()){
+                                    mSendMessageBinder.sendPhotoMessage(mUser.getEndpointId(), mPhotoUri);
+                                    sendMessage(null, mPhotoUri.toString());
+                                } else {
+                                    mSendMessageBinder.sendPhotoWithTextMessage(mUser.getEndpointId(), mPhotoUri, mMessageText);
+                                    sendMessage(mMessageText, mPhotoUri.toString());
+                                }
+                                mChosenPhotoImage.setVisibility(View.GONE);
+                                mRemovePhotoImage.setVisibility(View.GONE);
+                                setLayoutParams(1);
+                            }
                         }
-                        sendMessage(mMessageText);
                         mMessageInputEditText.setText("");
+                        mPhotoUri = null;
                     }
                 }
+            }
+        });
+
+        findViewById(R.id.attach_photo_chat_activity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                choosePhoto();
             }
         });
 
@@ -283,7 +352,7 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void sendMessage(String text) {
+    private void sendMessage(String text, String photoUrl) {
         UUID myUserId = Preferences.getUserId(getApplicationContext());
 
         Message message = new Message();
@@ -291,6 +360,7 @@ public class ChatActivity extends AppCompatActivity {
         message.setRead(false);
         message.setReceiverId(mUser.getId());
         message.setSenderId(myUserId);
+        message.setPhoto(photoUrl);
         mMessageViewModel.insert(message);
     }
 
@@ -315,11 +385,52 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-
     private void cancelNotification() {
         NotificationHelper.getManager(this).cancel(mUser.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
     }
 
+    private void choosePhoto() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_CODE_CHOOSE_PICTURE);
+    }
+
+    private void showPhoto(String photoUri) {
+        ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, fragment, FRAGMENT_TAG)
+                .addToBackStack(FRAGMENT_TAG)
+                .commit();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_CHOOSE_PICTURE) {
+            if (data != null) {
+                mPhotoUri = data.getData();
+
+                mChosenPhotoImage.setVisibility(View.VISIBLE);
+                mRemovePhotoImage.setVisibility(View.VISIBLE);
+
+                Glide.with(this)
+                        .load(mPhotoUri)
+                        .into(mChosenPhotoImage);
+
+                setLayoutParams(80);
+            }
+        }
+    }
+
+
+    private void setLayoutParams(int height) {
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) mView.getLayoutParams();
+
+        float pixels =  height * getResources().getDisplayMetrics().density;
+        params.height = (int)pixels;
+        mView.setLayoutParams(params);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat_activity, menu);

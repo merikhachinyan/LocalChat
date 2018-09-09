@@ -11,21 +11,19 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.adapter.DiscoveredUsersListAdapter;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.service.ChatService;
@@ -33,10 +31,6 @@ import com.ss.localchat.service.ChatService;
 public class DiscoveredUsersFragment extends Fragment {
 
     public static final String FRAGMENT_TITLE = "Discover";
-
-    public static final String START_DISCOVERY = "Start";
-
-    public static final String STOP_DISCOVERY = "Stop";
 
     public static final String DIALOG_TEXT = "Enable Advertising ?";
 
@@ -76,11 +70,32 @@ public class DiscoveredUsersFragment extends Fragment {
                 }
             };
 
-    private Button mStartDiscoverButton;
+
+    private MainActivity.OnButtonClickListener mListener = new MainActivity.OnButtonClickListener() {
+        @Override
+        public void onDiscoveryButtonClick(FloatingActionButton fab) {
+            if (mDiscoverBinder.isRunningService()) {
+                if (!mDiscoverBinder.isRunningDiscovery()) {
+                    startDiscovery();
+                    fab.setImageResource(R.drawable.ic_stop_black_24dp);
+                } else {
+                    stopDiscovery();
+                    fab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+                }
+
+                mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+
+            } else {
+                createDialog().show();
+            }
+        }
+    };
 
     private DiscoveredUsersListAdapter mDiscoveredUsersListAdapter;
 
     private ChatService.ServiceBinder mDiscoverBinder;
+
+    private OnStartDiscoveryListener mDiscoveryListener;
 
     private boolean isBound;
 
@@ -103,12 +118,10 @@ public class DiscoveredUsersFragment extends Fragment {
         getActivity().bindService(new Intent(getActivity(), ChatService.class),
                 mServiceConnection, Context.BIND_AUTO_CREATE);
     }
-   private InputMethodManager imm;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-
         return inflater.inflate(R.layout.fragment_discovered_users, container, false);
     }
 
@@ -118,23 +131,13 @@ public class DiscoveredUsersFragment extends Fragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
 
         if (isBound) {
             mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
 
-            if (mDiscoverBinder.isRunningDiscovery()) {
-                mStartDiscoverButton.setText(STOP_DISCOVERY);
-            } else {
-                mStartDiscoverButton.setText(START_DISCOVERY);
-            }
+            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
         }
     }
 
@@ -166,38 +169,16 @@ public class DiscoveredUsersFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mDiscoveredUsersListAdapter);
 
-        mStartDiscoverButton = view.findViewById(R.id.start_discover_users_button);
-        mStartDiscoverButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mDiscoverBinder.isRunningService()) {
-
-                    if (!mDiscoverBinder.isRunningDiscovery()) {
-                        startDiscovery();
-                    } else {
-                        stopDiscovery();
-                    }
-
-                    mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
-
-                } else {
-                    createDialog().show();
-                }
-            }
-        });
+        ((MainActivity) getActivity()).setOnButtonClickListener(mListener);
     }
 
     private void startDiscovery() {
-        mStartDiscoverButton.setText(STOP_DISCOVERY);
-
         if (isBound) {
             mDiscoverBinder.startDiscovery();
         }
     }
 
     private void stopDiscovery() {
-        mStartDiscoverButton.setText(START_DISCOVERY);
-
         if (isBound) {
             mDiscoverBinder.stopDiscovery();
         }
@@ -214,7 +195,11 @@ public class DiscoveredUsersFragment extends Fragment {
 
                         startDiscovery();
 
-                        mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+                        if (isBound) {
+                            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+
+                            mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
+                        }
                     }
                 })
                 .setNegativeButton(CANCEL, new DialogInterface.OnClickListener() {
@@ -226,11 +211,12 @@ public class DiscoveredUsersFragment extends Fragment {
 
         return builder.create();
     }
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
-        menu.clear();
-        menuInflater.inflate(R.menu.menu_main_search, menu);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-        searchView.requestFocus();
+
+    public void setOnStartDisocveryListener(OnStartDiscoveryListener listener) {
+        mDiscoveryListener = listener;
+    }
+
+    public interface OnStartDiscoveryListener {
+        void OnStartDiscovery(boolean flag);
     }
 }

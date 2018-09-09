@@ -1,5 +1,6 @@
 package com.ss.localchat.adapter;
 
+import android.content.Context;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.NonNull;
@@ -28,24 +29,26 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     private OnItemClickListener mListener;
     private MessageViewModel mMessageViewModel;
     private List<Chat> mChats = new ArrayList<>();
+
+    private Context mContext;
     private View view;
 
-    public ChatListAdapter() {
+
+    public ChatListAdapter(Context context) {
+        mContext = context;
     }
 
     @NonNull
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
         view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_view, parent, false);
-
         return new ChatViewHolder(view, mListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Chat user = mFilteredList.get(position);
-        holder.bind(user.user, user.message, user.count);
+        holder.bind(user.user, user.message, user.count, mContext);
     }
 
     @Override
@@ -60,8 +63,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
         mFilteredList.clear();
         mFilteredList = chats;
         notifyDataSetChanged();
-
-
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -96,7 +97,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
                     }
                 }
             }
-
         }
         return filteredModelList;
     }

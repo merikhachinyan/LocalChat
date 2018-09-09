@@ -9,17 +9,18 @@ import android.view.ViewGroup;
 
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.ChatViewHolder;
-import com.ss.localchat.db.entity.User;
 import com.ss.localchat.db.entity.Chat;
+import com.ss.localchat.db.entity.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
-
+    private List<Chat> mFilteredList = new ArrayList<>();
     private OnItemClickListener mListener;
 
-    private List<Chat> mChats;
+    private List<Chat> mChats = new ArrayList<>();
 
     private Context mContext;
 
@@ -37,17 +38,21 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        Chat user = mChats.get(position);
+        Chat user = mFilteredList.get(position);
         holder.bind(user.user, user.message, user.count, mContext);
     }
 
     @Override
     public int getItemCount() {
-        return mChats == null ? 0 : mChats.size();
+        return mFilteredList == null ? 0 : mFilteredList.size();
     }
 
     public void setUsers(List<Chat> chats) {
         mChats = chats;
+
+        // TODO: 8/27/2018 change users set logic, should pass users list instead of user
+        mFilteredList.clear();
+        mFilteredList = chats;
         notifyDataSetChanged();
     }
 
@@ -55,8 +60,31 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
         mListener = listener;
     }
 
+    private ArrayList<Chat> filter(List<Chat> models, String query) {
+
+        final String lowerCaseQuery = query.toLowerCase();
+
+        final ArrayList<Chat> filteredModelList = new ArrayList<>();
+        for (Chat model : models) {
+            final String name = model.user.getName().toLowerCase();
+            final String message = model.message.getText().toLowerCase();
+            if (name.contains(lowerCaseQuery) | message.contains(lowerCaseQuery)) {
+                filteredModelList.add(model);
+            }
+        }
+        return filteredModelList;
+    }
+
+    public void getFilter(String str) {
+
+        mFilteredList = filter(mChats, str);
+        notifyDataSetChanged();
+
+    }
+
     public interface OnItemClickListener {
         void onClick(User user);
+
         void onLongClick(User user, View view);
     }
 }

@@ -10,7 +10,10 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,12 +37,11 @@ public class ChatListFragment extends Fragment {
 
     public static final String FRAGMENT_TITLE = "Chats";
 
-
+    private ChatListAdapter mChatListAdapter;
     private MessageViewModel mMessageViewModel;
 
     public ChatListFragment() {
     }
-
 
     public static ChatListFragment newInstance() {
         ChatListFragment fragment = new ChatListFragment();
@@ -62,13 +64,14 @@ public class ChatListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
+        setHasOptionsMenu(true);
     }
 
     public void init(View v) {
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
-        final ChatListAdapter chatListAdapter = new ChatListAdapter(getContext());
-        chatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
+        mChatListAdapter = new ChatListAdapter(getContext());
+        mChatListAdapter.setOnItemClickListener(new ChatListAdapter.OnItemClickListener() {
             @Override
             public void onClick(User user) {
                 Intent intent = new Intent(getActivity(), ChatActivity.class);
@@ -91,7 +94,7 @@ public class ChatListFragment extends Fragment {
                 if (chats == null)
                     return;
 
-                chatListAdapter.setUsers(chats);
+                mChatListAdapter.setUsers(chats);
             }
         });
 
@@ -102,7 +105,7 @@ public class ChatListFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.addItemDecoration(dividerItemDecoration);
-        recyclerView.setAdapter(chatListAdapter);
+        recyclerView.setAdapter(mChatListAdapter);
     }
 
     private void showPopup(final User user, View view) {
@@ -121,5 +124,31 @@ public class ChatListFragment extends Fragment {
             }
         });
         popupMenu.show();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        menu.clear();
+        menuInflater.inflate(R.menu.menu_main_search, menu);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        search(searchView);
+    }
+
+    private void search(SearchView searchView) {
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (mChatListAdapter != null) {
+                    mChatListAdapter.getFilter(newText);
+                }
+                return true;
+            }
+        });
     }
 }

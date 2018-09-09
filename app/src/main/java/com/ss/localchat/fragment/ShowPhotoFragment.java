@@ -1,9 +1,6 @@
 package com.ss.localchat.fragment;
 
 
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,10 +8,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
@@ -52,22 +49,26 @@ public class ShowPhotoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        init(view);
+        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setHasOptionsMenu(true);
+        init(view);
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        ((AppCompatActivity)context).getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+    public void onResume() {
+        super.onResume();
+
+        ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
     }
 
     @Override
     public void onStop() {
         super.onStop();
 
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#517DA2")));
+        Window window = getActivity().getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        ((AppCompatActivity)getActivity()).getSupportActionBar().show();
     }
 
     private void init(View view) {
@@ -82,14 +83,13 @@ public class ShowPhotoFragment extends Fragment {
                     .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.ALL))
                     .into(imageView);
         }
+
+        ImageView backImage = view.findViewById(R.id.back_from_show_photo_fragment);
+        backImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFragmentManager().popBackStack();
+            }
+        });
     }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-
-        menu.clear();
-    }
-
-
 }

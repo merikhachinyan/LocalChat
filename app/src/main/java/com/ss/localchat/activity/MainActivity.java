@@ -156,9 +156,31 @@ public class MainActivity extends AppCompatActivity {
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (viewPager.getCurrentItem() == 1) {
+                if(viewPager.getCurrentItem() == 1) {
                     mListener.onDiscoveryButtonClick(mFab);
                 }
+            }
+        });
+
+        mFab.hide();
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == 0) {
+                    mFab.hide();
+                } else if (position == 1) {
+                    mFab.show();
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
         });
 

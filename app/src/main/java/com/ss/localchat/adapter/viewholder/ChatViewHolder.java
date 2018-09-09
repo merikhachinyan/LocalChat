@@ -1,6 +1,7 @@
 package com.ss.localchat.adapter.viewholder;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -55,6 +56,7 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
 
             if (lastMessage.getText() != null) {
                 lastMessageTextView.setText(lastMessage.getText());
+                lastMessageTextView.setTextColor(Color.GRAY);
             } else {
                 lastMessageTextView.setText(PHOTO);
                 lastMessageTextView.setTextColor(context.getResources().getColor(R.color.colorPrimary));

@@ -130,8 +130,8 @@ public class SignUpActivity extends AppCompatActivity {
     public void addImage() {
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-        }
-        SelectImage();
+        }else{
+        SelectImage();}
     }
 
 

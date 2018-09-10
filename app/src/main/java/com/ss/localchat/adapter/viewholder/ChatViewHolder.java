@@ -2,6 +2,7 @@ package com.ss.localchat.adapter.viewholder;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.content.Context;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -34,11 +35,10 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
 
     private AppCompatTextView unreadMessagesCountTextView;
 
-    public ChatViewHolder(View itemView, ChatListAdapter.OnItemClickListener listener) {
+
+    public ChatViewHolder(View itemView) {
 
         super(itemView);
-
-        mListener = listener;
 
         profileImageView = itemView.findViewById(R.id.profile_image_view);
         nameTextView = itemView.findViewById(R.id.name_text_view);
@@ -47,7 +47,7 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
         unreadMessagesCountTextView = itemView.findViewById(R.id.unread_messages_count_text_view);
     }
 
-    public void bind(final User user, Message lastMessage, int unreadMessagesCount, Context context) {
+    public void bind(final User user, Message lastMessage, int unreadMessagesCount, final ChatListAdapter.OnItemClickListener listener, Context context) {
         nameTextView.setText(user.getName());
 
         if (lastMessage != null) {
@@ -63,15 +63,15 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
             }
             dateTextView.setText(DateFormatUtil.formatChatDate(lastMessage.getDate()));
         } else {
-            lastMessageTextView.setVisibility(View.INVISIBLE);
-            dateTextView.setVisibility(View.INVISIBLE);
+            lastMessageTextView.setVisibility(View.GONE);
+            dateTextView.setVisibility(View.GONE);
         }
 
         if (unreadMessagesCount > 0) {
             unreadMessagesCountTextView.setVisibility(View.VISIBLE);
             unreadMessagesCountTextView.setText(String.valueOf(unreadMessagesCount));
         } else {
-            unreadMessagesCountTextView.setVisibility(View.INVISIBLE);
+            unreadMessagesCountTextView.setVisibility(View.GONE);
         }
 
         Glide.with(itemView)
@@ -83,8 +83,8 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.onClick(user);
+                if (listener != null) {
+                    listener.onClick(user);
                 }
             }
         });
@@ -92,8 +92,8 @@ public class ChatViewHolder extends RecyclerView.ViewHolder {
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (mListener != null) {
-                    mListener.onLongClick(user, v);
+                if (listener != null) {
+                    listener.onLongClick(user, v);
                 }
                 return true;
             }

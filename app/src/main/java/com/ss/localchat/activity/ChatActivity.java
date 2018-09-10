@@ -28,12 +28,15 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.rockerhieu.emojicon.EmojiconEditText;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
@@ -43,6 +46,7 @@ import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.model.ConnectionState;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.view.EmojiKeyboardLayout;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
@@ -51,13 +55,17 @@ import java.util.UUID;
 
 public class ChatActivity extends AppCompatActivity {
 
+    public static final String FRAGMENT_TAG_EMOJI = "emoji";
+
+    public static final String FRAGMENT_TAG_KEYBOARD = "custom_keyboard";
+
     public static final String USER_EXTRA = "chat.user";
 
-    private static final String CONNECTING = "Connecting";
+    private static final String CONNECTING_INFO = "Connecting";
 
-    private static final String CONNECTED = "Connected";
+    private static final String CONNECTED_INFO = "Connected";
 
-    private static final String DISCONNECTED = "Disconnected";
+    private static final String DISCONNECTED_INFO = "Disconnected";
 
     public static final String READ_MESSAGE = "read";
 
@@ -100,7 +108,7 @@ public class ChatActivity extends AppCompatActivity {
 
     public static UUID currentUserId;
 
-    private EditText mMessageInputEditText;
+    private EmojiconEditText mMessageInputEditText;
 
     private TextView mUserInfo;
 
@@ -121,8 +129,6 @@ public class ChatActivity extends AppCompatActivity {
     private User mUser;
 
     private ConnectionState mState;
-
-    private String mMessageText;
 
     private boolean isBound;
 
@@ -188,6 +194,7 @@ public class ChatActivity extends AppCompatActivity {
         super.onStop();
 
         isCurrentlyRunning = false;
+
     }
 
     @Override
@@ -253,6 +260,8 @@ public class ChatActivity extends AppCompatActivity {
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
+        EmojiKeyboardLayout keyboardLayout = findViewById(R.id.keyboardLayout);
+        keyboardLayout.setup(this, recyclerView);
 
         UserViewModel userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
         userViewModel.getUserById(mUser.getId()).observe(this, new Observer<User>() {
@@ -268,14 +277,14 @@ public class ChatActivity extends AppCompatActivity {
 
         mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
 
-        final LiveData<List<Message>> messagesLiveData = mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), true);
+        final LiveData<List<Message>> messagesLiveData = mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), true, false);
         messagesLiveData.observe(this, new Observer<List<Message>>() {
             @Override
             public void onChanged(@Nullable List<Message> messages) {
                 mMessageListAdapter.addMessages(messages);
                 messagesLiveData.removeObserver(this);
 
-                mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), false).observe(ChatActivity.this, new Observer<List<Message>>() {
+                mMessageViewModel.getReadOrUnreadMessagesWith(mUser.getId(), false, false).observe(ChatActivity.this, new Observer<List<Message>>() {
                     @Override
                     public void onChanged(@Nullable List<Message> messages) {
                         if (messages == null || messages.size() == 0)
@@ -294,23 +303,22 @@ public class ChatActivity extends AppCompatActivity {
         findViewById(R.id.send_button_chat_activity).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mMessageText = mMessageInputEditText.getText().toString().trim();
+                String messageText = mMessageInputEditText.getText().toString().trim();
                 if (mState == ConnectionState.DISCONNECTED) {
-                    Snackbar.make(v, DISCONNECTED + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(v, DISCONNECTED_INFO + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
                 } else {
-                    if (!mMessageText.isEmpty() || mPhotoUri != null) {
+                    if (!messageText.isEmpty() || mPhotoUri != null) {
                         if (isBound) {
                             if (mPhotoUri == null) {
-                                mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
-                                sendMessage(mMessageText, null);
-                            }
-                            else {
-                                if (mMessageText.isEmpty()){
+                                mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), messageText);
+                                sendMessage(messageText, null);
+                            } else {
+                                if (messageText.isEmpty()) {
                                     mSendMessageBinder.sendPhotoMessage(mUser.getEndpointId(), mPhotoUri);
                                     sendMessage(null, mPhotoUri.toString());
                                 } else {
-                                    mSendMessageBinder.sendPhotoWithTextMessage(mUser.getEndpointId(), mPhotoUri, mMessageText);
-                                    sendMessage(mMessageText, mPhotoUri.toString());
+                                    mSendMessageBinder.sendPhotoWithTextMessage(mUser.getEndpointId(), mPhotoUri, messageText);
+                                    sendMessage(messageText, mPhotoUri.toString());
                                 }
                                 mChosenPhotoImage.setVisibility(View.GONE);
                                 mRemovePhotoImage.setVisibility(View.GONE);
@@ -346,13 +354,20 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage(String text, String photoUrl) {
+//        if (isBound) {
+//            mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), text);
+//        }
+
         UUID myUserId = Preferences.getUserId(getApplicationContext());
+        String myUserName = Preferences.getUserName(getApplicationContext());
 
         Message message = new Message();
         message.setText(text);
         message.setRead(false);
         message.setReceiverId(mUser.getId());
         message.setSenderId(myUserId);
+        message.setGroup(false);
+        message.setSenderName(myUserName);
         message.setPhoto(photoUrl);
         mMessageViewModel.insert(message);
     }
@@ -360,21 +375,22 @@ public class ChatActivity extends AppCompatActivity {
     private void setUserInfo(ObservableArrayMap<String, ConnectionState> endpoints) {
         if (endpoints.containsKey(mUser.getEndpointId())) {
             mState = endpoints.get(mUser.getEndpointId());
+            invalidateOptionsMenu();
 
             switch (mState) {
                 case CONNECTING:
-                    mUserInfo.setText(CONNECTING);
+                    mUserInfo.setText(CONNECTING_INFO);
                     break;
                 case CONNECTED:
-                    mUserInfo.setText(CONNECTED);
+                    mUserInfo.setText(CONNECTED_INFO);
                     break;
                 case DISCONNECTED:
-                    mUserInfo.setText(DISCONNECTED);
+                    mUserInfo.setText(DISCONNECTED_INFO);
                     break;
             }
         } else {
             mState = ConnectionState.DISCONNECTED;
-            mUserInfo.setText(DISCONNECTED);
+            mUserInfo.setText(DISCONNECTED_INFO);
         }
     }
 
@@ -420,19 +436,45 @@ public class ChatActivity extends AppCompatActivity {
     private void setLayoutParams(int height) {
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) mView.getLayoutParams();
 
-        float pixels =  height * getResources().getDisplayMetrics().density;
-        params.height = (int)pixels;
+        float pixels = height * getResources().getDisplayMetrics().density;
+        params.height = (int) pixels;
         mView.setLayoutParams(params);
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_chat_activity, menu);
+        MenuItem connectDisconnect = menu.findItem(R.id.action_connect_disconnect_in_chat);
+        switch (mState) {
+            case CONNECTING:
+                connectDisconnect.setEnabled(false);
+                break;
+            case CONNECTED:
+                connectDisconnect.setTitle("Disconnect");
+                break;
+            case DISCONNECTED:
+                connectDisconnect.setTitle("Connect");
+                break;
+        }
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_connect_disconnect_in_chat:
+                if (!isBound) {
+                    Toast.makeText(this, "Bound error, please close and open chat", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                switch (mState) {
+                    case CONNECTED:
+                        mSendMessageBinder.disconnectFrom(mUser.getEndpointId());
+                        return true;
+                    case DISCONNECTED:
+                        mSendMessageBinder.connectTo(mUser.getEndpointId());
+                        return true;
+                }
             case R.id.action_clear_history_in_chat:
                 mMessageViewModel.clearHistory(mUser.getId());
                 mMessageListAdapter.clear();

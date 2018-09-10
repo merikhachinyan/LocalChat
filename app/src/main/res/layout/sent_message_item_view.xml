@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:emojicon="http://schemas.android.com/apk/res-auto"
     android:paddingStart="80dp"
     android:paddingEnd="0dp">
 
@@ -32,7 +33,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <TextView
+        <com.rockerhieu.emojicon.EmojiconTextView
             android:id="@+id/sent_message_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -42,7 +43,11 @@
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/sent_message_image_view"
             app:layout_constraintStart_toStartOf="parent"
-            tools:text="Outbox Message" />
+            tools:text="Outbox Message"
+            emojicon:emojiconSize="26sp"
+            android:gravity="center_vertical"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"/>
 
         <TextView
             android:id="@+id/sent_message_date_text_view"
@@ -57,7 +62,7 @@
             android:id="@+id/sent_message_unread_image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_done_all_black_24dp"
+            android:src="@drawable/ic_message_is_read_24dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/sent_message_text_view"/>
 

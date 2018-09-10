@@ -19,12 +19,12 @@ public class MessageRepository {
         messageDao = AppDatabase.getInstance(application).messageDao();
     }
 
-    public LiveData<List<Message>> getMessagesWith(UUID user_id) {
-        return messageDao.getMessagesWith(user_id);
+    public LiveData<List<Message>> getMessagesWith(UUID id) {
+        return messageDao.getMessagesWith(id);
     }
 
-    public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID user_id, boolean is_read) {
-        return messageDao.getReadOrUnreadMessagesWith(user_id, is_read);
+    public LiveData<List<Message>> getReadOrUnreadMessagesWith(UUID id, boolean isRead, boolean isGroup) {
+        return messageDao.getReadOrUnreadMessagesWith(id, isRead, isGroup);
     }
 
     public LiveData<List<Message>> getReceiverUnreadMessages(UUID user_id, boolean is_read_receiver) {
@@ -43,8 +43,8 @@ public class MessageRepository {
         new DeleteAsyncTask(messageDao).execute(message);
     }
 
-    public void clearHistory(final UUID user_id) {
-        new ClearHistoryAsyncTask(messageDao).execute(user_id);
+    public void clearHistory(final UUID id) {
+        new ClearHistoryAsyncTask(messageDao).execute(id);
     }
 
     private static class UpdateAsyncTask extends AsyncTask<Message, Void, Void> {

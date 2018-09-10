@@ -139,8 +139,10 @@ public class SettingsActivity extends AppCompatActivity {
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
 
-        init();
+//        init();
     }
+
+
 
     @Override
     protected void onDestroy() {
@@ -184,10 +186,11 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    if (!mAdvertiseBinder.isRunningService()) {
-                        startService(intent);
-                        mAdvertiseTextView.setText(DISABLE_ADVERTISING);
-
+                    if (isBound) {
+                        if (!mAdvertiseBinder.isRunningService()) {
+                            startService(intent);
+                            mAdvertiseTextView.setText(DISABLE_ADVERTISING);
+                        }
                     }
                 } else {
                     mAdvertiseBinder.stopService();
@@ -288,6 +291,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         }
 
+        init();
     }
 
     private void logout(){
@@ -301,11 +305,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit().remove(USER_ID_KEY).apply();
-        sharedPreferences.edit().remove(USER_NAME_KEY).apply();
-        sharedPreferences.edit().remove(INTRODUCE_APP_KEY).apply();
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Preferences.removeUser(getApplicationContext());
 
         userRepository.delete(mUser.getId());
 
@@ -315,7 +316,6 @@ public class SettingsActivity extends AppCompatActivity {
         mAdvertiseBinder.stopService();
 
         startActivity(intent);
-
 
         finish();
     }
@@ -330,8 +330,9 @@ public class SettingsActivity extends AppCompatActivity {
         isEditable = true;
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+        } else {
+            SelectImage();
         }
-        SelectImage();
     }
 
 

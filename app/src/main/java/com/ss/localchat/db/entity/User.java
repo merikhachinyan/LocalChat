@@ -24,6 +24,7 @@ public class User implements Serializable {
 
     private String name;
 
+
     @ColumnInfo(name = "photo_url")
     private String photoUrl;
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:emojicon="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -19,27 +20,41 @@
         android:paddingStart="8dp"
         android:paddingTop="4dp">
 
+        <TextView
+            android:id="@+id/received_message_sender_name_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            tools:text="Sender Name"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <ImageView
             android:id="@+id/received_message_image_view"
             android:layout_width="240dp"
             android:layout_height="240dp"
-            android:scaleType="fitXY"
             android:adjustViewBounds="true"
+            android:scaleType="fitXY"
             android:visibility="gone"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/received_message_sender_name_text_view" />
 
-        <TextView
+        <com.rockerhieu.emojicon.EmojiconTextView
             android:id="@+id/received_message_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
             android:textColor="@android:color/black"
             android:textSize="16sp"
-            android:ellipsize="end"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/received_message_image_view"
             app:layout_constraintStart_toStartOf="parent"
-            tools:text="Inbox Message" />
+            app:layout_constraintTop_toBottomOf="@id/received_message_image_view"
+            emojicon:emojiconSize="26sp"
+            tools:text="Inbox Message"
+            android:gravity="center_vertical"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"/>
 
         <TextView
             android:id="@+id/received_message_date_text_view"

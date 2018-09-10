@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 
 import com.ss.localchat.fragment.ChatListFragment;
 import com.ss.localchat.fragment.DiscoveredUsersFragment;
+import com.ss.localchat.fragment.GroupListFragment;
 
 import java.util.List;
 
@@ -36,6 +37,8 @@ public class ViewPagerFragmentAdapter extends FragmentPagerAdapter {
             case 0:
                 return ChatListFragment.FRAGMENT_TITLE;
             case 1:
+                return GroupListFragment.FRAGMENT_TITLE;
+            case 2:
                 return DiscoveredUsersFragment.FRAGMENT_TITLE;
             default:
                 return null;

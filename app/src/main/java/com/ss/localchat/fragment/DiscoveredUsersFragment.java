@@ -79,7 +79,7 @@ public class DiscoveredUsersFragment extends Fragment {
                     fab.setImageResource(R.drawable.ic_stop_black_24dp);
                 } else {
                     stopDiscovery();
-                    fab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+                    fab.setImageResource(R.drawable.ic_bluetooth_search_start);
                 }
 
                 mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
@@ -127,7 +127,6 @@ public class DiscoveredUsersFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
-
     }
 
     @Override
@@ -136,9 +135,9 @@ public class DiscoveredUsersFragment extends Fragment {
 
         if (isBound) {
             mDiscoveredUsersListAdapter.showLoadingIndicator(mDiscoverBinder.isRunningDiscovery());
-
-            //TODO check if mDiscoveryLister null
-            mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+            if (mDiscoveryListener != null) {
+                mDiscoveryListener.OnStartDiscovery(mDiscoverBinder.isRunningDiscovery());
+            }
         }
     }
 
@@ -166,7 +165,7 @@ public class DiscoveredUsersFragment extends Fragment {
             }
         });
 
-        final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users);
+        final RecyclerView recyclerView = view.findViewById(R.id.recycler_view_discovered_users_fragment);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mDiscoveredUsersListAdapter);
 
@@ -213,7 +212,7 @@ public class DiscoveredUsersFragment extends Fragment {
         return builder.create();
     }
 
-    public void setOnStartDisocveryListener(OnStartDiscoveryListener listener) {
+    public void setOnStartDiscoveryListener(OnStartDiscoveryListener listener) {
         mDiscoveryListener = listener;
     }
 

@@ -18,7 +18,6 @@ public class Preferences {
     public static final String INTRODUCE_APP_KEY = "introduce.app";
 
 
-
     public static UUID getUserId(Context context) {
         String id = PreferenceManager.getDefaultSharedPreferences(context).getString(USER_ID_KEY, null);
         return id == null ? null : UUID.fromString(id);
@@ -43,5 +42,14 @@ public class Preferences {
 
     public static boolean contain(Context context, String key) {
         return PreferenceManager.getDefaultSharedPreferences(context).contains(key);
+    }
+
+    public static void removeUser(Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.remove(USER_ID_KEY).apply();
+        editor.remove(USER_NAME_KEY).apply();
+        editor.remove(INTRODUCE_APP_KEY).apply();
     }
 }

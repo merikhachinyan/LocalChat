@@ -13,8 +13,10 @@ import android.support.v4.app.TaskStackBuilder;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
+import com.ss.localchat.activity.GroupChatActivity;
 import com.ss.localchat.activity.MainActivity;
 import com.ss.localchat.activity.SettingsActivity;
+import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 
@@ -65,10 +67,7 @@ public class NotificationHelper {
         return builder.build();
     }
 
-    public static Notification createNotification(Context context, User user, Message message) {
-        Intent intent = new Intent(context, ChatActivity.class);
-        intent.putExtra(ChatActivity.USER_EXTRA, user);
-
+    private static Notification createNotification(Context context, Intent intent, String name, Message message, User user) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntentWithParentStack(intent);
@@ -76,7 +75,7 @@ public class NotificationHelper {
         PendingIntent pendingIntent = stackBuilder.getPendingIntent(15, PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setContentTitle(user.getName())
+                .setContentTitle(name)
                 .setContentIntent(pendingIntent)
                 .setColor(context.getResources().getColor(R.color.colorAccent))
                 .setSmallIcon(R.drawable.ic_launcher_background)
@@ -85,31 +84,45 @@ public class NotificationHelper {
                 .setWhen(System.currentTimeMillis())
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        if (user.getPhotoUrl() != null) {
-            builder
-                    .setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())));
+        if (user != null && user.getPhotoUrl() != null) {
+            builder.setLargeIcon(BitmapHelper.uriToBitmap(context, Uri.parse(user.getPhotoUrl())));
         }
 
         if (message.getText() != null && message.getPhoto() != null) {
-            builder
-                    .setContentText(message.getText())
+            builder.setContentText(message.getText())
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()))
                     .setStyle(new NotificationCompat.BigPictureStyle()
                             .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
 
         } else if (message.getPhoto() == null) {
-            builder
-                    .setContentText(message.getText())
+            builder.setContentText(message.getText())
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(message.getText()));
 
+        } else {
+            builder.setStyle(new NotificationCompat.BigPictureStyle()
+                    .bigPicture(BitmapHelper.uriToBitmap(context, Uri.parse(message.getPhoto()))));
         }
 
         return builder.build();
     }
 
     public static void showNotification(Context context, User user, Message message) {
-        getManager(context).notify(user.getId().toString(), MESSAGE_NOTIFICATION_ID, createNotification(context, user, message));
+        Intent intent = new Intent(context, ChatActivity.class);
+        intent.putExtra(ChatActivity.USER_EXTRA, user);
+
+        getManager(context).notify(user.getId().toString(),
+                MESSAGE_NOTIFICATION_ID,
+                createNotification(context, intent, user.getName(), message, user));
+    }
+
+    public static void showNotification(Context context, Group group, Message message) {
+        Intent intent = new Intent(context, GroupChatActivity.class);
+        intent.putExtra(GroupChatActivity.GROUP_EXTRA, group);
+
+        getManager(context).notify(group.getId().toString(),
+                MESSAGE_NOTIFICATION_ID,
+                createNotification(context, intent, group.getName(), message, null));
     }
 }

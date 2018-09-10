@@ -22,6 +22,7 @@ import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
 import com.ss.localchat.adapter.ChatListAdapter;
 import com.ss.localchat.db.entity.Chat;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.DividerItemDecoration;
@@ -88,7 +89,7 @@ public class ChatListFragment extends Fragment {
         UUID myUserId = Preferences.getUserId(getActivity().getApplicationContext());
 
         UserViewModel userViewModel = ViewModelProviders.of(getActivity()).get(UserViewModel.class);
-        userViewModel.getUsersExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
+        userViewModel.getChatsExceptOwner(myUserId).observe(getActivity(), new Observer<List<Chat>>() {
             @Override
             public void onChanged(@Nullable List<Chat> chats) {
                 if (chats == null)
@@ -99,7 +100,7 @@ public class ChatListFragment extends Fragment {
         });
 
 
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 88));
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(v.getContext(), Util.dpToPx(getActivity(), 80));
 
         RecyclerView recyclerView = v.findViewById(R.id.recycler_view_chat_list_fragment);
         recyclerView.setHasFixedSize(true);
@@ -147,8 +148,11 @@ public class ChatListFragment extends Fragment {
                 if (mChatListAdapter != null) {
                     mChatListAdapter.getFilter(newText);
                 }
+
                 return true;
             }
         });
     }
+
+
 }

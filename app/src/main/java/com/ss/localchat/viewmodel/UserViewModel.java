@@ -22,16 +22,24 @@ public class UserViewModel extends AndroidViewModel {
         userRepository = new UserRepository(application);
     }
 
-    public LiveData<List<Chat>> getUsersExceptOwner(UUID owner) {
+    public LiveData<List<User>> getUsersExceptOwner(UUID owner) {
         return userRepository.getUsersExceptOwner(owner);
+    }
+
+    public LiveData<List<Chat>> getChatsExceptOwner(UUID owner) {
+        return userRepository.getChatsExceptOwner(owner);
     }
 
     public LiveData<User> getUserById(UUID id) {
         return userRepository.getUserById(id);
     }
 
-    public LiveData<User> getUserByEndpointId(String endpointId) {
-        return userRepository.getUserByEndpointId(endpointId);
+    public LiveData<List<User>> getUsersListById(UUID... uuids) {
+        return userRepository.getUsersListById(uuids);
+    }
+
+    public LiveData<List<String>> getEndpointId(UUID... uuids) {
+        return userRepository.getEndpointId(uuids);
     }
 
     public void insert(User user) {

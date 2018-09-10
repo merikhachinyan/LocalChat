@@ -20,16 +20,24 @@ public class UserRepository {
         userDao = AppDatabase.getInstance(application).userDao();
     }
 
-    public LiveData<List<Chat>> getUsersExceptOwner(UUID owner) {
+    public LiveData<List<User>> getUsersExceptOwner(UUID owner) {
         return userDao.getUsersExceptOwner(owner);
+    }
+
+    public LiveData<List<Chat>> getChatsExceptOwner(UUID owner) {
+        return userDao.getChatsExceptOwner(owner);
     }
 
     public LiveData<User> getUserById(UUID id) {
         return userDao.getUserById(id);
     }
 
-    public LiveData<User> getUserByEndpointId(String endpointId) {
-        return userDao.getUserByEndpointId(endpointId);
+    public LiveData<List<User>> getUsersListById(UUID... uuids) {
+        return userDao.getUsersListById(uuids);
+    }
+
+    public LiveData<List<String>> getEndpointId(UUID... uuids) {
+        return userDao.getEndpointId(uuids);
     }
 
     public void insert(User user) {

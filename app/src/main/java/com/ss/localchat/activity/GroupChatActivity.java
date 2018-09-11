@@ -23,30 +23,26 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
 import com.rockerhieu.emojicon.EmojiconEditText;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
-import com.ss.localchat.adapter.UsersListAdapter;
 import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.fragment.MembersListFragment;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.view.EmojiKeyboardLayout;
 import com.ss.localchat.viewmodel.GroupViewModel;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -236,6 +232,8 @@ public class GroupChatActivity extends AppCompatActivity {
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
+        EmojiKeyboardLayout keyboardLayout = findViewById(R.id.keyboardLayout);
+        keyboardLayout.setup(this, recyclerView);
 
         NotificationHelper.getManager(this).cancel(mGroup.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
 
@@ -270,9 +268,23 @@ public class GroupChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String messageText = mMessageInputEditText.getText().toString().trim();
                 if (!messageText.isEmpty()) {
-                    sendMessage(messageText);
-                    mMessageInputEditText.setText("");
+                    if (mPhotoUri != null) {
+                        sendMessage(messageText, mPhotoUri);
+                    } else {
+                        sendMessage(messageText, null);
+                    }
+                } else {
+                    if (mPhotoUri != null) {
+                        sendMessage(null, mPhotoUri);
+                    }
                 }
+
+                mChosenPhotoImage.setVisibility(View.GONE);
+                mRemovePhotoImage.setVisibility(View.GONE);
+                setLayoutParams(1);
+
+                mMessageInputEditText.setText("");
+                mPhotoUri = null;
             }
         });
 
@@ -298,14 +310,18 @@ public class GroupChatActivity extends AppCompatActivity {
         });
     }
 
-    private void sendMessage(String text) {
+    private void sendMessage(String text, Uri photoUrl) {
         if (!mGroup.getMembers().contains(Preferences.getUserId(getApplicationContext()).toString())) {
             Toast.makeText(this, "You've left the group!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (isBound) {
-            mSendMessageBinder.sendGroupMessageTo(mEndpointList, text, mGroup);
+            if (photoUrl == null) {
+                mSendMessageBinder.sendGroupMessageTo(mEndpointList, text, mGroup);
+            } else {
+                mSendMessageBinder.sendPhotoWithTextMessageToGroup(mEndpointList, photoUrl, text, mGroup);
+            }
 
             UUID myUserId = Preferences.getUserId(getApplicationContext());
             String myUserName = Preferences.getUserName(getApplicationContext());
@@ -317,6 +333,10 @@ public class GroupChatActivity extends AppCompatActivity {
             message.setSenderId(myUserId);
             message.setGroup(true);
             message.setSenderName(myUserName);
+
+            if (mPhotoUri != null) {
+                message.setPhoto(photoUrl.toString());
+            }
             mMessageViewModel.insert(message);
         }
     }

@@ -1,6 +1,5 @@
 package com.ss.localchat.adapter.viewholder;
 
-import android.content.Context;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -33,7 +32,7 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
         mSendPhotoImageView = itemView.findViewById(R.id.sent_message_image_view);
     }
 
-    public void bind(Context context, final Message message, final MessageListAdapter.OnImageClickListener listener) {
+    public void bind(final Message message, final MessageListAdapter.OnImageClickListener listener) {
         mMessageDate.setText(DateFormatUtil.formatMessageDate(message.getDate()));
 
         if (message.getText() != null) {
@@ -46,7 +45,7 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
         if (message.getPhoto() != null) {
             mSendPhotoImageView.setVisibility(View.VISIBLE);
 
-            Glide.with(context)
+            Glide.with(itemView)
                     .load(Uri.parse(message.getPhoto()))
                     .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.ALL))
                     .into(mSendPhotoImageView);

@@ -62,10 +62,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch (holder.getItemViewType()) {
             case RECEIVED_MESSAGE_TYPE:
-                ((ReceivedMessageHolder) holder).bind(mContext, mMessages.get(position), mListener);
+                ((ReceivedMessageHolder) holder).bind(mMessages.get(position), mListener);
                 break;
             case SENT_MESSAGE_TYPE:
-                ((SentMessageHolder) holder).bind(mContext, mMessages.get(position), mListener);
+                ((SentMessageHolder) holder).bind(mMessages.get(position), mListener);
                 break;
             case DATE_TYPE:
                 ((DateViewHolder) holder).bind(mMessages.get(position));

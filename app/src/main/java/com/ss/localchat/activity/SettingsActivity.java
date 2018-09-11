@@ -139,7 +139,7 @@ public class SettingsActivity extends AppCompatActivity {
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
 
-//        init();
+        init();
     }
 
 
@@ -288,10 +288,7 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                 }
             });
-
         }
-
-        init();
     }
 
     private void logout(){

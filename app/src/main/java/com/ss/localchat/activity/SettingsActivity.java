@@ -50,6 +50,8 @@ import com.ss.localchat.db.entity.User;
 import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.viewmodel.GroupViewModel;
+import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.io.ByteArrayOutputStream;
@@ -72,6 +74,10 @@ public class SettingsActivity extends AppCompatActivity {
     private ImageView imageView;
 
     private UserViewModel mUserViewModel;
+
+    private MessageViewModel mMessageViewModel;
+
+    private GroupViewModel mGroupViewModel;
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
@@ -157,6 +163,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void init() {
         userRepository = new UserRepository(getApplication());
+        mMessageViewModel=new MessageViewModel(getApplication());
+        mGroupViewModel=new GroupViewModel(getApplication());
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -309,7 +317,8 @@ public class SettingsActivity extends AppCompatActivity {
         Preferences.removeUser(getApplicationContext());
 
         userRepository.delete(mUser.getId());
-
+        mMessageViewModel.deleteAllMessages();
+        mGroupViewModel.deleteAllGroups();
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         manager.cancelAll();
 

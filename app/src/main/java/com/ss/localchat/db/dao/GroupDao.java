@@ -41,4 +41,6 @@ public interface GroupDao {
     @Delete
     void delete(Group group);
 
+    @Query("DELETE FROM groups" )
+    void deleteAllGroups();
 }

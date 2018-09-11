@@ -1,6 +1,10 @@
 package com.ss.localchat.adapter;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,9 +16,13 @@ import com.ss.localchat.adapter.viewholder.GroupViewHolder;
 import com.ss.localchat.db.entity.Chat;
 import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.GroupChat;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
 import com.ss.localchat.preferences.Preferences;
+import com.ss.localchat.viewmodel.GroupViewModel;
+import com.ss.localchat.viewmodel.MessageViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +35,9 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
 
     private UUID myUserId;
 
+    private List<GroupChat> mFilteredList = new ArrayList<>();
+    private MessageViewModel mMessageViewModel;
+    private View view;
 
     public GroupListAdapter(UUID id) {
         myUserId = id;
@@ -35,23 +46,25 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
     @NonNull
     @Override
     public GroupViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_view, parent, false);
+        view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_view, parent, false);
         return new GroupViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull GroupViewHolder holder, int position) {
-        GroupChat groupChat = mGroupChats.get(position);
+        GroupChat groupChat = mFilteredList.get(position);
         holder.bind(groupChat.group, groupChat.message, groupChat.count, mListener, myUserId);
     }
 
     @Override
     public int getItemCount() {
-        return mGroupChats == null ? 0 : mGroupChats.size();
+        return mFilteredList == null ? 0 : mFilteredList.size();
     }
 
     public void setGroups(List<GroupChat> groups) {
         mGroupChats = groups ;
+        mFilteredList.clear();
+        mFilteredList = groups;
         notifyDataSetChanged();
     }
 
@@ -62,5 +75,45 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
     public interface OnItemClickListener {
         void onClick(Group group);
         void onLongClick(Group group, View view);
+    }
+
+    private List<Message> messageList=new ArrayList<>();
+
+    private ArrayList<GroupChat> filter(List<GroupChat> models, String query) {
+
+        final String lowerCaseQuery = query.toLowerCase();
+
+        final ArrayList<GroupChat> filteredModelList = new ArrayList<>();
+        for (GroupChat model : models) {
+
+            mMessageViewModel = ViewModelProviders.of((FragmentActivity) view.getContext()).get(MessageViewModel.class);
+
+            mMessageViewModel.getMessagesWith(model.group.getId()).observe((FragmentActivity) view.getContext(), new Observer<List<Message>>() {
+                @Override
+                public void onChanged(@Nullable List<Message> messages) {
+                    messageList = messages;
+                }
+            });     final String name = model.group.getName().toLowerCase();
+            final String message = model.message.getText().toLowerCase();
+            if (name.contains(lowerCaseQuery) | message.contains(lowerCaseQuery)) {
+                filteredModelList.add(model);
+            }
+            //Todo need to update search in messages
+            /*else if (messageList != null) {
+                for (int i = 0; i < messageList.size(); i++) {
+                    if (messageList.get(i).getText().toLowerCase().contains(lowerCaseQuery)) {
+                           filteredModelList.add(model);
+                    }
+                }
+            }*/
+        }
+        return filteredModelList;
+    }
+
+    public void getFilter(String str) {
+
+        mFilteredList = filter(mGroupChats, str);
+        notifyDataSetChanged();
+
     }
 }

@@ -41,6 +41,7 @@ import com.ss.localchat.fragment.MembersListFragment;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.view.EmojiKeyboardLayout;
 import com.ss.localchat.viewmodel.GroupViewModel;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
@@ -236,6 +237,8 @@ public class GroupChatActivity extends AppCompatActivity {
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
+        EmojiKeyboardLayout keyboardLayout = findViewById(R.id.keyboardLayout);
+        keyboardLayout.setup(this, recyclerView);
 
         NotificationHelper.getManager(this).cancel(mGroup.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
 

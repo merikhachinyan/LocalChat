@@ -1,6 +1,5 @@
 package com.ss.localchat.adapter.viewholder;
 
-import android.content.Context;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -11,7 +10,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.rockerhieu.emojicon.EmojiconTextView;
-import com.rockerhieu.emojicon.emoji.Emojicon;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Message;
@@ -37,7 +35,7 @@ public class ReceivedMessageHolder extends RecyclerView.ViewHolder {
         mReceivedPhotoImageView = itemView.findViewById(R.id.received_message_image_view);
     }
 
-    public void bind(Context context, final Message message, final MessageListAdapter.OnImageClickListener listener) {
+    public void bind(final Message message, final MessageListAdapter.OnImageClickListener listener) {
         if (message.isGroup()) {
             mSenderName.setText(message.getSenderName());
             mSenderName.setVisibility(View.VISIBLE);

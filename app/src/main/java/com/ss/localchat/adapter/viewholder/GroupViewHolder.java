@@ -60,6 +60,7 @@ public class GroupViewHolder extends RecyclerView.ViewHolder {
                 senderNameTextView.setVisibility(View.GONE);
             } else {
                 senderNameTextView.setVisibility(View.VISIBLE);
+                //TODO lastMessage.getSenderName() is null
                 senderNameTextView.setText(lastMessage.getSenderName().concat(":"));
             }
             lastMessageTextView.setText(lastMessage.getText());

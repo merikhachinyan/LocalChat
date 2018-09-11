@@ -54,6 +54,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
@@ -124,7 +125,8 @@ public class ChatService extends IntentService {
 
     protected PayloadCallback mPayloadCallback = new PayloadCallback() {
         @Override
-        public void onPayloadReceived(@NonNull String s, @NonNull Payload payload) {
+        public void onPayloadReceived(@NonNull
+                                              String s, @NonNull Payload payload) {
 
             if (payload.getType() == Payload.Type.BYTES) {
 
@@ -145,6 +147,7 @@ public class ChatService extends IntentService {
                         Message message = new Message();
                         message.setText(messageText);
                         message.setRead(false);
+
                         message.setReceiverId(myUserId);
                         message.setSenderId(senderId);
                         message.setSenderName(sender);
@@ -179,13 +182,28 @@ public class ChatService extends IntentService {
                         UUID senderId = UUID.fromString(jsonObject.getString("id"));
                         String payloadId = jsonObject.getString("payload_id");
                         String imageExtension = jsonObject.getString("extension");
-                        String messageText = jsonObject.getString("message_text");
+                        boolean isTextMessage = jsonObject.getBoolean("is_text_message");
+                        boolean isGroup = jsonObject.getBoolean("group");
+
+                        String messageText = null;
+
+                        if (isTextMessage) {
+                            messageText = jsonObject.getString("message_text");
+                        }
 
                         mMessage = new Message();
                         mMessage.setText(messageText);
                         mMessage.setRead(false);
                         mMessage.setReceiverId(myUserId);
                         mMessage.setSenderId(senderId);
+
+                        if (isGroup) {
+                            mMessage.setGroup(true);
+                            showGroupMessageNotification(senderId, mMessage);
+                        } else {
+                            mMessage.setGroup(false);
+                            showMessageNotification(senderId, mMessage);
+                        }
 
                         String fileName = "picture-".concat(payloadId).concat(imageExtension);
 
@@ -541,6 +559,7 @@ public class ChatService extends IntentService {
             jsonObject.put("message", messageText);
             jsonObject.put("group", false);
             jsonObject.put("sender", myUserName);
+
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
@@ -572,6 +591,7 @@ public class ChatService extends IntentService {
             jsonObject.put("message", messageText);
             jsonObject.put("group", true);
             jsonObject.put("sender", myUserName);
+
             mConnectionsClient.sendPayload(endpointList, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
 
         } catch (JSONException e) {
@@ -638,31 +658,9 @@ public class ChatService extends IntentService {
         }
     }
 
-    private void sendPicture(String id, Uri uri) {
-        UUID myUserId = Preferences.getUserId(getApplicationContext());
-
-        try {
-            Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, uri), 640);
-
-            String fileExtension = getFileExtension(uri);
-            Payload filePayload = Payload.fromFile(BitmapHelper.bitmapToFile(this, bitmap, fileExtension));
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("type", PHOTO_MESSAGE_TYPE);
-            jsonObject.put("id", myUserId.toString());
-            jsonObject.put("payload_id", filePayload.getId());
-            jsonObject.put("extension", fileExtension);
-
-            mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
-            mConnectionsClient.sendPayload(id, filePayload);
-
-        } catch (FileNotFoundException | JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void sendPictureWithTextMessage(String id, Uri uri, String messageText) {
         UUID myUserId = Preferences.getUserId(getApplicationContext());
+        String myUserName = Preferences.getUserName(getApplicationContext());
 
         try {
             Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, uri), 640);
@@ -674,11 +672,52 @@ public class ChatService extends IntentService {
             jsonObject.put("type", PHOTO_TEXT_MESSAGE_TYPE);
             jsonObject.put("id", myUserId.toString());
             jsonObject.put("payload_id", filePayload.getId());
-            jsonObject.put("message_text", messageText);
             jsonObject.put("extension", fileExtension);
+            jsonObject.put("sender", myUserName);
+            jsonObject.put("group", false);
+
+            if (messageText == null) {
+                jsonObject.put("is_text_message", false);
+            } else {
+                jsonObject.put("is_text_message", true);
+                jsonObject.put("message_text", messageText);
+            }
 
             mConnectionsClient.sendPayload(id, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
             mConnectionsClient.sendPayload(id, filePayload);
+
+        } catch (FileNotFoundException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendPictureWithTextMessageToGroup(List<String> endpointList, Uri uri, String messageText, Group group) {
+
+        try {
+            Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, uri), 640);
+
+            String fileExtension = getFileExtension(uri);
+            Payload filePayload = Payload.fromFile(BitmapHelper.bitmapToFile(this, bitmap, fileExtension));
+
+            String myUserName = Preferences.getUserName(getApplicationContext());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", PHOTO_TEXT_MESSAGE_TYPE);
+            jsonObject.put("id", group.getId().toString());
+            jsonObject.put("payload_id", filePayload.getId());
+            jsonObject.put("group", true);
+            jsonObject.put("extension", fileExtension);
+            jsonObject.put("sender", myUserName);
+
+            if (messageText == null) {
+                jsonObject.put("is_text_message", false);
+            } else {
+                jsonObject.put("is_text_message", true);
+                jsonObject.put("message_text", messageText);
+            }
+
+            mConnectionsClient.sendPayload(endpointList, Payload.fromBytes(jsonObject.toString().getBytes(StandardCharsets.UTF_8)));
+            mConnectionsClient.sendPayload(endpointList, filePayload);
 
         } catch (FileNotFoundException | JSONException e) {
             e.printStackTrace();
@@ -800,8 +839,8 @@ public class ChatService extends IntentService {
             sendPictureWithTextMessage(id, uri, messageText);
         }
 
-        public void sendPhotoMessage(String id, Uri uri) {
-            sendPicture(id, uri);
+        public void sendPhotoWithTextMessageToGroup(List<String> endpointList, Uri uri, String messageText, Group group) {
+            sendPictureWithTextMessageToGroup(endpointList, uri, messageText, group);
         }
 
         public void markMessageAsRead(String id, String readMessage) {

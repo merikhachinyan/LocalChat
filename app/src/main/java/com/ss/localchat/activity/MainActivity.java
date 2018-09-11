@@ -2,11 +2,14 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -62,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
 
     private List<Fragment> mFragmentList = new ArrayList<>();
 
@@ -216,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    //TODO change startActivityForResult
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

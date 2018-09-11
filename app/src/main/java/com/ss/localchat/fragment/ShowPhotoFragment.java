@@ -58,7 +58,6 @@ public class ShowPhotoFragment extends Fragment {
 
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
     }
 
     @Override
@@ -68,7 +67,6 @@ public class ShowPhotoFragment extends Fragment {
         Window window = getActivity().getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        ((AppCompatActivity)getActivity()).getSupportActionBar().show();
     }
 
     private void init(View view) {

@@ -310,7 +310,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         Preferences.removeUser(getApplicationContext());
 
         userRepository.delete(mUser.getId());

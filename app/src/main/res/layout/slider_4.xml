@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#7323dc"
+    android:background="#FFFFFF"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -18,7 +18,7 @@
         android:layout_marginTop="10dp"
         android:text="Discover"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/colorPrimary"
         android:textSize="30dp"
         android:textStyle="bold" />
 
@@ -28,7 +28,7 @@
         android:layout_marginTop="10dp"
         android:text="Discover the people nearby you!"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="@color/colorPrimary"
         android:textSize="20dp" />
 
 </LinearLayout>

@@ -130,7 +130,7 @@ public class ChatListFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         menu.clear();
-        menuInflater.inflate(R.menu.menu_main_search, menu);
+        menuInflater.inflate(R.menu.menu_main_chat, menu);
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
         search(searchView);
     }

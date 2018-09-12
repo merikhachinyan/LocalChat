@@ -23,7 +23,9 @@ import com.ss.localchat.viewmodel.GroupViewModel;
 import com.ss.localchat.viewmodel.MessageViewModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -62,7 +64,7 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
     }
 
     public void setGroups(List<GroupChat> groups) {
-        mGroupChats = groups ;
+        mGroupChats = groups;
         mFilteredList.clear();
         mFilteredList = groups;
         notifyDataSetChanged();
@@ -74,38 +76,57 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
 
     public interface OnItemClickListener {
         void onClick(Group group);
+
         void onLongClick(Group group, View view);
     }
 
-    private List<Message> messageList=new ArrayList<>();
+
+    private Map<UUID, List<Message>> mUUIDListHashMap = new HashMap<>();
 
     private ArrayList<GroupChat> filter(List<GroupChat> models, String query) {
 
         final String lowerCaseQuery = query.toLowerCase();
 
         final ArrayList<GroupChat> filteredModelList = new ArrayList<>();
-        for (GroupChat model : models) {
+        for (final GroupChat model : models) {
 
             mMessageViewModel = ViewModelProviders.of((FragmentActivity) view.getContext()).get(MessageViewModel.class);
 
             mMessageViewModel.getMessagesWith(model.group.getId()).observe((FragmentActivity) view.getContext(), new Observer<List<Message>>() {
                 @Override
                 public void onChanged(@Nullable List<Message> messages) {
-                    messageList = messages;
+                    if (mUUIDListHashMap.get(model.group.getId()) == null) {
+                        mUUIDListHashMap.put(model.group.getId(), messages);
+                    } else {
+                        mUUIDListHashMap.remove(model.group.getId());
+                        mUUIDListHashMap.put(model.group.getId(), messages);
+                    }
+
                 }
-            });     final String name = model.group.getName().toLowerCase();
+            });
+            final String name = model.group.getName().toLowerCase();
             final String message = model.message.getText().toLowerCase();
             if (name.contains(lowerCaseQuery) | message.contains(lowerCaseQuery)) {
                 filteredModelList.add(model);
-            }
-            //Todo need to update search in messages
-            /*else if (messageList != null) {
-                for (int i = 0; i < messageList.size(); i++) {
-                    if (messageList.get(i).getText().toLowerCase().contains(lowerCaseQuery)) {
-                           filteredModelList.add(model);
+            } else {
+                if (mUUIDListHashMap.get(model.group.getId()) != null) {
+                    for (int i = 0; i < mUUIDListHashMap.get(model.group.getId()).size(); i++) {
+                        String str = mUUIDListHashMap.get(model.group.getId()).get(i).getText().toLowerCase();
+                        if (str.contains(lowerCaseQuery)) {
+                            boolean duplicate = false;
+                            for (i = 0; i < filteredModelList.size(); i++) {
+                                if (filteredModelList.get(i).group.getId() == model.group.getId()) {
+                                    duplicate = true;
+                                }
+
+                            }
+                            if (!duplicate) {
+                                filteredModelList.add(model);
+                            }
+                        }
                     }
                 }
-            }*/
+            }
         }
         return filteredModelList;
     }

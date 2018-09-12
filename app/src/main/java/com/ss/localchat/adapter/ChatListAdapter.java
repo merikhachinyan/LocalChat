@@ -20,7 +20,9 @@ import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.viewmodel.MessageViewModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -70,20 +72,25 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
         mListener = listener;
     }
 
-    private List<Message> messageList;
+    private Map<UUID, List<Message>> messageList = new HashMap<>();
 
     private ArrayList<Chat> filter(List<Chat> models, String query) {
 
         final String lowerCaseQuery = query.toLowerCase();
 
         final ArrayList<Chat> filteredModelList = new ArrayList<>();
-        for (Chat model : models) {
+        for (final Chat model : models) {
             mMessageViewModel = ViewModelProviders.of((FragmentActivity) view.getContext()).get(MessageViewModel.class);
 
             mMessageViewModel.getMessagesWith(model.user.getId()).observe((FragmentActivity) view.getContext(), new Observer<List<Message>>() {
                 @Override
                 public void onChanged(@Nullable List<Message> messages) {
-                    messageList = messages;
+                    if (messageList.get(model.user.getId()) == null) {
+                        messageList.put(model.user.getId(), messages);
+                    } else {
+                        messageList.remove(model.user.getId());
+                        messageList.put(model.user.getId(), messages);
+                    }
                 }
             });
 
@@ -91,10 +98,21 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
             final String message = model.message.getText().toLowerCase();
             if (name.contains(lowerCaseQuery) | message.contains(lowerCaseQuery)) {
                 filteredModelList.add(model);
-            } else if (messageList != null) {
-                for (int i = 0; i < messageList.size(); i++) {
-                    if (messageList.get(i).getText().toLowerCase().contains(lowerCaseQuery)) {
-                        filteredModelList.add(model);
+            } else {
+                if (messageList.get(model.user.getId()) != null) {
+                    for (int i = 0; i < messageList.get(model.user.getId()).size(); i++) {
+                        if (messageList.get(model.user.getId()).get(i).getText().toLowerCase().contains(lowerCaseQuery)) {
+                            boolean duplicate = false;
+                            for (int j = 0; j < filteredModelList.size(); j++) {
+                                if (filteredModelList.get(j).user.getId() == model.user.getId()) {
+                                    duplicate = true;
+                                }
+
+                            }
+                            if (!duplicate) {
+                                filteredModelList.add(model);
+                            }
+                        }
                     }
                 }
             }
@@ -111,6 +129,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
 
     public interface OnItemClickListener {
         void onClick(User user);
+
         void onLongClick(User user, View view);
     }
 }

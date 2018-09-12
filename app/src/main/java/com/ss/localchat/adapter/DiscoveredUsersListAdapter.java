@@ -1,6 +1,10 @@
 package com.ss.localchat.adapter;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +13,10 @@ import android.view.ViewGroup;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.viewholder.DiscoveredUserHolder;
 import com.ss.localchat.adapter.viewholder.LoadingIndicatorViewHolder;
+import com.ss.localchat.db.entity.GroupChat;
+import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.db.entity.User;
+import com.ss.localchat.viewmodel.MessageViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +31,7 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
     private OnItemClickListener mListener;
 
     private List<User> mUsers;
+    private List<User> filterUsers;
 
     public DiscoveredUsersListAdapter() {
         mUsers = new ArrayList<>();
@@ -70,6 +78,7 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
         int indexGap = mUsers.size() > 0 && mUsers.get(mUsers.size() - 1) == null ? 1 : 0;
         mUsers.add(mUsers.size() - indexGap, user);
         notifyItemInserted(mUsers.size() - indexGap - 1);
+        filterUsers = mUsers;
     }
 
     public void removeUserById(String id) {
@@ -106,5 +115,29 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
 
     public interface OnItemClickListener {
         void onClick(User user);
+    }
+
+    private ArrayList<User> filter(List<User> models, String query) {
+
+        final String lowerCaseQuery = query.toLowerCase();
+
+        final ArrayList<User> filteredModelList = new ArrayList<>();
+        for (final User model : models) {
+            if (model != null) {
+                final String name = model.getName().toLowerCase();
+                final String endpointId = model.getId().toString().toLowerCase();
+                if (name.contains(lowerCaseQuery) | endpointId.contains(lowerCaseQuery)) {
+                    filteredModelList.add(model);
+                }
+            }
+        }
+        return filteredModelList;
+    }
+
+    public void getFilter(String str) {
+
+        mUsers = filter(filterUsers, str);
+        notifyDataSetChanged();
+
     }
 }

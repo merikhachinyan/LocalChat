@@ -149,7 +149,6 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -163,8 +162,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void init() {
         userRepository = new UserRepository(getApplication());
-        mMessageViewModel=new MessageViewModel(getApplication());
-        mGroupViewModel=new GroupViewModel(getApplication());
+        mMessageViewModel = new MessageViewModel(getApplication());
+        mGroupViewModel = new GroupViewModel(getApplication());
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -278,7 +277,7 @@ public class SettingsActivity extends AppCompatActivity {
                             public void onClick(View v) {
                                 AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
                                 alert.setMessage("Are you sure?")
-                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener()                 {
+                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener() {
 
                                             public void onClick(DialogInterface dialog, int which) {
 
@@ -299,7 +298,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void logout(){
+    private void logout() {
         if (AccessToken.getCurrentAccessToken() == null) {
             goIntroduceActivity();
         } else {
@@ -313,7 +312,7 @@ public class SettingsActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         Preferences.removeUser(getApplicationContext());
 
-        userRepository.delete(mUser.getId());
+        userRepository.deleteAllUsers();
         mMessageViewModel.deleteAllMessages();
         mGroupViewModel.deleteAllGroups();
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -473,7 +472,8 @@ public class SettingsActivity extends AppCompatActivity {
                 mUser.setName(name);
 
                 userRepository.update(mUser);
-            }}).setNegativeButton("Cancel", null);
+            }
+        }).setNegativeButton("Cancel", null);
 
         builder.create().show();
     }

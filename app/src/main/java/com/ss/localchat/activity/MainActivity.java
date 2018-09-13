@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -157,23 +158,7 @@ public class MainActivity extends AppCompatActivity {
         mViewPager = findViewById(R.id.view_pager_content_main);
         mViewPager.setAdapter(adapter);
         mViewPager.setOffscreenPageLimit(3);
-        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
-                        .hideSoftInputFromWindow(mViewPager.getWindowToken(), 0);
-            }
 
-            @Override
-            public void onPageSelected(int position) {
-
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
         TabLayout tableLayout = findViewById(R.id.tab_layout_content_main);
         tableLayout.setupWithViewPager(mViewPager);
 
@@ -212,8 +197,11 @@ public class MainActivity extends AppCompatActivity {
         ((DiscoveredUsersFragment) mFragmentList.get(2)).setOnStartDiscoveryListener(mDiscoveryListener);
     }
 
+    private SearchView mSearchView;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        mSearchView = (SearchView) menu.findItem(R.id.action_search);
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }

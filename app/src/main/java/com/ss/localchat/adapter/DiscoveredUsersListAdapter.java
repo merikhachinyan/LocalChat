@@ -135,9 +135,10 @@ public class DiscoveredUsersListAdapter extends RecyclerView.Adapter<RecyclerVie
     }
 
     public void getFilter(String str) {
-
-        mUsers = filter(filterUsers, str);
-        notifyDataSetChanged();
+        if (filterUsers != null) {
+            mUsers = filter(filterUsers, str);
+            notifyDataSetChanged();
+        }
 
     }
 }

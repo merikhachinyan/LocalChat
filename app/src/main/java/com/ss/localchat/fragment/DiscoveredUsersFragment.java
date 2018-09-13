@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
@@ -252,4 +253,20 @@ public class DiscoveredUsersFragment extends Fragment {
         });
 
     }
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            if (getView() != null) {
+                init(getView());
+                final InputMethodManager imm = (InputMethodManager) getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm.isActive()) {
+                    imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
+                }
+
+            }
+        }
+    }
+
 }

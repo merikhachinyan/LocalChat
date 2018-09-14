@@ -41,11 +41,9 @@ public class IntroduceActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btn_next);
         btnSkip = findViewById(R.id.btn_skip);
 
-        //When user press skip, start Main Activity
         btnSkip.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 startLoginActivity();
             }
         });
@@ -55,7 +53,6 @@ public class IntroduceActivity extends AppCompatActivity {
             public void onClick(View view) {
                 int currentPage = viewPager.getCurrentItem() + 1;
                 if (currentPage < layouts.length) {
-                    //move to next page
                     viewPager.setCurrentItem(currentPage);
                 } else {
                     startLoginActivity();
@@ -75,7 +72,6 @@ public class IntroduceActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 if (position == layouts.length - 1) {
-                    //LAST PAGE
                     btnNext.setText("START");
                     btnSkip.setVisibility(View.GONE);
                 } else {
@@ -104,7 +100,6 @@ public class IntroduceActivity extends AppCompatActivity {
             dotstv[i].setTextColor(Color.parseColor("#a9b4bb"));
             layoutDot.addView(dotstv[i]);
         }
-        //Set current dot active
         if (dotstv.length > 0) {
             dotstv[page].setTextColor(Color.parseColor("#ffffff"));
         }

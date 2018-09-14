@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ((DiscoveredUsersFragment)mFragmentList.get(1)).setOnStartDiscoveryListener(mDiscoveryListener);
+        ((DiscoveredUsersFragment) mFragmentList.get(2)).setOnStartDiscoveryListener(mDiscoveryListener);
     }
 
     @Override

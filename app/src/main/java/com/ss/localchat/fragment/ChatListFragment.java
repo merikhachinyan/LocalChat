@@ -2,6 +2,7 @@ package com.ss.localchat.fragment;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,12 +12,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 
 import com.ss.localchat.R;
 import com.ss.localchat.activity.ChatActivity;
@@ -32,6 +35,9 @@ import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.List;
 import java.util.UUID;
+
+import static android.content.Context.INPUT_METHOD_SERVICE;
+import static android.support.constraint.Constraints.TAG;
 
 
 public class ChatListFragment extends Fragment {
@@ -127,19 +133,22 @@ public class ChatListFragment extends Fragment {
         popupMenu.show();
     }
 
+    private SearchView searchView;
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         menu.clear();
-        menuInflater.inflate(R.menu.menu_main_chat, menu);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        menuInflater.inflate(R.menu.menu_main_search, menu);
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
         search(searchView);
     }
 
-    private void search(SearchView searchView) {
+    private void search(final SearchView searchView) {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-
+                searchView.clearFocus();
                 return false;
             }
 
@@ -152,6 +161,38 @@ public class ChatListFragment extends Fragment {
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            if (getView() != null) {
+                init(getView());
+                final InputMethodManager imm = (InputMethodManager) getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm.isActive()) {
+                    imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
+                }
+
+            }
+        }
     }
 
 

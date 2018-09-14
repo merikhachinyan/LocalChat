@@ -22,6 +22,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -164,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mViewPager.getCurrentItem() == 2) {
+                if (mViewPager.getCurrentItem() == 2) {
                     mListener.onDiscoveryButtonClick(mFab);
                 }
             }
@@ -192,11 +194,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ((DiscoveredUsersFragment)mFragmentList.get(2)).setOnStartDiscoveryListener(mDiscoveryListener);
+        ((DiscoveredUsersFragment) mFragmentList.get(2)).setOnStartDiscoveryListener(mDiscoveryListener);
     }
+
+    private SearchView mSearchView;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        mSearchView = (SearchView) menu.findItem(R.id.action_search);
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }

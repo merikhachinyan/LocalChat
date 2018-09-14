@@ -2,6 +2,7 @@ package com.ss.localchat.fragment;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -10,10 +11,14 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -36,7 +41,7 @@ public class GroupListFragment extends Fragment {
     private GroupViewModel mGroupViewModel;
 
     private MessageViewModel mMessageViewModel;
-
+    private GroupListAdapter groupListAdapter;
     public GroupListFragment() {
 
     }
@@ -57,10 +62,11 @@ public class GroupListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         init(view);
+        setHasOptionsMenu(true);
     }
 
     private void init(View view) {
-        final GroupListAdapter groupListAdapter = new GroupListAdapter(Preferences.getUserId(getContext().getApplicationContext()));
+        groupListAdapter = new GroupListAdapter(Preferences.getUserId(getContext().getApplicationContext()));
         groupListAdapter.setOnItemClickListener(new GroupListAdapter.OnItemClickListener() {
             @Override
             public void onClick(Group group) {
@@ -117,4 +123,47 @@ public class GroupListFragment extends Fragment {
         });
         popupMenu.show();
     }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        menu.clear();
+        menuInflater.inflate(R.menu.menu_main_search, menu);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        search(searchView);
+    }
+
+    private void search(SearchView searchView) {
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (groupListAdapter != null) {
+                    groupListAdapter.getFilter(newText);
+                }
+
+                return true;
+            }
+        });
+    }
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            if (getView() != null) {
+                init(getView());
+                final InputMethodManager imm = (InputMethodManager) getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm.isActive()) {
+                    imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
+                }
+
+            }
+        }
+    }
+
+
 }

@@ -2,11 +2,14 @@ package com.ss.localchat.activity;
 
 import android.Manifest;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -19,6 +22,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.ss.localchat.R;
@@ -58,11 +63,10 @@ public class MainActivity extends AppCompatActivity {
             if (flag) {
                 mFab.setImageResource(R.drawable.ic_stop_black_24dp);
             } else {
-                mFab.setImageResource(R.drawable.ic_bluetooth_searching_black_24dp);
+                mFab.setImageResource(R.drawable.ic_bluetooth_search_start);
             }
         }
     };
-
 
     private List<Fragment> mFragmentList = new ArrayList<>();
 
@@ -162,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mViewPager.getCurrentItem() == 1) {
+                if (mViewPager.getCurrentItem() == 2) {
                     mListener.onDiscoveryButtonClick(mFab);
                 }
             }
@@ -193,8 +197,11 @@ public class MainActivity extends AppCompatActivity {
         ((DiscoveredUsersFragment) mFragmentList.get(2)).setOnStartDiscoveryListener(mDiscoveryListener);
     }
 
+    private SearchView mSearchView;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        mSearchView = (SearchView) menu.findItem(R.id.action_search);
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
@@ -214,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

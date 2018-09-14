@@ -48,4 +48,8 @@ public class MessageViewModel extends AndroidViewModel {
     public void clearHistory(UUID id) {
         messageRepository.clearHistory(id);
     }
+
+    public void deleteAllMessages() {
+        messageRepository.deleteAllMessages();
+    }
 }

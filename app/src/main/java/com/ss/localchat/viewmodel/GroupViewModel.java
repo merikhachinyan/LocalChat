@@ -41,4 +41,7 @@ public class GroupViewModel extends AndroidViewModel {
     public void delete(Group group) {
         groupRepository.delete(group);
     }
+    public void deleteAllGroups() {
+        groupRepository.deleteAllGrouops();
+    }
 }

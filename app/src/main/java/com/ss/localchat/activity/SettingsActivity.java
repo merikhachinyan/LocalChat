@@ -10,18 +10,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +31,8 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -50,14 +52,12 @@ import com.ss.localchat.db.entity.User;
 import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.viewmodel.GroupViewModel;
+import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
-
-import static com.ss.localchat.preferences.Preferences.INTRODUCE_APP_KEY;
-import static com.ss.localchat.preferences.Preferences.USER_ID_KEY;
-import static com.ss.localchat.preferences.Preferences.USER_NAME_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -72,6 +72,10 @@ public class SettingsActivity extends AppCompatActivity {
     private ImageView imageView;
 
     private UserViewModel mUserViewModel;
+
+    private MessageViewModel mMessageViewModel;
+
+    private GroupViewModel mGroupViewModel;
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
@@ -92,8 +96,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private TextView textViewMyProfileName;
 
-    private TextView mAdvertiseTextView;
-
     private User mUser;
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -104,15 +106,10 @@ public class SettingsActivity extends AppCompatActivity {
             isBound = true;
 
             if (mAdvertiseBinder.isRunningService()) {
-                mAdvertiseTextView.setText(DISABLE_ADVERTISING);
-
                 mAdvertisingSwitch.setChecked(true);
             } else {
-                mAdvertiseTextView.setText(ENABLE_ADVERTISING);
-
                 mAdvertisingSwitch.setChecked(false);
             }
-
         }
 
         @Override
@@ -136,11 +133,14 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        setStatusBarTransparent();
+
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
 
         init();
     }
+
 
     @Override
     protected void onDestroy() {
@@ -155,6 +155,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void init() {
         userRepository = new UserRepository(getApplication());
+        mMessageViewModel = new MessageViewModel(getApplication());
+        mGroupViewModel = new GroupViewModel(getApplication());
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -178,22 +180,18 @@ public class SettingsActivity extends AppCompatActivity {
 
         mAdvertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
 
-        mAdvertiseTextView = findViewById(R.id.advertising_text);
-
         mAdvertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    if(mAdvertiseBinder!=null){
-                    if (!mAdvertiseBinder.isRunningService()) {
-                        startService(intent);
-                        mAdvertiseTextView.setText(DISABLE_ADVERTISING);
-
+                    if (isBound) {
+                        if (!mAdvertiseBinder.isRunningService()) {
+                            startService(intent);
+                        }
                     }
-                 else {
+                } else {
                     mAdvertiseBinder.stopService();
-                    mAdvertiseTextView.setText(ENABLE_ADVERTISING);
-                }}}
+                }
             }
         });
 
@@ -268,7 +266,7 @@ public class SettingsActivity extends AppCompatActivity {
                             public void onClick(View v) {
                                 AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
                                 alert.setMessage("Are you sure?")
-                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener()                 {
+                                        .setPositiveButton("Logout", new DialogInterface.OnClickListener() {
 
                                             public void onClick(DialogInterface dialog, int which) {
 
@@ -286,12 +284,10 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                 }
             });
-
         }
-
     }
 
-    private void logout(){
+    private void logout() {
         if (AccessToken.getCurrentAccessToken() == null) {
             goIntroduceActivity();
         } else {
@@ -302,11 +298,12 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void goIntroduceActivity() {
         Intent intent = new Intent(this, IntroduceActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         Preferences.removeUser(getApplicationContext());
 
-        userRepository.delete(mUser.getId());
-
+        userRepository.deleteAllUsers();
+        mMessageViewModel.deleteAllMessages();
+        mGroupViewModel.deleteAllGroups();
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         manager.cancelAll();
 
@@ -371,16 +368,12 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
         builder.show();
-
     }
 
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container_layout, fragment, FRAGMENT_TAG)
-                .addToBackStack(FRAGMENT_TAG)
-                .commit();
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     @Override
@@ -439,19 +432,30 @@ public class SettingsActivity extends AppCompatActivity {
         SelectImage();
     }
 
+    private void setStatusBarTransparent() {
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(Color.TRANSPARENT);
+    }
+
     private void createAndDisplayDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LinearLayout layout = new LinearLayout(this);
         TextView tvMessage = new TextView(this);
         final EditText etInput = new EditText(this);
         etInput.setText(textViewMyProfileName.getText());
+
         tvMessage.setText("Enter name:");
         tvMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
-        etInput.setSingleLine();
+
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.addView(tvMessage);
         layout.addView(etInput);
         layout.setPadding(50, 40, 50, 10);
+
+        etInput.setSingleLine();
+        etInput.setSelection(etInput.getText().length());
 
         builder.setView(layout);
 
@@ -464,7 +468,8 @@ public class SettingsActivity extends AppCompatActivity {
                 mUser.setName(name);
 
                 userRepository.update(mUser);
-            }}).setNegativeButton("Cancel", null);
+            }
+        }).setNegativeButton("Cancel", null);
 
         builder.create().show();
     }

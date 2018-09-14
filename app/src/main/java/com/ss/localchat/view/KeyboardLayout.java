@@ -50,7 +50,7 @@ public class KeyboardLayout extends LinearLayout {
 		this.setOrientation(VERTICAL);
 
 		emojiKeyboard = this.findViewById(R.id.emoji_keyboard);
-		input = (EditText) this.findViewById(R.id.message_input_edit_text_chat_activity);
+		input = this.findViewById(R.id.message_input_edit_text_chat_activity);
 		emojiToggleView = this.findViewById(R.id.emoji_btn);
 		sendButton = this.findViewById(R.id.send_button_chat_activity);
 	}

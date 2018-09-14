@@ -14,8 +14,6 @@ import com.ss.localchat.adapter.ChatListAdapter;
 import com.ss.localchat.adapter.GroupListAdapter;
 import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
-import com.ss.localchat.db.entity.User;
-import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.util.DateFormatUtil;
 
 import java.util.UUID;
@@ -62,7 +60,13 @@ public class GroupViewHolder extends RecyclerView.ViewHolder {
                 senderNameTextView.setVisibility(View.VISIBLE);
                 senderNameTextView.setText(lastMessage.getSenderName().concat(":"));
             }
-            lastMessageTextView.setText(lastMessage.getText());
+            if (lastMessage.getText() != null) {
+                lastMessageTextView.setText(lastMessage.getText());
+            } else {
+                if (lastMessage.getPhoto() != null) {
+                    lastMessageTextView.setText("Photo");
+                }
+            }
             dateTextView.setText(DateFormatUtil.formatChatDate(lastMessage.getDate()));
         } else {
             lastMessageTextView.setVisibility(View.GONE);

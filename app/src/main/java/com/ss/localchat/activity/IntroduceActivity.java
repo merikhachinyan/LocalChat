@@ -72,7 +72,8 @@ public class IntroduceActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 if (position == layouts.length - 1) {
-                    btnNext.setText("START");
+                    //LAST PAGE
+                    btnNext.setText("GOT IT");
                     btnSkip.setVisibility(View.GONE);
                 } else {
                     btnNext.setText("NEXT");
@@ -101,7 +102,7 @@ public class IntroduceActivity extends AppCompatActivity {
             layoutDot.addView(dotstv[i]);
         }
         if (dotstv.length > 0) {
-            dotstv[page].setTextColor(Color.parseColor("#ffffff"));
+            dotstv[page].setTextColor(Color.parseColor("#517da2"));
         }
     }
 

@@ -7,9 +7,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -21,35 +23,37 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
+import com.rockerhieu.emojicon.EmojiconEditText;
 import com.ss.localchat.R;
 import com.ss.localchat.adapter.MessageListAdapter;
-import com.ss.localchat.adapter.UsersListAdapter;
 import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.fragment.MembersListFragment;
+import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
+import com.ss.localchat.view.EmojiKeyboardLayout;
 import com.ss.localchat.viewmodel.GroupViewModel;
 import com.ss.localchat.viewmodel.MessageViewModel;
 import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public class GroupChatActivity extends AppCompatActivity {
 
     public static final String GROUP_EXTRA = "chat.user";
+
+    public static final String FRAGMENT_TAG = "show.photo";
+
+    public static final int REQUEST_CODE_CHOOSE_PICTURE = 3;
 
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -66,12 +70,19 @@ public class GroupChatActivity extends AppCompatActivity {
         }
     };
 
+    private MessageListAdapter.OnImageClickListener mImageClickListener = new MessageListAdapter.OnImageClickListener() {
+        @Override
+        public void OnImageClick(Message message) {
+            showPhoto(message.getPhoto());
+        }
+    };
+
     public static boolean isCurrentlyRunning;
 
     public static UUID currentGroupId;
 
 
-    private EditText mMessageInputEditText;
+    private EmojiconEditText mMessageInputEditText;
 
     private MessageListAdapter mMessageListAdapter;
 
@@ -94,10 +105,18 @@ public class GroupChatActivity extends AppCompatActivity {
 
     private List<UUID> mListOfUsersId;
 
+    private Uri mPhotoUri;
+
 
     private TextView groupInfo;
 
     private TextView groupName;
+
+    private ImageView mChosenPhotoImage;
+
+    private ImageView mRemovePhotoImage;
+
+    private View mView;
 
 
     @Override
@@ -219,10 +238,14 @@ public class GroupChatActivity extends AppCompatActivity {
             }
         });
 
+        mMessageListAdapter.setOnImageClickListener(mImageClickListener);
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mMessageListAdapter);
+        EmojiKeyboardLayout keyboardLayout = findViewById(R.id.keyboardLayout);
+        keyboardLayout.setup(this, recyclerView);
 
         NotificationHelper.getManager(this).cancel(mGroup.getId().toString(), NotificationHelper.MESSAGE_NOTIFICATION_ID);
 
@@ -257,21 +280,60 @@ public class GroupChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String messageText = mMessageInputEditText.getText().toString().trim();
                 if (!messageText.isEmpty()) {
-                    sendMessage(messageText);
-                    mMessageInputEditText.setText("");
+                    if (mPhotoUri != null) {
+                        sendMessage(messageText, mPhotoUri);
+                    } else {
+                        sendMessage(messageText, null);
+                    }
+                } else {
+                    if (mPhotoUri != null) {
+                        sendMessage(null, mPhotoUri);
+                    }
                 }
+
+                mChosenPhotoImage.setVisibility(View.GONE);
+                mRemovePhotoImage.setVisibility(View.GONE);
+                setLayoutParams(1);
+
+                mMessageInputEditText.setText("");
+                mPhotoUri = null;
+            }
+        });
+
+        mView = findViewById(R.id.divider_view_chat_activity);
+
+        mChosenPhotoImage = findViewById(R.id.attach_photo_image_view);
+        mRemovePhotoImage = findViewById(R.id.remove_attached_photo_image_view);
+        mRemovePhotoImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPhotoUri = null;
+                mChosenPhotoImage.setVisibility(View.GONE);
+                mRemovePhotoImage.setVisibility(View.GONE);
+                setLayoutParams(1);
+            }
+        });
+
+        findViewById(R.id.attach_photo_chat_activity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                choosePhoto();
             }
         });
     }
 
-    private void sendMessage(String text) {
+    private void sendMessage(String text, Uri photoUrl) {
         if (!mGroup.getMembers().contains(Preferences.getUserId(getApplicationContext()).toString())) {
             Toast.makeText(this, "You've left the group!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (isBound) {
-            mSendMessageBinder.sendGroupMessageTo(mEndpointList, text, mGroup);
+            if (photoUrl == null) {
+                mSendMessageBinder.sendGroupMessageTo(mEndpointList, text, mGroup);
+            } else {
+                mSendMessageBinder.sendPhotoWithTextMessageToGroup(mEndpointList, photoUrl, text, mGroup);
+            }
 
             UUID myUserId = Preferences.getUserId(getApplicationContext());
             String myUserName = Preferences.getUserName(getApplicationContext());
@@ -283,6 +345,10 @@ public class GroupChatActivity extends AppCompatActivity {
             message.setSenderId(myUserId);
             message.setGroup(true);
             message.setSenderName(myUserName);
+
+            if (mPhotoUri != null) {
+                message.setPhoto(photoUrl.toString());
+            }
             mMessageViewModel.insert(message);
         }
     }
@@ -315,6 +381,45 @@ public class GroupChatActivity extends AppCompatActivity {
             message.setSenderId(myUserId);
             message.setGroup(true);
             mMessageViewModel.insert(message);
+        }
+    }
+
+    private void choosePhoto() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_CODE_CHOOSE_PICTURE);
+    }
+
+    private void showPhoto(String photoUri) {
+        ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
+
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
+    }
+
+    private void setLayoutParams(int height) {
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) mView.getLayoutParams();
+
+        float pixels = height * getResources().getDisplayMetrics().density;
+        params.height = (int) pixels;
+        mView.setLayoutParams(params);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_CHOOSE_PICTURE) {
+            if (data != null) {
+                mPhotoUri = data.getData();
+
+                mChosenPhotoImage.setVisibility(View.VISIBLE);
+                mRemovePhotoImage.setVisibility(View.VISIBLE);
+
+                Glide.with(this)
+                        .load(mPhotoUri)
+                        .into(mChosenPhotoImage);
+
+                setLayoutParams(80);
+            }
         }
     }
 

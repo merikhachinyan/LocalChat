@@ -14,7 +14,8 @@
             android:id="@+id/attach_photo_chat_activity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_add_black_24dp"></ImageView>
+            android:src="@drawable/ic_add_black_24dp">
+        </ImageView>
 
         <com.rockerhieu.emojicon.EmojiconEditText
             android:id="@+id/message_input_edit_text_chat_activity"

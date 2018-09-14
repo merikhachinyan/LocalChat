@@ -39,6 +39,9 @@ public class GroupRepository {
         new DeleteAsyncTask(groupDao).execute(group);
     }
 
+    public void deleteAllGrouops() {
+        new DeleteAllGroupsAsyncTask(groupDao).execute();
+    }
     private static class InsertAsyncTask extends AsyncTask<Group, Void, Void> {
 
         private GroupDao asyncTaskDao;
@@ -80,6 +83,21 @@ public class GroupRepository {
         @Override
         protected Void doInBackground(Group... groups) {
             asyncTaskDao.delete(groups[0]);
+            return null;
+        }
+    }
+
+    private static class DeleteAllGroupsAsyncTask extends AsyncTask<Group, Void, Void> {
+
+        private GroupDao asyncTaskDao;
+
+        DeleteAllGroupsAsyncTask(GroupDao dao) {
+            asyncTaskDao = dao;
+        }
+
+        @Override
+        protected Void doInBackground(Group... groups) {
+            asyncTaskDao.deleteAllGroups();
             return null;
         }
     }

@@ -43,4 +43,9 @@ public interface MessageDao {
     @Query("DELETE FROM messages " +
             "WHERE :id in (sender_id, receiver_id)")
     void clearHistory(UUID id);
+
+    @Query("DELETE FROM messages" )
+    void deleteAllMessages();
+
+
 }

@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 
 import com.kyo.keyboard.KeyboardHelper;
 import com.rockerhieu.emojicon.EmojiconGridFragment;
@@ -103,6 +102,7 @@ public class EmojiKeyboardLayout extends LinearLayout {
 
 	public static class MyEmojiconsKeyboardFragment extends Fragment implements EmojiconGridFragment.OnEmojiconClickedListener,
 		EmojiconsFragment.OnEmojiconBackspaceClickedListener {
+
 
 		private EditText input;
 

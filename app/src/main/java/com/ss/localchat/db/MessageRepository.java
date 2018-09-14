@@ -47,6 +47,10 @@ public class MessageRepository {
         new ClearHistoryAsyncTask(messageDao).execute(id);
     }
 
+    public void deleteAllMessages() {
+        new DeleteAllMessagesAsyncTask(messageDao).execute();
+    }
+
     private static class UpdateAsyncTask extends AsyncTask<Message, Void, Void> {
 
         private MessageDao asyncTaskDao;
@@ -103,6 +107,21 @@ public class MessageRepository {
         @Override
         protected Void doInBackground(UUID... uuids) {
             asyncTaskDao.clearHistory(uuids[0]);
+            return null;
+        }
+    }
+
+    private static class DeleteAllMessagesAsyncTask extends AsyncTask<UUID, Void, Void> {
+
+        private MessageDao asyncTaskDao;
+
+        DeleteAllMessagesAsyncTask(MessageDao dao) {
+            asyncTaskDao = dao;
+        }
+
+        @Override
+        protected Void doInBackground(UUID... uuids) {
+            asyncTaskDao.deleteAllMessages();
             return null;
         }
     }

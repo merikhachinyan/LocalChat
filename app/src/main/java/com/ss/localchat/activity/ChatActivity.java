@@ -26,9 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -129,8 +127,6 @@ public class ChatActivity extends AppCompatActivity {
     private User mUser;
 
     private ConnectionState mState;
-
-    private String mMessageText;
 
     private boolean isBound;
 
@@ -306,33 +302,28 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String messageText = mMessageInputEditText.getText().toString().trim();
-                if (mState == ConnectionState.DISCONNECTED) {
-                    Snackbar.make(v, DISCONNECTED_INFO + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
+                if (!messageText.isEmpty()) {
+                    if (mPhotoUri != null) {
+                        sendMessage(messageText, mPhotoUri);
+                    } else {
+                        sendMessage(messageText, null);
+                    }
                 } else {
-                    if (!mMessageText.isEmpty() || mPhotoUri != null) {
-                        if (isBound) {
-                            if (mPhotoUri == null) {
-                                mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), mMessageText);
-                                sendMessage(mMessageText, null);
-                            } else {
-                                if (mMessageText.isEmpty()) {
-                                    mSendMessageBinder.sendPhotoMessage(mUser.getEndpointId(), mPhotoUri);
-                                    sendMessage(null, mPhotoUri.toString());
-                                } else {
-                                    mSendMessageBinder.sendPhotoWithTextMessage(mUser.getEndpointId(), mPhotoUri, mMessageText);
-                                    sendMessage(mMessageText, mPhotoUri.toString());
-                                }
-                                mChosenPhotoImage.setVisibility(View.GONE);
-                                mRemovePhotoImage.setVisibility(View.GONE);
-                                setLayoutParams(1);
-                            }
-                        }
-                        mMessageInputEditText.setText("");
-                        mPhotoUri = null;
+                    if (mPhotoUri != null) {
+                        sendMessage(null, mPhotoUri);
                     }
                 }
+
+                mChosenPhotoImage.setVisibility(View.GONE);
+                mRemovePhotoImage.setVisibility(View.GONE);
+                setLayoutParams(1);
+
+                mMessageInputEditText.setText("");
+                mPhotoUri = null;
             }
         });
+
+        mView = findViewById(R.id.divider_view_chat_activity);
 
         findViewById(R.id.attach_photo_chat_activity).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -353,23 +344,35 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void sendMessage(String text, String photoUrl) {
-        if (isBound) {
-            mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), text);
+    private void sendMessage(String text, Uri photoUrl) {
+        if (mState == ConnectionState.DISCONNECTED || mState == ConnectionState.CONNECTING) {
+            Snackbar.make(mView, DISCONNECTED_INFO + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
+            return;
         }
 
-        UUID myUserId = Preferences.getUserId(getApplicationContext());
-        String myUserName = Preferences.getUserName(getApplicationContext());
+        if (isBound) {
+            if (photoUrl == null) {
+                mSendMessageBinder.sendMessageTo(mUser.getEndpointId(), text);
+            } else {
+                mSendMessageBinder.sendPhotoWithTextMessage(mUser.getEndpointId(), photoUrl, text);
+            }
 
-        Message message = new Message();
-        message.setText(text);
-        message.setRead(false);
-        message.setReceiverId(mUser.getId());
-        message.setSenderId(myUserId);
-        message.setGroup(false);
-        message.setSenderName(myUserName);
-        message.setPhoto(photoUrl);
-        mMessageViewModel.insert(message);
+            UUID myUserId = Preferences.getUserId(getApplicationContext());
+            String myUserName = Preferences.getUserName(getApplicationContext());
+
+            Message message = new Message();
+            message.setText(text);
+            message.setRead(false);
+            message.setReceiverId(mUser.getId());
+            message.setSenderId(myUserId);
+            message.setGroup(false);
+            message.setSenderName(myUserName);
+
+            if (photoUrl != null) {
+                message.setPhoto(photoUrl.toString());
+            }
+            mMessageViewModel.insert(message);
+        }
     }
 
     private void setUserInfo(ObservableArrayMap<String, ConnectionState> endpoints) {
@@ -408,10 +411,7 @@ public class ChatActivity extends AppCompatActivity {
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragment, FRAGMENT_TAG)
-                .addToBackStack(FRAGMENT_TAG)
-                .commit();
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     @Override

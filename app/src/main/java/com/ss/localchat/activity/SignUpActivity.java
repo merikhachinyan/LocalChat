@@ -117,8 +117,10 @@ public class SignUpActivity extends AppCompatActivity {
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_ID_KEY, user.getId().toString());
                     Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, user.getName());
 
-                    String path = saveToInternalStorage(Uri.parse(user.getPhotoUrl()), user.getId());
-                    Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, path);
+                    if (user.getPhotoUrl() != null) {
+                        String path = saveToInternalStorage(Uri.parse(user.getPhotoUrl()), user.getId());
+                        Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, path);
+                    }
 
                     startMainActivity();
                 }
@@ -203,13 +205,6 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    public void pickImage() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        //startActivityForResult(intent, REQUEST_CODE_SELECT_PICTURE);
     }
 
     @Override

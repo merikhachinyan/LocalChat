@@ -27,7 +27,8 @@
             android:textColor="@color/colorPrimaryDark"
             android:textSize="14sp"
             android:ellipsize="end"
-            tools:text="Sender Name" />
+            tools:text="Sender Name"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/received_message_image_view"
@@ -37,7 +38,7 @@
             android:scaleType="fitXY"
             android:visibility="gone"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/received_message_sender_name_text_view" />
 
         <com.rockerhieu.emojicon.EmojiconTextView
             android:id="@+id/received_message_text_view"

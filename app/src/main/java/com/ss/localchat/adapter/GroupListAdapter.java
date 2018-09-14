@@ -114,8 +114,8 @@ public class GroupListAdapter extends RecyclerView.Adapter<GroupViewHolder> {
                         String str = mUUIDListHashMap.get(model.group.getId()).get(i).getText().toLowerCase();
                         if (str.contains(lowerCaseQuery)) {
                             boolean duplicate = false;
-                            for (i = 0; i < filteredModelList.size(); i++) {
-                                if (filteredModelList.get(i).group.getId() == model.group.getId()) {
+                            for (int j = 0; j < filteredModelList.size(); j++) {
+                                if (filteredModelList.get(j).group.getId() == model.group.getId()) {
                                     duplicate = true;
                                 }
 

@@ -253,12 +253,12 @@ public class DiscoveredUsersFragment extends Fragment {
         });
 
     }
+
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
             if (getView() != null) {
-                init(getView());
                 final InputMethodManager imm = (InputMethodManager) getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                 if (imm.isActive()) {
                     imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);

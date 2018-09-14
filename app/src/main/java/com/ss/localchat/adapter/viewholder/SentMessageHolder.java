@@ -63,10 +63,14 @@ public class SentMessageHolder extends RecyclerView.ViewHolder {
             }
         });
 
-        if (message.isReadReceiver()) {
-            mReadMessageImage.setImageResource(R.drawable.ic_message_is_read_24dp);
+        if (message.isGroup()) {
+            mReadMessageImage.setVisibility(View.GONE);
         } else {
-            mReadMessageImage.setImageResource(R.drawable.ic_message_is_unread_24dp);
+            if (message.isReadReceiver()) {
+                mReadMessageImage.setImageResource(R.drawable.ic_message_is_read_24dp);
+            } else {
+                mReadMessageImage.setImageResource(R.drawable.ic_message_is_unread_24dp);
+            }
         }
     }
 }

@@ -34,6 +34,7 @@ import com.ss.localchat.adapter.MessageListAdapter;
 import com.ss.localchat.db.entity.Group;
 import com.ss.localchat.db.entity.Message;
 import com.ss.localchat.fragment.MembersListFragment;
+import com.ss.localchat.fragment.ShowPhotoFragment;
 import com.ss.localchat.helper.NotificationHelper;
 import com.ss.localchat.preferences.Preferences;
 import com.ss.localchat.service.ChatService;
@@ -50,6 +51,8 @@ public class GroupChatActivity extends AppCompatActivity {
 
     public static final String GROUP_EXTRA = "chat.user";
 
+    public static final String FRAGMENT_TAG = "show.photo";
+
     public static final int REQUEST_CODE_CHOOSE_PICTURE = 3;
 
 
@@ -64,6 +67,13 @@ public class GroupChatActivity extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName name) {
             mSendMessageBinder = null;
             isBound = false;
+        }
+    };
+
+    private MessageListAdapter.OnImageClickListener mImageClickListener = new MessageListAdapter.OnImageClickListener() {
+        @Override
+        public void OnImageClick(Message message) {
+            showPhoto(message.getPhoto());
         }
     };
 
@@ -228,6 +238,8 @@ public class GroupChatActivity extends AppCompatActivity {
             }
         });
 
+        mMessageListAdapter.setOnImageClickListener(mImageClickListener);
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -377,6 +389,12 @@ public class GroupChatActivity extends AppCompatActivity {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
         startActivityForResult(intent, REQUEST_CODE_CHOOSE_PICTURE);
+    }
+
+    private void showPhoto(String photoUri) {
+        ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
+
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     private void setLayoutParams(int height) {

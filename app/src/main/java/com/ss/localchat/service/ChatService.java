@@ -184,6 +184,7 @@ public class ChatService extends IntentService {
                         String imageExtension = jsonObject.getString("extension");
                         boolean isTextMessage = jsonObject.getBoolean("is_text_message");
                         boolean isGroup = jsonObject.getBoolean("group");
+                        String sender = jsonObject.getString("sender");
 
                         String messageText = null;
 
@@ -196,6 +197,7 @@ public class ChatService extends IntentService {
                         mMessage.setRead(false);
                         mMessage.setReceiverId(myUserId);
                         mMessage.setSenderId(senderId);
+                        mMessage.setSenderName(sender);
 
                         if (isGroup) {
                             mMessage.setGroup(true);
@@ -215,11 +217,14 @@ public class ChatService extends IntentService {
                         UUID senderId = UUID.fromString(jsonObject.getString("id"));
                         String payloadId = jsonObject.getString("payload_id");
                         String imageExtension = jsonObject.getString("extension");
+                        String sender = jsonObject.getString("sender");
+
 
                         mMessage = new Message();
                         mMessage.setRead(false);
                         mMessage.setReceiverId(myUserId);
                         mMessage.setSenderId(senderId);
+                        mMessage.setSenderName(sender);
 
                         String fileName = "picture-".concat(payloadId).concat(imageExtension);
 
@@ -269,7 +274,6 @@ public class ChatService extends IntentService {
                     File newFile = new File(payloadFile.getParentFile(), fileName);
                     boolean isRenamed = payloadFile.renameTo(newFile);
                     Log.v("____", "Receive and renamed: " + isRenamed);
-                    mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());
 
                     if (fileName.contains("photo")) {
                         mUserRepository.updatePhoto(s, Uri.fromFile(newFile).toString());

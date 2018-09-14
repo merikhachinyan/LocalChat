@@ -10,18 +10,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +31,8 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -56,10 +58,6 @@ import com.ss.localchat.viewmodel.UserViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
-
-import static com.ss.localchat.preferences.Preferences.INTRODUCE_APP_KEY;
-import static com.ss.localchat.preferences.Preferences.USER_ID_KEY;
-import static com.ss.localchat.preferences.Preferences.USER_NAME_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -98,8 +96,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private TextView textViewMyProfileName;
 
-    private TextView mAdvertiseTextView;
-
     private User mUser;
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -110,15 +106,10 @@ public class SettingsActivity extends AppCompatActivity {
             isBound = true;
 
             if (mAdvertiseBinder.isRunningService()) {
-                mAdvertiseTextView.setText(DISABLE_ADVERTISING);
-
                 mAdvertisingSwitch.setChecked(true);
             } else {
-                mAdvertiseTextView.setText(ENABLE_ADVERTISING);
-
                 mAdvertisingSwitch.setChecked(false);
             }
-
         }
 
         @Override
@@ -141,6 +132,8 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        setStatusBarTransparent();
 
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
@@ -188,8 +181,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         mAdvertisingSwitch = findViewById(R.id.turn_on_off_advertising_switch);
 
-        mAdvertiseTextView = findViewById(R.id.advertising_text);
-
         mAdvertisingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -197,12 +188,10 @@ public class SettingsActivity extends AppCompatActivity {
                     if (isBound) {
                         if (!mAdvertiseBinder.isRunningService()) {
                             startService(intent);
-                            mAdvertiseTextView.setText(DISABLE_ADVERTISING);
                         }
                     }
                 } else {
                     mAdvertiseBinder.stopService();
-                    mAdvertiseTextView.setText(ENABLE_ADVERTISING);
                 }
             }
         });
@@ -380,16 +369,12 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
         builder.show();
-
     }
 
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container_layout, fragment, FRAGMENT_TAG)
-                .addToBackStack(FRAGMENT_TAG)
-                .commit();
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     @Override
@@ -448,19 +433,30 @@ public class SettingsActivity extends AppCompatActivity {
         SelectImage();
     }
 
+    private void setStatusBarTransparent() {
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(Color.TRANSPARENT);
+    }
+
     private void createAndDisplayDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LinearLayout layout = new LinearLayout(this);
         TextView tvMessage = new TextView(this);
         final EditText etInput = new EditText(this);
         etInput.setText(textViewMyProfileName.getText());
+
         tvMessage.setText("Enter name:");
         tvMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
-        etInput.setSingleLine();
+
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.addView(tvMessage);
         layout.addView(etInput);
         layout.setPadding(50, 40, 50, 10);
+
+        etInput.setSingleLine();
+        etInput.setSelection(etInput.getText().length());
 
         builder.setView(layout);
 

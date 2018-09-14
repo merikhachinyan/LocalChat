@@ -26,9 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -347,7 +345,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage(String text, Uri photoUrl) {
-        if (mState == ConnectionState.DISCONNECTED) {
+        if (mState == ConnectionState.DISCONNECTED || mState == ConnectionState.CONNECTING) {
             Snackbar.make(mView, DISCONNECTED_INFO + " from " + mUser.getName(), Snackbar.LENGTH_LONG).show();
             return;
         }
@@ -413,10 +411,7 @@ public class ChatActivity extends AppCompatActivity {
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragment, FRAGMENT_TAG)
-                .addToBackStack(FRAGMENT_TAG)
-                .commit();
+        fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     @Override

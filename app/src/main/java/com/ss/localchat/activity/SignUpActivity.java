@@ -18,6 +18,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -57,7 +58,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private ImageView mImageView;
 
-    private EditText mFirstName;
+    private EditText mNameEditText;
 
     private Uri mUri;
 
@@ -98,19 +99,20 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
 
-        mFirstName = findViewById(R.id.editTextFirstName);
+        mNameEditText = findViewById(R.id.editTextFirstName);
+        mNameEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         Button loginNoInternet = findViewById(R.id.loginNoInternet);
         loginNoInternet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mFirstName.getText().toString().length() <= 0) {
-                    mFirstName.setError("Enter FirstName");
+                if (mNameEditText.getText().toString().length() <= 0) {
+                    mNameEditText.setError("Enter FirstName");
                 } else {
-                    mFirstName.setError(null);
+                    mNameEditText.setError(null);
 
                     User user = new User();
-                    user.setName(mFirstName.getText().toString());
+                    user.setName(mNameEditText.getText().toString());
                     user.setPhotoUrl(mUri == null ? null : mUri.toString());
 
                     mUserRepository.insert(user);
@@ -132,8 +134,9 @@ public class SignUpActivity extends AppCompatActivity {
     public void addImage() {
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-        }else{
-        SelectImage();}
+        } else {
+            selectImage();
+        }
     }
 
 
@@ -147,7 +150,7 @@ public class SignUpActivity extends AppCompatActivity {
         return true;
     }
 
-    private String saveToInternalStorage(Uri mUri, UUID uuid){
+    private String saveToInternalStorage(Uri mUri, UUID uuid) {
         Bitmap bitmap = BitmapHelper.getResizedBitmap(BitmapHelper.uriToBitmap(this, mUri), 480);
 
         String extension = getFileExtension(mUri);
@@ -163,21 +166,19 @@ public class SignUpActivity extends AppCompatActivity {
 
             if (extension.equals(".jpg")) {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-            } else if (extension.equals(".png")){
+            } else if (extension.equals(".png")) {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             }
 
             fos.close();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-        String path = directory.getAbsolutePath() + "/" + file.getName();
 
-        return path;
+        return directory.getAbsolutePath() + "/" + file.getName();
     }
 
-    private void SelectImage() {
+    private void selectImage() {
 
         final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
 
@@ -197,7 +198,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
-                    startActivityForResult(intent.createChooser(intent, "Select File"), SELECT_FILE);
+                    startActivityForResult(Intent.createChooser(intent, "Select File"), SELECT_FILE);
 
                 } else if (items[i].equals("Cancel")) {
                     dialogInterface.dismiss();
@@ -260,7 +261,7 @@ public class SignUpActivity extends AppCompatActivity {
             }
         }
 
-        SelectImage();
+        selectImage();
     }
 
 

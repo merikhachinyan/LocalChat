@@ -13,7 +13,6 @@ public class DiscoveredUserHolder extends RecyclerView.ViewHolder {
     private DiscoveredUsersListAdapter.OnItemClickListener mListener;
 
     private TextView mUserName;
-    private TextView mUserId;
 
     public DiscoveredUserHolder(View itemView, DiscoveredUsersListAdapter.OnItemClickListener listener) {
         super(itemView);
@@ -21,12 +20,10 @@ public class DiscoveredUserHolder extends RecyclerView.ViewHolder {
         mListener = listener;
 
         mUserName = itemView.findViewById(R.id.discovered_user_name_text_view);
-        mUserId = itemView.findViewById(R.id.discovered_user_id_text_view);
     }
 
     public void bind(final User user) {
         mUserName.setText(user.getName());
-        mUserId.setText(user.getId().toString());
 
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override

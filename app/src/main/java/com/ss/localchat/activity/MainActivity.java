@@ -103,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         init();
+
+        startService(new Intent(this, ChatService.class));
     }
 
     @Override
@@ -113,10 +115,10 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
 
-        if (!isAdvertising) {
-            startService(new Intent(this, ChatService.class));
-            isAdvertising = true;
-        }
+//        if (!isAdvertising) {
+//            startService(new Intent(this, ChatService.class));
+//            isAdvertising = true;
+//        }
     }
 
     private boolean hasPermissions(Context context, String... permissions) {

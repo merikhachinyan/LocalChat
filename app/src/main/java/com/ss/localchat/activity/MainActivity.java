@@ -40,8 +40,6 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int CHAT_REQUEST_CODE = 1;
-
     public static final int NEW_GROUP_REQUEST_CODE = 2;
 
     private final static String[] REQUIRED_PERMISSIONS =
@@ -215,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(new Intent(this, NewGroupActivity.class), NEW_GROUP_REQUEST_CODE);
                 return true;
             case R.id.action_settings:
-                startActivityForResult(new Intent(this, SettingsActivity.class), CHAT_REQUEST_CODE);
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -233,9 +231,6 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case NEW_GROUP_REQUEST_CODE:
                 mViewPager.setCurrentItem(1, true);
-                break;
-            case CHAT_REQUEST_CODE:
-                isAdvertising = true;
                 break;
         }
     }

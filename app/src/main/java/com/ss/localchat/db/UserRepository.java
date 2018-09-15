@@ -120,7 +120,7 @@ public class UserRepository {
         }
     }
 
-    private static class DeleteAllUsersAsyncTask extends AsyncTask<UUID, Void, Void> {
+    private static class DeleteAllUsersAsyncTask extends AsyncTask<Void, Void, Void> {
 
         private UserDao asyncTaskDao;
 
@@ -129,7 +129,7 @@ public class UserRepository {
         }
 
         @Override
-        protected Void doInBackground(UUID... uuids) {
+        protected Void doInBackground(Void... voids) {
             asyncTaskDao.deleteAllUsers();
             return null;
         }

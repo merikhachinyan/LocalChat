@@ -4,63 +4,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/app_background_image"
+    android:padding="24dp"
     tools:context=".activity.LoginActivity">
-
-    <com.facebook.login.widget.LoginButton
-
-        android:id="@+id/login_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="264dp"
-        android:background="@drawable/login_button"
-        android:paddingBottom="10dp"
-        android:paddingTop="10dp"
-        app:layout_constraintBottom_toTopOf="@+id/textView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <android.support.v7.widget.ContentFrameLayout
-        android:id="@+id/container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"></android.support.v7.widget.ContentFrameLayout>
 
     <Button
         android:id="@+id/btnLogin"
-        android:layout_width="179dp"
-        android:layout_height="38dp"
-
-        android:layout_marginBottom="81dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/login_button"
-        android:text="Sign Up"
-        android:textColor="@color/cardview_light_background"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:text="Sign up"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toTopOf="@id/textView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
         tools:ignore="MissingConstraints" />
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="36dp"
-        android:layout_height="21dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:text="or"
-        android:textAlignment="center"
-        android:textColor="@color/cardview_light_background"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/btnLogin"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@id/facebook_login_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_button" />
+        app:layout_constraintStart_toStartOf="parent" />
 
+
+    <com.facebook.login.widget.LoginButton
+        android:id="@+id/facebook_login_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp"
+        android:paddingTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

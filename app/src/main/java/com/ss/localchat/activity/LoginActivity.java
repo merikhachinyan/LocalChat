@@ -1,9 +1,12 @@
 package com.ss.localchat.activity;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -30,7 +33,6 @@ public class LoginActivity extends AppCompatActivity {
 
         mCallbackManager = CallbackManager.Factory.create();
 
-
         Button login = findViewById(R.id.btnLogin);
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -39,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        LoginButton loginButton = findViewById(R.id.login_button);
+        LoginButton loginButton = findViewById(R.id.facebook_login_button);
         loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             private ProfileTracker mProfileTracker;
 

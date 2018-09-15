@@ -48,8 +48,6 @@ public class Preferences {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        editor.remove(USER_ID_KEY).apply();
-        editor.remove(USER_NAME_KEY).apply();
-        editor.remove(INTRODUCE_APP_KEY).apply();
+        editor.remove(USER_ID_KEY).remove(USER_NAME_KEY).remove(INTRODUCE_APP_KEY).apply();
     }
 }

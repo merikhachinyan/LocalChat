@@ -26,6 +26,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.text.InputType;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -61,13 +62,21 @@ import java.util.UUID;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    public static final String ENABLE_ADVERTISING = "Enable Advertising";
-
-    public static final String DISABLE_ADVERTISING = "Disable Advertising";
-
     public static final String FRAGMENT_TAG = "show.photo";
 
-    private UserRepository userRepository;
+    private static final int REQUEST_SELECT_FILE = 1;
+
+    private static final int REQUEST_CAMERA = 2;
+
+    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
+
+    private final static String[] REQUIRED_PERMISSIONS = new String[]
+            {
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
+
 
     private ImageView imageView;
 
@@ -77,22 +86,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private GroupViewModel mGroupViewModel;
 
-    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
-
-    private final static String[] REQUIRED_PERMISSIONS =
-            new String[]{
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-
-
-            };
-
-    private static final int SELECT_FILE = 1;
-
-    private static final int REQUEST_CAMERA = 2;
-
-    private Uri mUri;
 
     private TextView textViewMyProfileName;
 
@@ -133,11 +126,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        setStatusBarTransparent();
-
         bindService(new Intent(this, ChatService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-
-
         init();
     }
 
@@ -148,15 +137,15 @@ public class SettingsActivity extends AppCompatActivity {
 
         if (isBound) {
             unbindService(mServiceConnection);
-
             Log.v("___", "unbind settings");
         }
     }
 
     private void init() {
-        userRepository = new UserRepository(getApplication());
-        mMessageViewModel = new MessageViewModel(getApplication());
-        mGroupViewModel = new GroupViewModel(getApplication());
+        mUserViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
+        mMessageViewModel = ViewModelProviders.of(this).get(MessageViewModel.class);
+        mGroupViewModel = ViewModelProviders.of(this).get(GroupViewModel.class);
+
         textViewMyProfileName = findViewById(R.id.myprofile_name);
         imageView = findViewById(R.id.myprofile_imageView);
         FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButtonCamera);
@@ -200,34 +189,18 @@ public class SettingsActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (mUser.getPhotoUrl() != null) {
                     showPhoto(mUser.getPhotoUrl());
-                } else
+                } else {
                     addImage();
+                }
             }
         });
 
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
+        findViewById(R.id.back_from_settings_activity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 onBackPressed();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-
-        sendResult();
-    }
-
-    private void sendResult() {
-        Intent intent = new Intent();
-        setResult(RESULT_OK, intent);
-        finish();
+            }
+        });
     }
 
     @Override
@@ -235,7 +208,6 @@ public class SettingsActivity extends AppCompatActivity {
         super.onStart();
 
         if (!isEditable) {
-            mUserViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
             final UUID myid = Preferences.getUserId(getApplicationContext());
             mUserViewModel.getUserById(myid).observe(this, new Observer<User>() {
                 @Override
@@ -260,8 +232,8 @@ public class SettingsActivity extends AppCompatActivity {
                         if (mUser.getName() == null) {
                             textViewMyProfileName.setText("User Name");
                         }
-                        CardView cardView = findViewById(R.id.cardViewLogOut);
-                        cardView.setOnClickListener(new View.OnClickListener() {
+                        Button buttonLogOut = findViewById(R.id.logout_button_settings_activity);
+                        buttonLogOut.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
@@ -288,29 +260,27 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        if (AccessToken.getCurrentAccessToken() == null) {
-            goIntroduceActivity();
-        } else {
+        if (AccessToken.getCurrentAccessToken() != null) {
             LoginManager.getInstance().logOut();
-            goIntroduceActivity();
         }
+        goIntroduceActivity();
     }
 
     private void goIntroduceActivity() {
-        Intent intent = new Intent(this, IntroduceActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         Preferences.removeUser(getApplicationContext());
 
-        userRepository.deleteAllUsers();
+        mUserViewModel.deleteAllUsers();
         mMessageViewModel.deleteAllMessages();
         mGroupViewModel.deleteAllGroups();
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.cancelAll();
-
+        if (manager != null) {
+            manager.cancelAll();
+        }
         mAdvertiseBinder.stopService();
 
+        Intent intent = new Intent(this, IntroduceActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-
         finish();
     }
 
@@ -324,9 +294,8 @@ public class SettingsActivity extends AppCompatActivity {
         isEditable = true;
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-        } else {
-            SelectImage();
         }
+        selectImage();
     }
 
 
@@ -337,10 +306,11 @@ public class SettingsActivity extends AppCompatActivity {
                 return false;
             }
         }
+        selectImage();
         return true;
     }
 
-    private void SelectImage() {
+    private void selectImage() {
 
         final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
 
@@ -360,7 +330,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     intent.setType("image/*");
-                    startActivityForResult(intent.createChooser(intent, "Select File"), SELECT_FILE);
+                    startActivityForResult(Intent.createChooser(intent, "Select File"), REQUEST_SELECT_FILE);
 
                 } else if (items[i].equals("Cancel")) {
                     dialogInterface.dismiss();
@@ -379,34 +349,30 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-
-        if (resultCode == Activity.RESULT_OK) {
-
-            if (requestCode == REQUEST_CAMERA) {
-
-                Bundle bundle = data.getExtras();
-                Bitmap bitmap = (Bitmap) bundle.get("data");
-                mUri = getImageUri(getApplicationContext(), bitmap);
-                Glide.with(this)
-                        .load(mUri)
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(imageView);
-
-                mUser.setPhotoUrl(mUri.toString());
-
-            } else if (requestCode == SELECT_FILE) {
-
-                mUri = data.getData();
-                Glide.with(this)
-                        .load(mUri)
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(imageView);
-                mUser.setPhotoUrl(mUri.toString());
-            }
-            userRepository.update(mUser);
-
+        if (resultCode != RESULT_OK) {
+            return;
         }
+        if (requestCode == REQUEST_CAMERA) {
+            Bundle bundle = data.getExtras();
+            Bitmap bitmap = (Bitmap) bundle.get("data");
+            Uri uri = getImageUri(getApplicationContext(), bitmap);
+            changeProfilePicture(uri);
+        } else if (requestCode == REQUEST_SELECT_FILE) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                changeProfilePicture(uri);
+            }
+        }
+    }
+
+    private void changeProfilePicture(Uri uri) {
+        Glide.with(this)
+                .load(uri)
+                .apply(RequestOptions.circleCropTransform())
+                .into(imageView);
+        mUser.setPhotoUrl(uri.toString());
+        Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, mUser.getPhotoUrl());
+        mUserViewModel.update(mUser);
     }
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {
@@ -429,14 +395,7 @@ public class SettingsActivity extends AppCompatActivity {
                 return;
             }
         }
-        SelectImage();
-    }
-
-    private void setStatusBarTransparent() {
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        Window window = getWindow();
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        selectImage();
     }
 
     private void createAndDisplayDialog() {
@@ -445,16 +404,17 @@ public class SettingsActivity extends AppCompatActivity {
         TextView tvMessage = new TextView(this);
         final EditText etInput = new EditText(this);
         etInput.setText(textViewMyProfileName.getText());
+        etInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         tvMessage.setText("Enter name:");
         tvMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
+
 
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.addView(tvMessage);
         layout.addView(etInput);
         layout.setPadding(50, 40, 50, 10);
 
-        etInput.setSingleLine();
         etInput.setSelection(etInput.getText().length());
 
         builder.setView(layout);
@@ -463,11 +423,12 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                String name = etInput.getText().toString();
+                String name = etInput.getText().toString().trim();
                 textViewMyProfileName.setText(name);
                 mUser.setName(name);
 
-                userRepository.update(mUser);
+                mUserViewModel.update(mUser);
+                Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_NAME_KEY, name);
             }
         }).setNegativeButton("Cancel", null);
 

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="#ffffff"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -10,25 +10,24 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_gravity="center"
-        android:src="@drawable/ic_public_black_24dp" />
+        android:src="@drawable/ic_chat_black_24dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Discover"
+        android:text="Local chat"
         android:textAlignment="center"
         android:textColor="@color/colorPrimary"
-        android:textSize="30dp"
+        android:textSize="30sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Discover the people nearby you!"
+        android:text="Communicate with them without internet connection"
         android:textAlignment="center"
-        android:textColor="@color/colorPrimary"
-        android:textSize="20dp" />
+        android:textSize="20sp" />
 
 </LinearLayout>

@@ -62,7 +62,7 @@ public class NotificationHelper {
                 .setContentTitle(title)
                 .setContentText(message)
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.ic_launcher_background);
+                .setSmallIcon(R.drawable.ic_status_bar);
 
         return builder.build();
     }
@@ -78,7 +78,7 @@ public class NotificationHelper {
                 .setContentTitle(name)
                 .setContentIntent(pendingIntent)
                 .setColor(context.getResources().getColor(R.color.colorAccent))
-                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setSmallIcon(R.drawable.ic_status_bar)
                 .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                 .setWhen(System.currentTimeMillis())

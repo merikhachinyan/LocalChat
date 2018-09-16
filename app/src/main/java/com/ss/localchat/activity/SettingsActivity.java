@@ -108,7 +108,6 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mAdvertiseBinder = null;
-
             isBound = false;
         }
     };
@@ -216,22 +215,12 @@ public class SettingsActivity extends AppCompatActivity {
                     mUser = user;
                     if (mUser != null) {
                         textViewMyProfileName.setText(mUser.getName());
-                        if (mUser.getPhotoUrl() != null) {
-                            Glide.with(getApplicationContext())
-                                    .load(mUser.getPhotoUrl())
-                                    .apply(RequestOptions.circleCropTransform())
-                                    .into(imageView);
+                        Glide.with(getApplicationContext())
+                                .load(mUser.getPhotoUrl())
+                                .apply(RequestOptions.circleCropTransform())
+                                .error(Glide.with(getApplicationContext()).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
+                                .into(imageView);
 
-                        } else {
-                            Glide.with(getApplicationContext())
-                                    .load(R.drawable.no_user_image)
-                                    .apply(RequestOptions.circleCropTransform())
-                                    .into(imageView);
-
-                        }
-                        if (mUser.getName() == null) {
-                            textViewMyProfileName.setText("User Name");
-                        }
                         Button buttonLogOut = findViewById(R.id.logout_button_settings_activity);
                         buttonLogOut.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -294,8 +283,9 @@ public class SettingsActivity extends AppCompatActivity {
         isEditable = true;
         if (!hasPermissions(this, REQUIRED_PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+        } else {
+            selectImage();
         }
-        selectImage();
     }
 
 
@@ -306,13 +296,12 @@ public class SettingsActivity extends AppCompatActivity {
                 return false;
             }
         }
-        selectImage();
         return true;
     }
 
     private void selectImage() {
 
-        final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
+        final CharSequence[] items = {"Camera", "Gallery", "Delete"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add Image");
@@ -332,8 +321,9 @@ public class SettingsActivity extends AppCompatActivity {
                     intent.setType("image/*");
                     startActivityForResult(Intent.createChooser(intent, "Select File"), REQUEST_SELECT_FILE);
 
-                } else if (items[i].equals("Cancel")) {
-                    dialogInterface.dismiss();
+                } else if (items[i].equals("Delete")) {
+                    if (mUser.getPhotoUrl() != null){
+                    deleteProfilePicture();}
                 }
             }
         });
@@ -342,7 +332,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
-
         fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
@@ -374,6 +363,18 @@ public class SettingsActivity extends AppCompatActivity {
         Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, mUser.getPhotoUrl());
         mUserViewModel.update(mUser);
     }
+
+    private void deleteProfilePicture() {
+        Glide.with(this)
+                .load(R.drawable.no_user_image)
+                .apply(RequestOptions.circleCropTransform())
+                .error(Glide.with(imageView).load(R.drawable.no_user_image).apply(RequestOptions.circleCropTransform()))
+                .into(imageView);
+        mUser.setPhotoUrl(null);
+        Preferences.putStringToPreferences(getApplicationContext(), Preferences.USER_PHOTO_KEY, null);
+        mUserViewModel.update(mUser);
+    }
+
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();

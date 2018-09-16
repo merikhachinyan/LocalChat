@@ -2,6 +2,7 @@ package com.ss.localchat.view;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -94,6 +96,9 @@ public class EmojiKeyboardLayout extends LinearLayout {
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
+		heightMeasureSpec = MeasureSpec.makeMeasureSpec(675, MeasureSpec.AT_MOST);
+
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 		if (keyboardHelper == null) {
 			throw new IllegalArgumentException("Please invoke setup method!");

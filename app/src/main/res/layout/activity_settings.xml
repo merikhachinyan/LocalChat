@@ -10,9 +10,10 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout"
-        android:layout_width="match_parent"
-        android:layout_height="280dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
+        android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -21,8 +22,6 @@
             android:id="@+id/back_from_settings_activity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="32dp"
             android:src="@drawable/ic_arrow_back_24dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -31,7 +30,7 @@
             android:id="@+id/myprofile_imageView"
             android:layout_width="160dp"
             android:layout_height="160dp"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="36dp"
             android:src="@drawable/no_user_image"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -42,7 +41,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_camera"
-            android:tint="#FFFFFF"
             app:layout_constraintBottom_toBottomOf="@id/myprofile_imageView"
             app:layout_constraintEnd_toEndOf="@id/myprofile_imageView" />
 
@@ -74,26 +72,26 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@android:color/white"
+        android:orientation="horizontal"
         android:padding="16dp"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/constraintLayout">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="start"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:text="@string/enable_advertising"
-            android:layout_gravity="start"
-            android:textSize="18sp"/>
+            android:textSize="18sp" />
 
         <Switch
             android:id="@+id/turn_on_off_advertising_switch"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
@@ -101,12 +99,12 @@
         android:id="@+id/logout_button_settings_activity"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:background="@android:color/white"
         android:text="Delete account"
         android:textColor="#df0808"
-        android:layout_marginBottom="16dp"
-        android:background="@android:color/white"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

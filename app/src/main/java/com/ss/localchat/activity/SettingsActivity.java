@@ -108,7 +108,6 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mAdvertiseBinder = null;
-
             isBound = false;
         }
     };
@@ -342,7 +341,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void showPhoto(String photoUri) {
         ShowPhotoFragment fragment = ShowPhotoFragment.newInstance(photoUri);
-
         fragment.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 

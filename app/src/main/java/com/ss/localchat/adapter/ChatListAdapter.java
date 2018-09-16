@@ -86,6 +86,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatViewHolder> {
                 @Override
                 public void onChanged(@Nullable List<Message> messages) {
                     if (messageList.get(model.user.getId()) == null) {
+                        if(lowerCaseQuery.length()==1){
+                            filteredModelList.add(model);
+                        }
                         messageList.put(model.user.getId(), messages);
                     } else {
                         messageList.remove(model.user.getId());

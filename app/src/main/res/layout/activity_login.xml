@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -22,8 +23,8 @@
         android:id="@+id/loginCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/colorPrimary"
-        android:src="@android:drawable/ic_menu_camera"
+        app:backgroundTint="@color/colorPrimary"
+        android:src="@drawable/ic_camera"
         app:layout_constraintBottom_toBottomOf="@+id/imageViewLogin"
         app:layout_constraintEnd_toEndOf="@+id/imageViewLogin" />
 
